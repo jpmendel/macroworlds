@@ -1,0 +1,11 @@
+[package]
+name = "microworlds-rs"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "app"
+path = "src/main.rs"
+
+[dependencies]
+eframe = "0.26.2"

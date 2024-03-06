@@ -56,3 +56,12 @@ pub fn decode_token(arg: Option<&Token>) -> Result<&Token, Box<dyn Error>> {
         Err(Box::from("expected an input"))
     }
 }
+
+pub fn are_tokens_equal(arg1: &Token, arg2: &Token) -> bool {
+    match (arg1, arg2) {
+        (Token::Number(num1), Token::Number(num2)) => num1 == num2,
+        (Token::String(str1), Token::String(str2)) => str1 == str2,
+        (Token::Boolean(bool1), Token::Boolean(bool2)) => bool1 == bool2,
+        _ => false,
+    }
+}

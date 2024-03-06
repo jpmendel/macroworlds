@@ -7,21 +7,6 @@ use crate::language::util::decode_token;
 use crate::language::util::{decode_list, decode_number, decode_proc, decode_string};
 
 impl Command {
-    pub fn repeat() -> Self {
-        Command {
-            name: String::from("repeat"),
-            params: vec![String::from("count"), String::from("block")],
-            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
-                let count = decode_number(args.get(0))? as usize;
-                let code = decode_list(args.get(1))?;
-                for _ in 0..count {
-                    int.interpret(&code)?;
-                }
-                Ok(Token::Void)
-            },
-        }
-    }
-
     pub fn make() -> Self {
         Command {
             name: String::from("make"),
@@ -100,6 +85,35 @@ impl Command {
                     int.interpret(&true_code)?;
                 } else {
                     int.interpret(&false_code)?;
+                }
+                Ok(Token::Void)
+            },
+        }
+    }
+
+    pub fn repeat() -> Self {
+        Command {
+            name: String::from("repeat"),
+            params: vec![String::from("count"), String::from("block")],
+            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
+                let count = decode_number(args.get(0))? as usize;
+                let code = decode_list(args.get(1))?;
+                for _ in 0..count {
+                    int.interpret(&code)?;
+                }
+                Ok(Token::Void)
+            },
+        }
+    }
+
+    pub fn forever() -> Self {
+        Command {
+            name: String::from("forever"),
+            params: vec![String::from("block")],
+            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
+                let code = decode_list(args.get(0))?;
+                for _ in 0..10 {
+                    int.interpret(&code)?;
                 }
                 Ok(Token::Void)
             },

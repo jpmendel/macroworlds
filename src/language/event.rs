@@ -17,3 +17,9 @@ pub enum UiEvent {
     Newturtle(String),
     Addr(String),
 }
+
+#[derive(Clone)]
+pub enum InputEvent {
+    Interrupt,
+    Key(String),
+}

@@ -1,7 +1,9 @@
 use crate::interpreter::interpreter::Interpreter;
 use crate::language::command::Command;
 use crate::language::token::Token;
-use crate::language::util::{decode_boolean, decode_number};
+use crate::language::util::{decode_boolean, decode_number, decode_token};
+
+use super::util::are_tokens_equal;
 
 impl Command {
     pub fn add() -> Self {
@@ -61,9 +63,9 @@ impl Command {
             name: String::from("eq"),
             params: vec![String::from("arg1"), String::from("arg2")],
             action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
-                let arg1 = decode_number(args.get(0))?;
-                let arg2 = decode_number(args.get(1))?;
-                let result = arg1 == arg2;
+                let arg1 = decode_token(args.get(0))?;
+                let arg2 = decode_token(args.get(1))?;
+                let result = are_tokens_equal(arg1, arg2);
                 Ok(Token::Boolean(result))
             },
         }
@@ -74,9 +76,9 @@ impl Command {
             name: String::from("ne"),
             params: vec![String::from("arg1"), String::from("arg2")],
             action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
-                let arg1 = decode_number(args.get(0))?;
-                let arg2 = decode_number(args.get(1))?;
-                let result = arg1 != arg2;
+                let arg1 = decode_token(args.get(0))?;
+                let arg2 = decode_token(args.get(1))?;
+                let result = !are_tokens_equal(arg1, arg2);
                 Ok(Token::Boolean(result))
             },
         }

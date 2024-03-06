@@ -45,7 +45,6 @@ impl CommandDictionary {
         dictionary.add(Command::clean());
         dictionary.add(Command::newturtle());
         dictionary.add(Command::addr());
-        dictionary.add(Command::repeat());
         dictionary.add(Command::wait());
         dictionary.add(Command::make());
         dictionary.add(Command::to());
@@ -53,6 +52,8 @@ impl CommandDictionary {
         dictionary.add(Command::op());
         dictionary.add(Command::ifthen());
         dictionary.add(Command::ifelse());
+        dictionary.add(Command::repeat());
+        dictionary.add(Command::forever());
         dictionary
     }
 

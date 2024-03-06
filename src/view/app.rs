@@ -1,9 +1,7 @@
 use crate::interpreter::interpreter::Interpreter;
-use crate::language::event::UiEvent;
+use crate::language::event::{InputEvent, UiEvent};
 use crate::view::canvas::Canvas;
-use crate::view::turtle::Turtle;
 use eframe::egui::*;
-use std::collections::HashMap;
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -15,13 +13,16 @@ pub struct App {
     pub code: String,
     pub canvas_pos: Pos2,
     pub canvas_size: Vec2,
-    pub event_receiver: Arc<Mutex<mpsc::Receiver<UiEvent>>>,
+    pub input_sender: mpsc::Sender<InputEvent>,
+    pub ui_receiver: Arc<Mutex<mpsc::Receiver<UiEvent>>>,
+    pub is_running: Arc<Mutex<bool>>,
 }
 
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let (sender, receiver) = mpsc::channel::<UiEvent>();
-        let interpreter = Interpreter::new(sender);
+        let (ui_sender, ui_receiver) = mpsc::channel::<UiEvent>();
+        let (input_sender, input_receiver) = mpsc::channel::<InputEvent>();
+        let interpreter = Interpreter::new(ui_sender, input_receiver);
         let canvas_pos = pos2(50.0, 50.0);
         let canvas_size = vec2(500.0, 400.0);
         App {
@@ -30,20 +31,25 @@ impl App {
             canvas_pos,
             canvas_size,
             canvas: Arc::from(Mutex::from(Canvas::new(canvas_pos, canvas_size))),
-            event_receiver: Arc::from(Mutex::from(receiver)),
+            input_sender,
+            ui_receiver: Arc::from(Mutex::from(ui_receiver)),
+            is_running: Arc::from(Mutex::from(false)),
         }
     }
 
     pub fn run_code(&mut self, ctx: &Context) {
         // Set up a background thread to listen to UI events coming over the channel.
         let canvas_mutex = self.canvas.clone();
-        let receiver_mutex = self.event_receiver.clone();
+        let receiver_mutex = self.ui_receiver.clone();
+        let is_running_mutex = self.is_running.clone();
         let ctx_mutex = Arc::from(Mutex::from(ctx.clone())).clone();
         thread::spawn(move || {
             let event_receiver = receiver_mutex.lock().unwrap();
             let timeout = Duration::from_secs(2);
             while let Ok(event) = event_receiver.recv_timeout(timeout) {
                 if let UiEvent::Done = event {
+                    let mut is_running = is_running_mutex.lock().unwrap();
+                    *is_running = false;
                     break;
                 }
                 let mut canvas = canvas_mutex.lock().unwrap();
@@ -59,6 +65,12 @@ impl App {
             let mut interpreter = interpreter_mutex.lock().unwrap();
             let _ = interpreter.interpret(&code);
         });
+
+        *self.is_running.lock().unwrap() = true;
+    }
+
+    pub fn interrupt_code(&mut self) {
+        self.input_sender.send(InputEvent::Interrupt).unwrap_or(());
     }
 }
 
@@ -100,12 +112,34 @@ impl eframe::App for App {
                 ui.add(text_field);
 
                 ui.centered_and_justified(|ui: &mut Ui| {
-                    let button = Button::new(RichText::new(String::from("Run Code")));
+                    let is_running = *self.is_running.lock().unwrap();
+                    let button_text = if is_running {
+                        String::from("Stop")
+                    } else {
+                        String::from("Run Code")
+                    };
+                    let button = Button::new(RichText::new(button_text));
                     let button_res = ui.add(button);
                     if button_res.clicked() {
-                        self.run_code(ctx);
+                        if is_running {
+                            self.interrupt_code();
+                        } else {
+                            self.run_code(ctx);
+                        }
                     }
                 });
             });
+        let is_focused = ctx.memory(|memory| memory.focus().is_some());
+        if !is_focused {
+            ctx.input(|input| {
+                for key in input.keys_down.iter() {
+                    if input.key_pressed(*key) {
+                        self.input_sender
+                            .send(InputEvent::Key(key.name().to_string()))
+                            .unwrap_or(());
+                    }
+                }
+            });
+        }
     }
 }

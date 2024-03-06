@@ -2,7 +2,7 @@ use crate::interpreter::datastore::Datastore;
 use crate::interpreter::lexer::Lexer;
 use crate::language::command::{Command, Procedure};
 use crate::language::dictionary::CommandDictionary;
-use crate::language::event::UiEvent;
+use crate::language::event::{InputEvent, UiEvent};
 use crate::language::token::Token;
 use crate::DEBUG;
 use std::error::Error;
@@ -11,18 +11,23 @@ use std::sync::mpsc;
 pub struct Interpreter {
     pub lexer: Lexer,
     pub datastore: Datastore,
-    pub event_sender: mpsc::Sender<UiEvent>,
+    pub ui_sender: mpsc::Sender<UiEvent>,
+    pub input_receiver: mpsc::Receiver<InputEvent>,
 }
 
 impl Interpreter {
-    pub fn new(event_sender: mpsc::Sender<UiEvent>) -> Self {
+    pub fn new(
+        ui_sender: mpsc::Sender<UiEvent>,
+        input_receiver: mpsc::Receiver<InputEvent>,
+    ) -> Self {
         let dictionary = CommandDictionary::default();
         let lexer = Lexer::with(dictionary);
         let datastore = Datastore::new();
         Interpreter {
             lexer,
             datastore,
-            event_sender,
+            ui_sender,
+            input_receiver,
         }
     }
 
@@ -33,6 +38,9 @@ impl Interpreter {
         }
         self.lexer.load(code);
         loop {
+            if let Ok(input_event) = self.input_receiver.try_recv() {
+                self.handle_input(input_event)?;
+            }
             let token = match self.lexer.read_token() {
                 Ok(token) => token,
                 Err(err) => {
@@ -125,7 +133,17 @@ impl Interpreter {
     }
 
     pub fn emit_ui_event(&self, event: UiEvent) {
-        self.event_sender.send(event).unwrap_or(());
+        self.ui_sender.send(event).unwrap_or(());
+    }
+
+    fn handle_input(&mut self, event: InputEvent) -> Result<(), Box<dyn Error>> {
+        match event {
+            InputEvent::Interrupt => {
+                self.clean_up();
+                Err(Box::from("interrupt"))
+            }
+            _ => Ok(()),
+        }
     }
 
     fn exit_scope(&mut self) {

@@ -15,8 +15,9 @@ impl Command {
                 let dist = decode_number(args.get(0))?;
                 let turtle = int.datastore.current_turtle();
                 let original_pos = turtle.pos.clone();
-                let x = dist * turtle.heading.to_radians().cos();
-                let y = dist * turtle.heading.to_radians().sin();
+                // Translate heading to a "clockwise, 0 == north" system.
+                let x = dist * (-turtle.heading + 90.0).to_radians().cos();
+                let y = dist * (-turtle.heading + 90.0).to_radians().sin();
                 let new_pos = (original_pos.0 + x, original_pos.1 + y);
                 turtle.pos = new_pos.clone();
                 let _ = int
@@ -40,8 +41,9 @@ impl Command {
                 let dist = decode_number(args.get(0))?;
                 let turtle = int.datastore.current_turtle();
                 let original_pos = turtle.pos.clone();
-                let x = -dist * turtle.heading.to_radians().cos();
-                let y = -dist * turtle.heading.to_radians().sin();
+                // Translate heading to a "clockwise, 0 == north" system.
+                let x = -dist * (-turtle.heading + 90.0).to_radians().cos();
+                let y = -dist * (-turtle.heading + 90.0).to_radians().sin();
                 let new_pos = (original_pos.0 + x, original_pos.1 + y);
                 turtle.pos = new_pos.clone();
                 let _ = int

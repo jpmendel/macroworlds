@@ -110,7 +110,6 @@ impl eframe::App for App {
                             let print_output = RichText::new(canvas.text.clone())
                                 .font(FontId::proportional(16.0))
                                 .color(Color32::from_gray(255));
-
                             let print_output_label = Label::new(print_output);
                             ui.add(print_output_label);
                         });
@@ -158,58 +157,56 @@ impl eframe::App for App {
             .exact_width(size.width() * 0.4)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
-                ui.vertical(|ui: &mut Ui| {
-                    // Buttons
-                    TopBottomPanel::bottom("bottom_right")
-                        .frame(Frame::none())
-                        .exact_height(size.height() * 0.1)
-                        .resizable(false)
-                        .show_inside(ui, |ui: &mut Ui| {
-                            let is_running = *self.is_running.lock().unwrap();
-                            let button_text = if is_running {
-                                String::from("Stop")
-                            } else {
-                                String::from("Run Code")
-                            };
-                            let button_label = RichText::new(button_text)
-                                .font(FontId::proportional(16.0))
-                                .color(Color32::from_gray(255));
-                            let button = Button::new(button_label);
-                            let button_ref = ui
-                                .add_sized(vec2(size.width() * 0.4, ui.available_height()), button);
-                            if button_ref.clicked() {
-                                if is_running {
-                                    self.interrupt_code();
-                                } else {
-                                    self.run_code(ctx);
-                                }
-                            }
-                        });
-
-                    ui.add_space(10.0);
-
-                    // Title
-                    ui.horizontal(|ui: &mut Ui| {
-                        ui.add_space(10.0);
-                        let title = RichText::new(String::from("Editor"))
-                            .font(FontId::proportional(18.0))
+                // Buttons
+                TopBottomPanel::bottom("bottom_right")
+                    .frame(Frame::none())
+                    .exact_height(size.height() * 0.1)
+                    .resizable(false)
+                    .show_inside(ui, |ui: &mut Ui| {
+                        let is_running = *self.is_running.lock().unwrap();
+                        let button_text = if is_running {
+                            String::from("Stop")
+                        } else {
+                            String::from("Run Code")
+                        };
+                        let button_label = RichText::new(button_text)
+                            .font(FontId::proportional(16.0))
                             .color(Color32::from_gray(255));
-                        let title_label = Label::new(title);
-                        ui.add(title_label);
+                        let button = Button::new(button_label);
+                        let button_ref =
+                            ui.add_sized(vec2(size.width() * 0.4, ui.available_height()), button);
+                        if button_ref.clicked() {
+                            if is_running {
+                                self.interrupt_code();
+                            } else {
+                                self.run_code(ctx);
+                            }
+                        }
                     });
 
+                ui.add_space(10.0);
+
+                // Title
+                ui.horizontal(|ui: &mut Ui| {
                     ui.add_space(10.0);
+                    let title = RichText::new(String::from("Editor"))
+                        .font(FontId::proportional(18.0))
+                        .color(Color32::from_gray(255));
+                    let title_label = Label::new(title);
+                    ui.add(title_label);
+                });
 
-                    // Text Area
-                    ScrollArea::vertical().show(ui, |ui: &mut Ui| {
-                        let text_field = TextEdit::multiline(&mut self.code)
-                            .code_editor()
-                            .font(FontId::monospace(16.0));
-                        ui.add_sized(
-                            vec2(size.width() * 0.396, ui.available_height()),
-                            text_field,
-                        );
-                    });
+                ui.add_space(10.0);
+
+                // Text Area
+                ScrollArea::vertical().show(ui, |ui: &mut Ui| {
+                    let text_field = TextEdit::multiline(&mut self.code)
+                        .code_editor()
+                        .font(FontId::monospace(16.0));
+                    ui.add_sized(
+                        vec2(size.width() * 0.396, ui.available_height()),
+                        text_field,
+                    );
                 });
             });
 

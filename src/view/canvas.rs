@@ -25,6 +25,7 @@ impl Canvas {
     }
 
     pub fn to_canvas_coordinates(&self, x: f32, y: f32) -> Pos2 {
+        // Translate from "(0, 0) center, north positive" system to the rect on the page.
         pos2(
             x + (self.pos.x + self.size.x / 2.0),
             -y + (self.pos.y + self.size.y / 2.0),
@@ -32,7 +33,8 @@ impl Canvas {
     }
 
     pub fn to_canvas_angle(&self, angle: f32) -> f32 {
-        angle
+        // Translate from "clockwise, 0 == north" to "counterclockwise, 0 == east" system.
+        (-angle - 90.0) % 360.0
     }
 
     pub fn handle_ui_event(&mut self, ctx: &Context, event: UiEvent) {
@@ -64,9 +66,9 @@ impl Canvas {
                 }
             }
             UiEvent::TurtleHeading(name, angle) => {
-                let angle = self.to_canvas_angle(angle);
+                let heading = self.to_canvas_angle(angle);
                 if let Some(turtle) = self.turtles.get_mut(&name) {
-                    turtle.heading = angle;
+                    turtle.heading = heading;
                 } else {
                     println!("error: turtle named {} does not exist", name);
                 }

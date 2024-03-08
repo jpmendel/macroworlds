@@ -11,7 +11,7 @@ impl TurtleView {
     pub fn with(pos: Pos2) -> Self {
         TurtleView {
             pos,
-            heading: 0.0,
+            heading: 90.0,
             color: Color32::from_gray(0),
             is_visible: true,
         }

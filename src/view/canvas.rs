@@ -1,4 +1,4 @@
-use crate::language::event::UiEvent;
+use crate::interpreter::event::UiEvent;
 use crate::view::turtle::{LineView, TurtleView};
 use eframe::egui::*;
 use eframe::epaint::Hsva;
@@ -55,6 +55,9 @@ impl Canvas {
                 } else {
                     println!("error: turtle named {} already exists", name);
                 }
+            }
+            UiEvent::RemoveTurtle(name) => {
+                self.turtles.remove(&name);
             }
             UiEvent::TurtlePos(name, (x, y)) => {
                 let pos = self.to_canvas_coordinates(x, y);

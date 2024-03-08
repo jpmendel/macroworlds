@@ -12,38 +12,53 @@ impl CommandDictionary {
             functions: HashMap::new(),
             infix_operators: HashMap::new(),
         };
-        dictionary.add(Command::add());
-        dictionary.add(Command::addr());
+
+        // General Commands
         dictionary.add(Command::and());
         dictionary.add(Command::ask());
         dictionary.add(Command::bk());
+        dictionary.add(Command::butfirst());
+        dictionary.add(Command::butlast());
+        dictionary.add(Command::cc());
+        dictionary.add(Command::cg());
         dictionary.add(Command::clean());
-        dictionary.add(Command::div());
-        dictionary.add(Command::eq());
+        dictionary.add(Command::color());
+        dictionary.add(Command::difference());
+        dictionary.add(Command::dolist());
+        dictionary.add(Command::dotimes());
+        dictionary.add(Command::empty());
+        dictionary.add(Command::equal());
         dictionary.add(Command::fd());
+        dictionary.add(Command::first());
         dictionary.add(Command::forever());
-        dictionary.add(Command::geq());
+        dictionary.add(Command::fput());
         dictionary.add(Command::greater());
+        dictionary.add(Command::heading());
         dictionary.add(Command::ht());
         dictionary.add(Command::ifelse());
         dictionary.add(Command::ifthen());
-        dictionary.add(Command::leq());
+        dictionary.add(Command::item());
+        dictionary.add(Command::home());
+        dictionary.add(Command::key());
+        dictionary.add(Command::last());
         dictionary.add(Command::less());
+        dictionary.add(Command::list());
         dictionary.add(Command::local());
+        dictionary.add(Command::lput());
         dictionary.add(Command::lt());
-        dictionary.add(Command::loopback());
         dictionary.add(Command::make());
-        dictionary.add(Command::mul());
-        dictionary.add(Command::ne());
+        dictionary.add(Command::member());
         dictionary.add(Command::newturtle());
         dictionary.add(Command::not());
         dictionary.add(Command::op());
         dictionary.add(Command::or());
-        dictionary.add(Command::paren());
         dictionary.add(Command::pd());
-        dictionary.add(Command::print());
+        dictionary.add(Command::pos());
+        dictionary.add(Command::product());
         dictionary.add(Command::pu());
+        dictionary.add(Command::quotient());
         dictionary.add(Command::readchar());
+        dictionary.add(Command::remove());
         dictionary.add(Command::repeat());
         dictionary.add(Command::rt());
         dictionary.add(Command::setx());
@@ -51,21 +66,29 @@ impl CommandDictionary {
         dictionary.add(Command::setpos());
         dictionary.add(Command::seth());
         dictionary.add(Command::setc());
+        dictionary.add(Command::show());
         dictionary.add(Command::st());
-        dictionary.add(Command::sub());
+        dictionary.add(Command::sum());
         dictionary.add(Command::to());
+        dictionary.add(Command::tto());
         dictionary.add(Command::wait());
+        dictionary.add(Command::who());
+        dictionary.add(Command::word());
+        dictionary.add(Command::xcor());
+        dictionary.add(Command::ycor());
 
-        dictionary.add_infix(String::from("+"), Command::add());
-        dictionary.add_infix(String::from("-"), Command::sub());
-        dictionary.add_infix(String::from("*"), Command::mul());
-        dictionary.add_infix(String::from("/"), Command::div());
-        dictionary.add_infix(String::from("="), Command::eq());
-        dictionary.add_infix(String::from("!="), Command::ne());
+        // Hidden Commands
+        dictionary.add(Command::paren());
+        dictionary.add(Command::loopback());
+
+        // Infix Operators
+        dictionary.add_infix(String::from("+"), Command::sum());
+        dictionary.add_infix(String::from("-"), Command::difference());
+        dictionary.add_infix(String::from("*"), Command::product());
+        dictionary.add_infix(String::from("/"), Command::quotient());
+        dictionary.add_infix(String::from("="), Command::equal());
         dictionary.add_infix(String::from(">"), Command::greater());
         dictionary.add_infix(String::from("<"), Command::less());
-        dictionary.add_infix(String::from(">="), Command::geq());
-        dictionary.add_infix(String::from("<="), Command::leq());
 
         dictionary
     }

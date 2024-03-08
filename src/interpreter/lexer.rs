@@ -1,4 +1,4 @@
-use crate::language::command::{Command, CommandAction};
+use crate::language::command::{Command, CommandAction, Params};
 use crate::language::dictionary::CommandDictionary;
 use crate::language::token::Token;
 use std::collections::VecDeque;
@@ -17,10 +17,11 @@ impl Lexer {
         }
     }
 
-    pub fn push_frame(&mut self, text: &str) {
+    pub fn push_frame(&mut self, text: &str, in_paren: bool) {
         let frame = LexerFrame {
             text: String::from(text),
             position: 0,
+            in_paren,
         };
         self.stack.push_back(frame);
     }
@@ -46,7 +47,7 @@ impl Lexer {
         self.stack.back_mut().unwrap()
     }
 
-    pub fn define(&mut self, name: String, params: Vec<String>, action: CommandAction) {
+    pub fn define(&mut self, name: String, params: Params, action: CommandAction) {
         self.dictionary.add(Command {
             name,
             params,
@@ -67,21 +68,18 @@ impl Lexer {
         }
         let identifier = self.read_identifier()?;
         if let Some(command) = self.dictionary.lookup(&identifier) {
-            let args = self.read_arguments(&command.name, command.params.len());
+            let args = self.read_arguments(&command);
             let token = Token::Command(command, args);
-            Ok(token)
-        } else if identifier.ends_with(',') {
-            let name = identifier.replacen(',', "", 1);
-            let token = Token::Command(Command::addr(), vec![Token::String(name)]);
-            Ok(token)
+            let with_infix = self.handle_parse_infix(token);
+            Ok(with_infix)
         } else if identifier.starts_with(':') {
-            let sanitized = identifier.replacen(':', "", 1);
+            let sanitized = identifier[1..].to_string();
             let token = Token::Variable(sanitized);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if identifier.starts_with('\"') {
-            let sanitized = identifier.replacen('\"', "", 1);
-            let token = Token::String(sanitized);
+            let sanitized = identifier[1..].to_string();
+            let token = Token::Word(sanitized);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if let Ok(num) = identifier.parse::<f32>() {
@@ -93,8 +91,21 @@ impl Lexer {
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if identifier.starts_with('[') {
-            let sanitized = identifier.replace('[', "").replace(']', "");
+            let sanitized = identifier[1..identifier.len() - 1].to_string();
             let token = Token::List(sanitized);
+            let with_infix = self.handle_parse_infix(token);
+            Ok(with_infix)
+        } else if identifier.ends_with(',') {
+            let sanitized = identifier[..identifier.len() - 1].to_string();
+            let token = Token::Command(Command::tto(), vec![Token::Word(sanitized)]);
+            Ok(token)
+        } else if identifier.ends_with("\'s") {
+            let sanitized = identifier[..identifier.len() - 2].to_string();
+            let command = Command::ask();
+            let mut args = vec![Token::Word(sanitized)];
+            let rest_args = self.read_fixed_arguments(&command.name, 1);
+            args.extend(rest_args);
+            let token = Token::Command(command, args);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else {
@@ -140,15 +151,39 @@ impl Lexer {
         Ok(command_name)
     }
 
-    fn read_arguments(&mut self, command_name: &String, param_count: usize) -> Vec<Token> {
+    fn read_arguments(&mut self, command: &Command) -> Vec<Token> {
+        match command.params {
+            Params::Fixed(count) => self.read_fixed_arguments(&command.name, count),
+            Params::Variadic(count) => self.read_variadic_arguments(count),
+            Params::None => vec![],
+        }
+    }
+
+    fn read_fixed_arguments(&mut self, command_name: &String, count: usize) -> Vec<Token> {
         let mut args = vec![];
-        for _ in 0..param_count {
-            self.consume_whitespace();
+        for _ in 0..count {
             if command_name == "to" {
                 if let Ok(token) = self.read_procedure() {
                     args.push(token);
                 }
             } else {
+                if let Ok(token) = self.read_token() {
+                    args.push(token);
+                }
+            }
+        }
+        args
+    }
+
+    fn read_variadic_arguments(&mut self, default_count: usize) -> Vec<Token> {
+        let mut args = vec![];
+        let frame = self.get_top_frame();
+        if frame.in_paren {
+            while let Ok(token) = self.read_token() {
+                args.push(token);
+            }
+        } else {
+            for _ in 0..default_count {
                 if let Ok(token) = self.read_token() {
                     args.push(token);
                 }
@@ -199,7 +234,7 @@ impl Lexer {
     }
 
     fn read_infix_operator(&mut self, left_arg: Token, operator: Command) -> Token {
-        let mut args = self.read_arguments(&operator.name, 1);
+        let mut args = self.read_fixed_arguments(&operator.name, 1);
         args.insert(0, left_arg);
         Token::Command(operator, args)
     }
@@ -255,6 +290,7 @@ impl Lexer {
 struct LexerFrame {
     text: String,
     position: usize,
+    in_paren: bool,
 }
 
 impl LexerFrame {

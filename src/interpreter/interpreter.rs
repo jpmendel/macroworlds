@@ -1,16 +1,16 @@
-use crate::interpreter::datastore::Datastore;
+use crate::interpreter::event::{InputEvent, UiEvent};
 use crate::interpreter::lexer::Lexer;
-use crate::language::command::{Command, Procedure};
+use crate::language::command::{Params, Procedure};
 use crate::language::dictionary::CommandDictionary;
-use crate::language::event::{InputEvent, UiEvent};
 use crate::language::token::Token;
+use crate::state::state::State;
 use crate::DEBUG;
 use std::error::Error;
 use std::sync::mpsc;
 
 pub struct Interpreter {
     pub lexer: Lexer,
-    pub datastore: Datastore,
+    pub state: State,
     pub ui_sender: mpsc::Sender<UiEvent>,
     pub input_receiver: mpsc::Receiver<InputEvent>,
 }
@@ -22,21 +22,46 @@ impl Interpreter {
     ) -> Self {
         let dictionary = CommandDictionary::default();
         let lexer = Lexer::with(dictionary);
-        let datastore = Datastore::new();
+        let state = State::new();
         Interpreter {
             lexer,
-            datastore,
+            state,
             ui_sender,
             input_receiver,
         }
     }
 
     pub fn interpret(&mut self, code: &str) -> Result<Token, Box<dyn Error>> {
+        self.execute_code(code, false)
+    }
+
+    pub fn interpret_in_new_scope(
+        &mut self,
+        code: &str,
+        local_params: Vec<(String, Token)>,
+    ) -> Result<Token, Box<dyn Error>> {
+        self.state.push_scope();
+        for (param, arg) in &local_params {
+            self.state.set_variable(param.clone(), arg.clone());
+        }
+        let return_value = self.interpret(code);
+        for (param, _) in &local_params {
+            self.state.remove_variable(&param);
+        }
+        self.state.pop_scope();
+        return_value
+    }
+
+    pub fn interpret_in_parenthesis(&mut self, code: &str) -> Result<Token, Box<dyn Error>> {
+        self.execute_code(code, true)
+    }
+
+    fn execute_code(&mut self, code: &str, in_paren: bool) -> Result<Token, Box<dyn Error>> {
         if code.is_empty() {
             self.exit_scope();
             return Ok(Token::Void);
         }
-        self.lexer.push_frame(code);
+        self.lexer.push_frame(code, in_paren);
         loop {
             while let Ok(input_event) = self.input_receiver.try_recv() {
                 self.handle_input(input_event)?;
@@ -64,8 +89,12 @@ impl Interpreter {
                     }
                 }
                 Err(err) => {
-                    println!("error: {}", err);
-                    let _ = self.ui_sender.send(UiEvent::Print(err.to_string()));
+                    if err.to_string() == "interrupt" {
+                        println!("Program Ended");
+                    } else {
+                        println!("error: {}", err);
+                        let _ = self.ui_sender.send(UiEvent::Print(err.to_string()));
+                    }
                     self.clean_up();
                     return Err(err);
                 }
@@ -85,9 +114,9 @@ impl Interpreter {
                 if DEBUG {
                     println!("{} {:?}", command.name, results);
                 }
-                (command.action)(self, &command, results)
+                (command.action)(self, &command.name, results)
             }
-            Token::Variable(variable) => match self.datastore.get_variable(&variable) {
+            Token::Variable(variable) => match self.state.get_variable(&variable) {
                 Some(stored) => Ok(stored.clone()),
                 None => Err(Box::from(format!("{} has no value", variable))),
             },
@@ -98,51 +127,74 @@ impl Interpreter {
         }
     }
 
-    pub fn execute_code_in_new_scope(
-        &mut self,
-        code: &str,
-        local_params: Vec<(String, Token)>,
-    ) -> Result<Token, Box<dyn Error>> {
-        self.datastore.push_scope();
-        for (param, arg) in &local_params {
-            self.datastore.set_variable(param.clone(), arg.clone());
-        }
-        let return_value = self.interpret(code);
-        for (param, _) in &local_params {
-            self.datastore.remove_variable(&param);
-        }
-        self.datastore.pop_scope();
-        return_value
-    }
-
     pub fn define_procedure(&mut self, procedure: Procedure) {
         self.lexer.define(
             procedure.name.clone(),
-            procedure.params.clone(),
-            |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
-                if com.params.len() != args.len() {
+            Params::Fixed(procedure.params.len()),
+            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+                let proc = int.state.get_procedure(com).unwrap();
+                if proc.params.len() != args.len() {
                     return Err(Box::from("wrong number of inputs"));
                 }
-                let proc = int.datastore.get_procedure(&com.name).unwrap();
                 let code = proc.code.clone();
                 let mut local_params = vec![];
-                for i in 0..com.params.len() {
-                    local_params.push((com.params[i].clone(), args[i].clone()));
+                for i in 0..proc.params.len() {
+                    local_params.push((proc.params[i].clone(), args[i].clone()));
                 }
-                int.execute_code_in_new_scope(&code, local_params)
+                int.interpret_in_new_scope(&code, local_params)
             },
         );
-        self.datastore.set_procedure(procedure);
+        self.state.set_procedure(procedure);
+    }
+
+    pub fn parse_list(&mut self, list: &String) -> Result<Vec<Token>, Box<dyn Error>> {
+        let mut items = vec![];
+        let mut current_item = String::new();
+        let mut reading_list = false;
+
+        for chr in list.chars() {
+            if chr == '[' {
+                reading_list = true;
+            } else if chr == ']' {
+                reading_list = false;
+                let token = Token::List(current_item.clone());
+                items.push(token);
+                current_item = String::new();
+            } else if reading_list {
+                current_item.push(chr);
+            } else if !chr.is_whitespace() {
+                current_item.push(chr);
+            } else if !current_item.is_empty() {
+                let token = self.parse_list_token(current_item)?;
+                items.push(token);
+                current_item = String::new();
+            }
+        }
+        if !current_item.is_empty() {
+            let token = self.parse_list_token(current_item)?;
+            items.push(token);
+        }
+        Ok(items)
+    }
+
+    fn parse_list_token(&self, text: String) -> Result<Token, Box<dyn Error>> {
+        if text.starts_with(':') {
+            let var_name = text[1..].to_string();
+            if let Some(var) = self.state.get_variable(&var_name) {
+                Ok(var.clone())
+            } else {
+                Err(Box::from(format!("{} has no value", var_name)))
+            }
+        } else {
+            Ok(Token::Word(text.clone()))
+        }
     }
 
     fn handle_input(&mut self, event: InputEvent) -> Result<(), Box<dyn Error>> {
         match event {
-            InputEvent::Interrupt => {
-                self.clean_up();
-                Err(Box::from("interrupt"))
-            }
+            InputEvent::Interrupt => Err(Box::from("interrupt")),
             InputEvent::Key(key) => {
-                self.datastore.add_key_to_buffer(key);
+                self.state.add_key_to_buffer(key);
                 Ok(())
             }
         }
@@ -158,7 +210,7 @@ impl Interpreter {
 
     fn clean_up(&mut self) {
         self.lexer.clear_frames();
-        self.datastore.reset_scope();
+        self.state.reset_scope();
         let _ = self.ui_sender.send(UiEvent::Done);
     }
 }

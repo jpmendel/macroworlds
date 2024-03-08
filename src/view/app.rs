@@ -1,5 +1,5 @@
+use crate::interpreter::event::{InputEvent, UiEvent};
 use crate::interpreter::interpreter::Interpreter;
-use crate::language::event::{InputEvent, UiEvent};
 use crate::view::canvas::Canvas;
 use eframe::egui::*;
 use std::collections::HashSet;
@@ -21,7 +21,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let (ui_sender, ui_receiver) = mpsc::channel::<UiEvent>();
         let (input_sender, input_receiver) = mpsc::channel::<InputEvent>();
         let interpreter = Interpreter::new(ui_sender, input_receiver);
@@ -86,7 +86,7 @@ impl App {
 }
 
 impl eframe::App for App {
-    fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         let size = ctx.input(|i| i.viewport().outer_rect).unwrap();
 
         // Canvas and Console

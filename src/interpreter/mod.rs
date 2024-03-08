@@ -1,3 +1,3 @@
-pub mod datastore;
+pub mod event;
 pub mod interpreter;
 pub mod lexer;

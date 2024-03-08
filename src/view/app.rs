@@ -71,7 +71,6 @@ impl App {
             let mut interpreter = interpreter_mutex.lock().unwrap();
             while interpreter.input_receiver.try_recv().is_ok() {
                 // Consume remaining events.
-                println!("NOM");
             }
             let _ = interpreter.interpret(&code);
             let mut is_running = is_running_mutex.lock().unwrap();
@@ -170,7 +169,7 @@ impl eframe::App for App {
 
                 let text_field = TextEdit::multiline(&mut self.code)
                     .code_editor()
-                    .desired_rows(26)
+                    .desired_rows(27)
                     .desired_width(size.width() * 0.39)
                     .font(FontId::monospace(16.0));
                 ui.add(text_field);
@@ -206,7 +205,9 @@ impl eframe::App for App {
                     .collect();
                 let diff = self.key_buffer.difference(&keys);
                 for key in diff {
-                    let _ = self.input_sender.send(InputEvent::Key(key.clone()));
+                    let _ = self
+                        .input_sender
+                        .send(InputEvent::Key(key.clone().to_lowercase()));
                 }
                 self.key_buffer = keys;
             });

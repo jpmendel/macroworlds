@@ -100,6 +100,11 @@ impl Datastore {
         }
     }
 
+    pub fn get_turtle(&mut self, name: &String) -> Option<&Turtle> {
+        let index = self.canvas.turtle_lookup.get(name)?;
+        self.canvas.turtles.get(*index)
+    }
+
     pub fn create_turtle(&mut self, name: String) -> &Turtle {
         let turtle = Turtle::with(name.clone());
         self.canvas.turtles.push(turtle);

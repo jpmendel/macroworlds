@@ -69,6 +69,7 @@ impl Command {
             },
         }
     }
+
     pub fn ifelse() -> Self {
         Command {
             name: String::from("ifelse"),
@@ -87,6 +88,18 @@ impl Command {
                     int.interpret(&false_code)?;
                 }
                 Ok(Token::Void)
+            },
+        }
+    }
+
+    pub fn paren() -> Self {
+        Command {
+            name: String::from("__paren"),
+            params: vec![String::from("code")],
+            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
+                let code = decode_list(args.get(0))?;
+                let code_with_return = format!("op {}", code);
+                int.interpret(&code_with_return)
             },
         }
     }
@@ -147,11 +160,33 @@ impl Command {
             params: vec![],
             action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
                 if let Some(key) = int.datastore.get_one_key() {
-                    println!("KEY: {}", key);
                     Ok(Token::String(key))
                 } else {
                     Ok(Token::String(String::from("")))
                 }
+            },
+        }
+    }
+
+    pub fn ask() -> Self {
+        Command {
+            name: String::from("ask"),
+            params: vec![String::from("turtle"), String::from("property")],
+            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
+                let name = decode_string(args.get(0))?;
+                let property = decode_string(args.get(1))?;
+                if let Some(turtle) = int.datastore.get_turtle(&name) {
+                    let token = match property.as_str() {
+                        "x" => Token::Number(turtle.pos.0),
+                        "y" => Token::Number(turtle.pos.1),
+                        "pos" => Token::List(format!("{} {}", turtle.pos.0, turtle.pos.1)),
+                        "heading" => Token::Number(turtle.heading),
+                        "color" => Token::Number(turtle.color),
+                        _ => Token::Void,
+                    };
+                    return Ok(token);
+                }
+                Ok(Token::Void)
             },
         }
     }

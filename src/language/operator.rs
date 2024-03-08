@@ -136,6 +136,32 @@ impl Command {
         }
     }
 
+    pub fn or() -> Self {
+        Command {
+            name: String::from("or"),
+            params: vec![String::from("arg1"), String::from("arg2")],
+            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
+                let arg1 = decode_boolean(args.get(0))?;
+                let arg2 = decode_boolean(args.get(1))?;
+                let result = arg1 || arg2;
+                Ok(Token::Boolean(result))
+            },
+        }
+    }
+
+    pub fn and() -> Self {
+        Command {
+            name: String::from("and"),
+            params: vec![String::from("arg1"), String::from("arg2")],
+            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
+                let arg1 = decode_boolean(args.get(0))?;
+                let arg2 = decode_boolean(args.get(1))?;
+                let result = arg1 && arg2;
+                Ok(Token::Boolean(result))
+            },
+        }
+    }
+
     pub fn not() -> Self {
         Command {
             name: String::from("not"),

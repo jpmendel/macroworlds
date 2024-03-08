@@ -22,7 +22,6 @@ impl Command {
                 let _ = int
                     .ui_sender
                     .send(UiEvent::TurtlePos(turtle.name.clone(), turtle.pos.clone()));
-
                 if turtle.is_drawing {
                     let color = turtle.color.clone();
                     let line = int.datastore.add_line(original_pos, new_pos, color);
@@ -48,7 +47,6 @@ impl Command {
                 let _ = int
                     .ui_sender
                     .send(UiEvent::TurtlePos(turtle.name.clone(), turtle.pos.clone()));
-
                 if turtle.is_drawing {
                     let color = turtle.color.clone();
                     let line = int.datastore.add_line(original_pos, new_pos, color);
@@ -93,6 +91,52 @@ impl Command {
         }
     }
 
+    pub fn setx() -> Self {
+        Command {
+            name: String::from("setx"),
+            params: vec![String::from("coords")],
+            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
+                let x = decode_number(args.get(0))?;
+                let turtle = int.datastore.current_turtle();
+                let original_pos = turtle.pos.clone();
+                turtle.pos.0 = x;
+                let new_pos = turtle.pos.clone();
+                let _ = int
+                    .ui_sender
+                    .send(UiEvent::TurtlePos(turtle.name.clone(), turtle.pos.clone()));
+                if turtle.is_drawing {
+                    let color = turtle.color.clone();
+                    let line = int.datastore.add_line(original_pos, new_pos, color);
+                    let _ = int.ui_sender.send(UiEvent::AddLine(line.clone()));
+                }
+                Ok(Token::Void)
+            },
+        }
+    }
+
+    pub fn sety() -> Self {
+        Command {
+            name: String::from("sety"),
+            params: vec![String::from("coords")],
+            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
+                let y = decode_number(args.get(0))?;
+                let turtle = int.datastore.current_turtle();
+                let original_pos = turtle.pos.clone();
+                turtle.pos.1 = y;
+                let new_pos = turtle.pos.clone();
+                let _ = int
+                    .ui_sender
+                    .send(UiEvent::TurtlePos(turtle.name.clone(), turtle.pos.clone()));
+                if turtle.is_drawing {
+                    let color = turtle.color.clone();
+                    let line = int.datastore.add_line(original_pos, new_pos, color);
+                    let _ = int.ui_sender.send(UiEvent::AddLine(line.clone()));
+                }
+                Ok(Token::Void)
+            },
+        }
+    }
+
     pub fn setpos() -> Self {
         Command {
             name: String::from("setpos"),
@@ -106,11 +150,17 @@ impl Command {
                 let x = coords[0].parse::<f32>()?;
                 let y = coords[1].parse::<f32>()?;
                 let turtle = int.datastore.current_turtle();
-                turtle.pos = (x, y);
-                let _ = int.ui_sender.send(UiEvent::TurtleHeading(
-                    turtle.name.clone(),
-                    turtle.heading.clone(),
-                ));
+                let original_pos = turtle.pos.clone();
+                let new_pos = (x, y);
+                turtle.pos = new_pos.clone();
+                let _ = int
+                    .ui_sender
+                    .send(UiEvent::TurtlePos(turtle.name.clone(), turtle.pos.clone()));
+                if turtle.is_drawing {
+                    let color = turtle.color.clone();
+                    let line = int.datastore.add_line(original_pos, new_pos, color);
+                    let _ = int.ui_sender.send(UiEvent::AddLine(line.clone()));
+                }
                 Ok(Token::Void)
             },
         }

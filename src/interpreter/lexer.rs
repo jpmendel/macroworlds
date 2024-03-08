@@ -60,6 +60,11 @@ impl Lexer {
         if frame.current_char() == '\0' {
             return Err(Box::from("reached end of file"));
         }
+        if frame.current_char() == '(' {
+            let token = self.read_parenthesis()?;
+            let with_infix = self.handle_parse_infix(token);
+            return Ok(with_infix);
+        }
         let identifier = self.read_identifier()?;
         if let Some(command) = self.dictionary.lookup(&identifier) {
             let args = self.read_arguments(&command.name, command.params.len());
@@ -150,6 +155,23 @@ impl Lexer {
             }
         }
         args
+    }
+
+    fn read_parenthesis(&mut self) -> Result<Token, Box<dyn Error>> {
+        let frame = self.get_top_frame();
+        let mut code = String::new();
+        if frame.current_char() == '(' {
+            frame.next();
+        }
+        while frame.current_char() != ')' && frame.current_char() != '\0' {
+            code.push(frame.current_char().clone());
+            frame.next();
+        }
+        if frame.current_char() == '\0' {
+            return Err(Box::from("found unclosed parenthesis"));
+        }
+        frame.next();
+        Ok(Token::Command(Command::paren(), vec![Token::List(code)]))
     }
 
     fn handle_parse_infix(&mut self, token: Token) -> Token {

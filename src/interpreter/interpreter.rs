@@ -36,9 +36,9 @@ impl Interpreter {
             self.exit_scope();
             return Ok(Token::Void);
         }
-        self.lexer.load(code);
+        self.lexer.push_frame(code);
         loop {
-            if let Ok(input_event) = self.input_receiver.try_recv() {
+            while let Ok(input_event) = self.input_receiver.try_recv() {
                 self.handle_input(input_event)?;
             }
             let token = match self.lexer.read_token() {
@@ -65,6 +65,7 @@ impl Interpreter {
                 }
                 Err(err) => {
                     println!("error: {}", err);
+                    let _ = self.ui_sender.send(UiEvent::Print(err.to_string()));
                     self.clean_up();
                     return Err(err);
                 }
@@ -86,18 +87,32 @@ impl Interpreter {
                 }
                 (command.action)(self, &command, results)
             }
-            Token::Variable(variable) => {
-                let var_name = variable.replacen(':', "", 1);
-                match self.datastore.get_variable(&var_name) {
-                    Some(stored) => Ok(stored.clone()),
-                    None => Err(Box::from(format!("{} has no value", var_name))),
-                }
-            }
+            Token::Variable(variable) => match self.datastore.get_variable(&variable) {
+                Some(stored) => Ok(stored.clone()),
+                None => Err(Box::from(format!("{} has no value", variable))),
+            },
             Token::Undefined(undefined) => {
                 Err(Box::from(format!("I don't know how to {}", undefined)))
             }
             other => Ok(other),
         }
+    }
+
+    pub fn execute_code_in_new_scope(
+        &mut self,
+        code: &str,
+        local_params: Vec<(String, Token)>,
+    ) -> Result<Token, Box<dyn Error>> {
+        self.datastore.push_scope();
+        for (param, arg) in &local_params {
+            self.datastore.set_variable(param.clone(), arg.clone());
+        }
+        let return_value = self.interpret(code);
+        for (param, _) in &local_params {
+            self.datastore.remove_variable(&param);
+        }
+        self.datastore.pop_scope();
+        return_value
     }
 
     pub fn define_procedure(&mut self, procedure: Procedure) {
@@ -108,32 +123,16 @@ impl Interpreter {
                 if com.params.len() != args.len() {
                     return Err(Box::from("wrong number of inputs"));
                 }
-                int.datastore.push_scope();
+                let proc = int.datastore.get_procedure(&com.name).unwrap();
+                let code = proc.code.clone();
+                let mut local_params = vec![];
                 for i in 0..com.params.len() {
-                    let arg_name = com.params.get(i).unwrap();
-                    let value = args.get(i).unwrap();
-                    int.datastore.set_variable(arg_name.clone(), value.clone());
+                    local_params.push((com.params[i].clone(), args[i].clone()));
                 }
-                let return_value = int.execute_procedure(com.name.clone());
-                for param in &com.params {
-                    int.datastore.remove_variable(&param);
-                }
-                int.datastore.pop_scope();
-                return_value
+                int.execute_code_in_new_scope(&code, local_params)
             },
         );
         self.datastore.set_procedure(procedure);
-    }
-
-    pub fn execute_procedure(&mut self, name: String) -> Result<Token, Box<dyn Error>> {
-        if let Some(proc) = self.datastore.get_procedure(&name) {
-            return self.interpret(&proc.code.clone());
-        }
-        Ok(Token::Void)
-    }
-
-    pub fn emit_ui_event(&self, event: UiEvent) {
-        self.ui_sender.send(event).unwrap_or(());
     }
 
     fn handle_input(&mut self, event: InputEvent) -> Result<(), Box<dyn Error>> {
@@ -142,7 +141,10 @@ impl Interpreter {
                 self.clean_up();
                 Err(Box::from("interrupt"))
             }
-            _ => Ok(()),
+            InputEvent::Key(key) => {
+                self.datastore.add_key_to_buffer(key);
+                Ok(())
+            }
         }
     }
 
@@ -150,12 +152,13 @@ impl Interpreter {
         let exited_main = self.lexer.pop_frame();
         if exited_main {
             println!("Done!");
-            self.emit_ui_event(UiEvent::Done);
+            self.clean_up();
         }
     }
 
     fn clean_up(&mut self) {
         self.lexer.clear_frames();
-        self.emit_ui_event(UiEvent::Done);
+        self.datastore.reset_scope();
+        let _ = self.ui_sender.send(UiEvent::Done);
     }
 }

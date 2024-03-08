@@ -98,9 +98,9 @@ impl Command {
             action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
                 let count = decode_number(args.get(0))? as usize;
                 let code = decode_list(args.get(1))?;
-                for _ in 0..count {
-                    int.interpret(&code)?;
-                }
+                let local_params = vec![(String::from("__loopcount"), Token::Number(count as f32))];
+                let looping_code = code + "\n__loopback";
+                int.execute_code_in_new_scope(&looping_code, local_params)?;
                 Ok(Token::Void)
             },
         }
@@ -112,10 +112,46 @@ impl Command {
             params: vec![String::from("block")],
             action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
                 let code = decode_list(args.get(0))?;
-                for _ in 0..10 {
-                    int.interpret(&code)?;
+                let local_params = vec![];
+                let looping_code = code + "\n__loopback";
+                int.execute_code_in_new_scope(&looping_code, local_params)?;
+                Ok(Token::Void)
+            },
+        }
+    }
+
+    pub fn loopback() -> Self {
+        Command {
+            name: String::from("__loopback"),
+            params: vec![],
+            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
+                let loop_var_name = String::from("__loopcount");
+                let count_token = int.datastore.get_variable(&loop_var_name);
+                if let Some(Token::Number(count)) = count_token {
+                    if *count > 0.0 {
+                        int.lexer.return_to_start_of_top_frame();
+                        int.datastore
+                            .set_variable(loop_var_name, Token::Number(count - 1.0));
+                    }
+                } else {
+                    int.lexer.return_to_start_of_top_frame();
                 }
                 Ok(Token::Void)
+            },
+        }
+    }
+
+    pub fn readchar() -> Self {
+        Command {
+            name: String::from("readchar"),
+            params: vec![],
+            action: |int: &mut Interpreter, com: &Command, args: Vec<Token>| {
+                if let Some(key) = int.datastore.get_one_key() {
+                    println!("KEY: {}", key);
+                    Ok(Token::String(key))
+                } else {
+                    Ok(Token::String(String::from("")))
+                }
             },
         }
     }

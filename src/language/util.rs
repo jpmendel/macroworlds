@@ -14,7 +14,7 @@ pub fn decode_number(arg: Option<&Token>) -> Result<f32, Box<dyn Error>> {
 pub fn decode_string(arg: Option<&Token>) -> Result<String, Box<dyn Error>> {
     let string: String;
     if let Some(Token::String(s)) = arg {
-        string = s.clone().replacen('"', "", 1);
+        string = s.clone();
     } else {
         return Err(Box::from("expected string as input"));
     }
@@ -32,13 +32,13 @@ pub fn decode_boolean(arg: Option<&Token>) -> Result<bool, Box<dyn Error>> {
 }
 
 pub fn decode_list(arg: Option<&Token>) -> Result<String, Box<dyn Error>> {
-    let array: String;
-    if let Some(Token::List(arr)) = arg {
-        array = arr.clone().replace('[', "").replace(']', "");
+    let list: String;
+    if let Some(Token::List(l)) = arg {
+        list = l.clone();
     } else {
         return Err(Box::from("expected list as input"));
     }
-    Ok(array)
+    Ok(list)
 }
 
 pub fn decode_proc(arg: Option<&Token>) -> Result<(String, Vec<String>, String), Box<dyn Error>> {

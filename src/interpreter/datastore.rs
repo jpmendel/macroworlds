@@ -1,23 +1,14 @@
 use crate::language::command::Procedure;
 use crate::language::token::Token;
-use std::collections::HashMap;
-
-pub struct Datastore {
-    scopes: Vec<Scope>,
-    pub procedures: HashMap<String, Procedure>,
-}
+use crate::language::turtle::{Line, Turtle};
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug)]
-struct Scope {
-    variables: HashMap<String, Token>,
-}
-
-impl Scope {
-    fn new() -> Self {
-        Scope {
-            variables: HashMap::new(),
-        }
-    }
+pub struct Datastore {
+    scopes: VecDeque<Scope>,
+    procedures: HashMap<String, Procedure>,
+    canvas: Canvas,
+    input: InputState,
 }
 
 impl Datastore {
@@ -26,19 +17,28 @@ impl Datastore {
             variables: HashMap::new(),
         };
         Datastore {
-            scopes: vec![global_scope],
+            scopes: VecDeque::from([global_scope]),
             procedures: HashMap::new(),
+            canvas: Canvas::new(),
+            input: InputState::new(),
         }
     }
 
     pub fn push_scope(&mut self) {
-        self.scopes.insert(0, Scope::new());
+        self.scopes.push_front(Scope::new());
     }
 
     pub fn pop_scope(&mut self) {
         // Prevent popping of global scope.
         if self.scopes.len() > 1 {
-            self.scopes.remove(0);
+            self.scopes.pop_front();
+        }
+    }
+
+    pub fn reset_scope(&mut self) {
+        // Pop all except the global scope.
+        while self.scopes.len() > 1 {
+            self.scopes.pop_front();
         }
     }
 
@@ -62,25 +62,110 @@ impl Datastore {
                 return;
             }
         }
-        let global_scope = self.scopes.last_mut().unwrap();
+        let global_scope = self.scopes.back_mut().unwrap();
         global_scope.variables.insert(name, value);
     }
 
     pub fn set_local(&mut self, name: String) {
-        let local_scope = self.scopes.first_mut().unwrap();
+        let local_scope = self.scopes.front_mut().unwrap();
         local_scope.variables.insert(name, Token::Void);
     }
 
     pub fn remove_variable(&mut self, name: &str) {
-        let current_scope = self.scopes.first_mut().unwrap();
+        let current_scope = self.scopes.front_mut().unwrap();
         current_scope.variables.remove(name);
     }
 
-    pub fn get_procedure(&self, name: &str) -> Option<&Procedure> {
+    pub fn get_procedure(&mut self, name: &str) -> Option<&Procedure> {
         self.procedures.get(name)
     }
 
     pub fn set_procedure(&mut self, procedure: Procedure) {
         self.procedures.insert(procedure.name.clone(), procedure);
+    }
+
+    pub fn current_turtle(&mut self) -> &mut Turtle {
+        self.canvas
+            .turtles
+            .get_mut(self.canvas.current_turtle_index)
+            .unwrap()
+    }
+
+    pub fn set_current_turtle(&mut self, name: &String) -> bool {
+        if let Some(index) = self.canvas.turtle_lookup.get(name) {
+            self.canvas.current_turtle_index = index.clone();
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn create_turtle(&mut self, name: String) -> &Turtle {
+        let turtle = Turtle::with(name.clone());
+        self.canvas.turtles.push(turtle);
+        self.canvas
+            .turtle_lookup
+            .insert(name, self.canvas.turtles.len() - 1);
+        self.canvas.turtles.last().unwrap()
+    }
+
+    pub fn add_line(&mut self, start: (f32, f32), end: (f32, f32), color: f32) -> &Line {
+        let line = Line { start, end, color };
+        self.canvas.lines.push(line);
+        self.canvas.lines.last().unwrap()
+    }
+
+    pub fn get_one_key(&mut self) -> Option<String> {
+        self.input.key_buffer.pop_front()
+    }
+
+    pub fn add_key_to_buffer(&mut self, key: String) {
+        self.input.key_buffer.push_back(key);
+    }
+}
+
+#[derive(Debug)]
+struct Scope {
+    variables: HashMap<String, Token>,
+}
+
+impl Scope {
+    fn new() -> Self {
+        Scope {
+            variables: HashMap::new(),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Canvas {
+    turtles: Vec<Turtle>,
+    turtle_lookup: HashMap<String, usize>,
+    current_turtle_index: usize,
+    lines: Vec<Line>,
+}
+
+impl Canvas {
+    fn new() -> Self {
+        let turtle_name = String::from("t1");
+        Canvas {
+            turtles: vec![Turtle::with(turtle_name.clone())],
+            turtle_lookup: [(turtle_name, 0)].into_iter().collect(),
+            current_turtle_index: 0,
+            lines: vec![],
+        }
+    }
+}
+
+#[derive(Debug)]
+struct InputState {
+    key_buffer: VecDeque<String>,
+}
+
+impl InputState {
+    fn new() -> Self {
+        InputState {
+            key_buffer: VecDeque::new(),
+        }
     }
 }

@@ -2,6 +2,7 @@ use crate::interpreter::interpreter::Interpreter;
 use crate::language::event::{InputEvent, UiEvent};
 use crate::view::canvas::Canvas;
 use eframe::egui::*;
+use std::collections::HashSet;
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -16,6 +17,7 @@ pub struct App {
     pub input_sender: mpsc::Sender<InputEvent>,
     pub ui_receiver: Arc<Mutex<mpsc::Receiver<UiEvent>>>,
     pub is_running: Arc<Mutex<bool>>,
+    pub key_buffer: HashSet<String>,
 }
 
 impl App {
@@ -34,36 +36,46 @@ impl App {
             input_sender,
             ui_receiver: Arc::from(Mutex::from(ui_receiver)),
             is_running: Arc::from(Mutex::from(false)),
+            key_buffer: HashSet::new(),
         }
     }
 
     pub fn run_code(&mut self, ctx: &Context) {
+        self.key_buffer.clear();
+
         // Set up a background thread to listen to UI events coming over the channel.
         let canvas_mutex = self.canvas.clone();
         let receiver_mutex = self.ui_receiver.clone();
-        let is_running_mutex = self.is_running.clone();
         let ctx_mutex = Arc::from(Mutex::from(ctx.clone())).clone();
         thread::spawn(move || {
             let event_receiver = receiver_mutex.lock().unwrap();
             let timeout = Duration::from_secs(2);
             while let Ok(event) = event_receiver.recv_timeout(timeout) {
                 if let UiEvent::Done = event {
-                    let mut is_running = is_running_mutex.lock().unwrap();
-                    *is_running = false;
                     break;
                 }
                 let mut canvas = canvas_mutex.lock().unwrap();
                 let ctx = ctx_mutex.lock().unwrap();
-                canvas.draw(&ctx, event);
+                canvas.handle_ui_event(&ctx, event);
+            }
+            while event_receiver.try_recv().is_ok() {
+                // Consume remaining events.
             }
         });
 
         // Set up a background thread to run interpreter and send any UI updates.
         let interpreter_mutex = self.interpreter.clone();
+        let is_running_mutex = self.is_running.clone();
         let code = self.code.clone();
         thread::spawn(move || {
             let mut interpreter = interpreter_mutex.lock().unwrap();
+            while interpreter.input_receiver.try_recv().is_ok() {
+                // Consume remaining events.
+                println!("NOM");
+            }
             let _ = interpreter.interpret(&code);
+            let mut is_running = is_running_mutex.lock().unwrap();
+            *is_running = false;
         });
 
         *self.is_running.lock().unwrap() = true;
@@ -77,36 +89,88 @@ impl App {
 impl eframe::App for App {
     fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
         let size = ctx.input(|i| i.viewport().outer_rect).unwrap();
+
+        // Canvas and Console
         SidePanel::left("left")
             .frame(Frame::none())
             .exact_width(size.width() * 0.6)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
-                ui.heading("MicroWorlds.rs");
+                ui.add_space(10.0);
+
+                ui.horizontal(|ui: &mut Ui| {
+                    ui.add_space(10.0);
+                    // Title text.
+                    let title = RichText::new(String::from("MicroWorlds.rs"))
+                        .font(FontId::proportional(18.0))
+                        .color(Color32::from_gray(255));
+                    let title_label = Label::new(title);
+                    ui.add(title_label);
+                });
+
+                // Set up canvas area.
                 let painter = ui.painter();
                 let rect = Rect::from_x_y_ranges(
                     Rangef::new(self.canvas_pos.x, self.canvas_pos.x + self.canvas_size.x),
                     Rangef::new(self.canvas_pos.y, self.canvas_pos.y + self.canvas_size.y),
                 );
-                painter.rect_filled(rect, Rounding::same(0.0), Color32::from_rgb(255, 255, 255));
-                let line_painter = ui.painter_at(rect);
+                painter.rect_filled(rect, Rounding::same(0.0), Color32::from_gray(255));
+
+                // Paint lines and turtles on screen.
+                let content_painter = ui.painter_at(rect);
                 let canvas = self.canvas.lock().unwrap();
                 for line in &canvas.lines {
-                    line_painter.line_segment(
+                    content_painter.line_segment(
                         [line.start.clone(), line.end.clone()],
                         Stroke::new(3.0, line.color),
                     );
                 }
+                for (_, turtle) in &canvas.turtles {
+                    content_painter.circle_filled(turtle.pos, 5.0, turtle.color);
+                }
+
+                // Add print output console.
+                TopBottomPanel::bottom("bottom")
+                    .frame(Frame::none())
+                    .exact_height(size.height() * 0.2)
+                    .resizable(false)
+                    .show_inside(ui, |ui: &mut Ui| {
+                        ui.add_space(6.0);
+
+                        ui.horizontal(|ui: &mut Ui| {
+                            ui.add_space(6.0);
+                            let print_output = RichText::new(canvas.text.clone())
+                                .font(FontId::proportional(16.0))
+                                .color(Color32::from_gray(255));
+
+                            let print_output_label = Label::new(print_output);
+                            ui.add(print_output_label);
+                        });
+                    });
             });
+
+        // Code Editor
         SidePanel::right("right")
             .frame(Frame::none())
             .exact_width(size.width() * 0.4)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
-                ui.heading("Editor");
+                ui.add_space(10.0);
+
+                ui.horizontal(|ui: &mut Ui| {
+                    ui.add_space(10.0);
+                    let title = RichText::new(String::from("Editor"))
+                        .font(FontId::proportional(18.0))
+                        .color(Color32::from_gray(255));
+                    let title_label = Label::new(title);
+                    ui.add(title_label);
+                });
+
+                ui.add_space(10.0);
+
                 let text_field = TextEdit::multiline(&mut self.code)
                     .code_editor()
-                    .desired_rows(28)
+                    .desired_rows(26)
                     .desired_width(size.width() * 0.39)
                     .font(FontId::monospace(16.0));
                 ui.add(text_field);
@@ -118,9 +182,12 @@ impl eframe::App for App {
                     } else {
                         String::from("Run Code")
                     };
-                    let button = Button::new(RichText::new(button_text));
-                    let button_res = ui.add(button);
-                    if button_res.clicked() {
+                    let button_label = RichText::new(button_text)
+                        .font(FontId::proportional(16.0))
+                        .color(Color32::from_gray(255));
+                    let button = Button::new(button_label);
+                    let button_ref = ui.add(button);
+                    if button_ref.clicked() {
                         if is_running {
                             self.interrupt_code();
                         } else {
@@ -132,13 +199,16 @@ impl eframe::App for App {
         let is_focused = ctx.memory(|memory| memory.focus().is_some());
         if !is_focused {
             ctx.input(|input| {
-                for key in input.keys_down.iter() {
-                    if input.key_pressed(*key) {
-                        self.input_sender
-                            .send(InputEvent::Key(key.name().to_string()))
-                            .unwrap_or(());
-                    }
+                let keys: HashSet<String> = input
+                    .keys_down
+                    .iter()
+                    .map(|key| key.name().to_string())
+                    .collect();
+                let diff = self.key_buffer.difference(&keys);
+                for key in diff {
+                    let _ = self.input_sender.send(InputEvent::Key(key.clone()));
                 }
+                self.key_buffer = keys;
             });
         }
     }

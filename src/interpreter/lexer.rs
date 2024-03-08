@@ -1,33 +1,34 @@
 use crate::language::command::{Command, CommandAction};
 use crate::language::dictionary::CommandDictionary;
 use crate::language::token::Token;
+use std::collections::VecDeque;
 use std::error::Error;
 
 pub struct Lexer {
     dictionary: CommandDictionary,
-    stack: Vec<LexerFrame>,
+    stack: VecDeque<LexerFrame>,
 }
 
 impl Lexer {
     pub fn with(dictionary: CommandDictionary) -> Self {
         Lexer {
             dictionary,
-            stack: vec![],
+            stack: VecDeque::new(),
         }
     }
 
-    pub fn load(&mut self, text: &str) {
+    pub fn push_frame(&mut self, text: &str) {
         let frame = LexerFrame {
             text: String::from(text),
             position: 0,
         };
-        self.stack.push(frame);
+        self.stack.push_back(frame);
     }
 
     pub fn pop_frame(&mut self) -> bool {
         let exiting_main = self.stack.len() == 1;
         if self.stack.len() > 0 {
-            self.stack.pop();
+            self.stack.pop_back();
         }
         exiting_main
     }
@@ -36,8 +37,13 @@ impl Lexer {
         self.stack.clear();
     }
 
+    pub fn return_to_start_of_top_frame(&mut self) {
+        let top_frame = self.stack.back_mut().unwrap();
+        top_frame.position = 0;
+    }
+
     fn get_top_frame(&mut self) -> &mut LexerFrame {
-        self.stack.last_mut().unwrap()
+        self.stack.back_mut().unwrap()
     }
 
     pub fn define(&mut self, name: String, params: Vec<String>, action: CommandAction) {
@@ -64,11 +70,13 @@ impl Lexer {
             let token = Token::Command(Command::addr(), vec![Token::String(name)]);
             Ok(token)
         } else if identifier.starts_with(':') {
-            let token = Token::Variable(identifier);
+            let sanitized = identifier.replacen(':', "", 1);
+            let token = Token::Variable(sanitized);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if identifier.starts_with('\"') {
-            let token = Token::String(identifier);
+            let sanitized = identifier.replacen('\"', "", 1);
+            let token = Token::String(sanitized);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if let Ok(num) = identifier.parse::<f32>() {
@@ -80,7 +88,8 @@ impl Lexer {
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if identifier.starts_with('[') {
-            let token = Token::List(identifier);
+            let sanitized = identifier.replace('[', "").replace(']', "");
+            let token = Token::List(sanitized);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else {

@@ -1,24 +1,20 @@
-#[derive(Clone)]
+use crate::language::turtle::Line;
+
+#[derive(Debug, Clone)]
 pub enum UiEvent {
     Done,
     Wait(u64),
-    Fd(f32),
-    Bk(f32),
-    Lt(f32),
-    Rt(f32),
-    Setpos(f32, f32),
-    Seth(f32),
-    Setc(f32),
-    Pd,
-    Pu,
-    St,
-    Ht,
+    Print(String),
+    NewTurtle(String),
+    TurtlePos(String, (f32, f32)),
+    TurtleHeading(String, f32),
+    TurtleColor(String, f32),
+    TurtleVisible(String, bool),
+    AddLine(Line),
     Clean,
-    Newturtle(String),
-    Addr(String),
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum InputEvent {
     Interrupt,
     Key(String),

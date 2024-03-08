@@ -95,41 +95,10 @@ impl eframe::App for App {
             .exact_width(size.width() * 0.6)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
-                ui.add_space(10.0);
-
-                ui.horizontal(|ui: &mut Ui| {
-                    ui.add_space(10.0);
-                    // Title text.
-                    let title = RichText::new(String::from("MicroWorlds.rs"))
-                        .font(FontId::proportional(18.0))
-                        .color(Color32::from_gray(255));
-                    let title_label = Label::new(title);
-                    ui.add(title_label);
-                });
-
-                // Set up canvas area.
-                let painter = ui.painter();
-                let rect = Rect::from_x_y_ranges(
-                    Rangef::new(self.canvas_pos.x, self.canvas_pos.x + self.canvas_size.x),
-                    Rangef::new(self.canvas_pos.y, self.canvas_pos.y + self.canvas_size.y),
-                );
-                painter.rect_filled(rect, Rounding::same(0.0), Color32::from_gray(255));
-
-                // Paint lines and turtles on screen.
-                let content_painter = ui.painter_at(rect);
                 let canvas = self.canvas.lock().unwrap();
-                for line in &canvas.lines {
-                    content_painter.line_segment(
-                        [line.start.clone(), line.end.clone()],
-                        Stroke::new(3.0, line.color),
-                    );
-                }
-                for (_, turtle) in &canvas.turtles {
-                    content_painter.circle_filled(turtle.pos, 5.0, turtle.color);
-                }
 
-                // Add print output console.
-                TopBottomPanel::bottom("bottom")
+                // Output Console
+                TopBottomPanel::bottom("bottom_left")
                     .frame(Frame::none())
                     .exact_height(size.height() * 0.2)
                     .resizable(false)
@@ -146,6 +115,41 @@ impl eframe::App for App {
                             ui.add(print_output_label);
                         });
                     });
+
+                ui.add_space(10.0);
+
+                // Title
+                ui.horizontal(|ui: &mut Ui| {
+                    ui.add_space(10.0);
+                    // Title text.
+                    let title = RichText::new(String::from("MicroWorlds.rs"))
+                        .font(FontId::proportional(18.0))
+                        .color(Color32::from_gray(255));
+                    let title_label = Label::new(title);
+                    ui.add(title_label);
+                });
+
+                // Blank Canvas
+                let painter = ui.painter();
+                let rect = Rect::from_x_y_ranges(
+                    Rangef::new(self.canvas_pos.x, self.canvas_pos.x + self.canvas_size.x),
+                    Rangef::new(self.canvas_pos.y, self.canvas_pos.y + self.canvas_size.y),
+                );
+                painter.rect_filled(rect, Rounding::same(0.0), Color32::from_gray(255));
+
+                // Lines
+                let content_painter = ui.painter_at(rect);
+                for line in &canvas.lines {
+                    content_painter.line_segment(
+                        [line.start.clone(), line.end.clone()],
+                        Stroke::new(3.0, line.color),
+                    );
+                }
+
+                // Turtles
+                for (_, turtle) in &canvas.turtles {
+                    content_painter.circle_filled(turtle.pos, 5.0, turtle.color);
+                }
             });
 
         // Code Editor
@@ -154,47 +158,62 @@ impl eframe::App for App {
             .exact_width(size.width() * 0.4)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
-                ui.add_space(10.0);
+                ui.vertical(|ui: &mut Ui| {
+                    // Buttons
+                    TopBottomPanel::bottom("bottom_right")
+                        .frame(Frame::none())
+                        .exact_height(size.height() * 0.1)
+                        .resizable(false)
+                        .show_inside(ui, |ui: &mut Ui| {
+                            let is_running = *self.is_running.lock().unwrap();
+                            let button_text = if is_running {
+                                String::from("Stop")
+                            } else {
+                                String::from("Run Code")
+                            };
+                            let button_label = RichText::new(button_text)
+                                .font(FontId::proportional(16.0))
+                                .color(Color32::from_gray(255));
+                            let button = Button::new(button_label);
+                            let button_ref = ui
+                                .add_sized(vec2(size.width() * 0.4, ui.available_height()), button);
+                            if button_ref.clicked() {
+                                if is_running {
+                                    self.interrupt_code();
+                                } else {
+                                    self.run_code(ctx);
+                                }
+                            }
+                        });
 
-                ui.horizontal(|ui: &mut Ui| {
                     ui.add_space(10.0);
-                    let title = RichText::new(String::from("Editor"))
-                        .font(FontId::proportional(18.0))
-                        .color(Color32::from_gray(255));
-                    let title_label = Label::new(title);
-                    ui.add(title_label);
-                });
 
-                ui.add_space(10.0);
+                    // Title
+                    ui.horizontal(|ui: &mut Ui| {
+                        ui.add_space(10.0);
+                        let title = RichText::new(String::from("Editor"))
+                            .font(FontId::proportional(18.0))
+                            .color(Color32::from_gray(255));
+                        let title_label = Label::new(title);
+                        ui.add(title_label);
+                    });
 
-                let text_field = TextEdit::multiline(&mut self.code)
-                    .code_editor()
-                    .desired_rows(27)
-                    .desired_width(size.width() * 0.39)
-                    .font(FontId::monospace(16.0));
-                ui.add(text_field);
+                    ui.add_space(10.0);
 
-                ui.centered_and_justified(|ui: &mut Ui| {
-                    let is_running = *self.is_running.lock().unwrap();
-                    let button_text = if is_running {
-                        String::from("Stop")
-                    } else {
-                        String::from("Run Code")
-                    };
-                    let button_label = RichText::new(button_text)
-                        .font(FontId::proportional(16.0))
-                        .color(Color32::from_gray(255));
-                    let button = Button::new(button_label);
-                    let button_ref = ui.add(button);
-                    if button_ref.clicked() {
-                        if is_running {
-                            self.interrupt_code();
-                        } else {
-                            self.run_code(ctx);
-                        }
-                    }
+                    // Text Area
+                    ScrollArea::vertical().show(ui, |ui: &mut Ui| {
+                        let text_field = TextEdit::multiline(&mut self.code)
+                            .code_editor()
+                            .font(FontId::monospace(16.0));
+                        ui.add_sized(
+                            vec2(size.width() * 0.396, ui.available_height()),
+                            text_field,
+                        );
+                    });
                 });
             });
+
+        // Handle Keyboard Events
         let is_focused = ctx.memory(|memory| memory.focus().is_some());
         if !is_focused {
             ctx.input(|input| {

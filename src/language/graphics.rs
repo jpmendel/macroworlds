@@ -5,7 +5,7 @@ use crate::language::token::Token;
 use crate::language::util::{
     decode_list, decode_number, decode_token, decode_word, join_to_list_string,
 };
-use crate::state::object::CanvasObject;
+use crate::state::object::{CanvasObject, TurtleShape};
 use std::thread;
 use std::time::Duration;
 
@@ -145,8 +145,19 @@ impl Command {
             name: String::from("color"),
             params: Params::None,
             action: |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                let color = int.state.current_object()?.color();
-                Ok(Token::Number(color.clone()))
+                let obj = int.state.current_object()?;
+                Ok(Token::Number(obj.color().clone()))
+            },
+        }
+    }
+
+    pub fn shape() -> Self {
+        Command {
+            name: String::from("shape"),
+            params: Params::None,
+            action: |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+                let turtle = int.state.current_turtle()?;
+                Ok(Token::Word(turtle.shape.to_string()))
             },
         }
     }
@@ -255,11 +266,34 @@ impl Command {
             params: Params::Fixed(1),
             action: |int: &mut Interpreter, _com: &String, args: Vec<Token>| {
                 let color = decode_number(args.get(0))?;
-                let turtle = int.state.current_turtle()?;
-                turtle.color = color;
+                let obj = int.state.current_object()?;
+                obj.set_color(color);
                 let _ = int.ui_sender.send(UiEvent::ObjectColor(
+                    obj.name().clone(),
+                    obj.color().clone(),
+                ));
+                Ok(Token::Void)
+            },
+        }
+    }
+
+    pub fn setsh() -> Self {
+        Command {
+            name: String::from("setsh"),
+            params: Params::Fixed(1),
+            action: |int: &mut Interpreter, _com: &String, args: Vec<Token>| {
+                let shape_string = decode_word(args.get(0))?;
+                let shape = match shape_string.to_lowercase().as_str() {
+                    "triangle" => TurtleShape::Triangle,
+                    "circle" => TurtleShape::Circle,
+                    "square" => TurtleShape::Square,
+                    sh => return Err(Box::from(format!("no shape named {}", sh))),
+                };
+                let turtle = int.state.current_turtle()?;
+                turtle.shape = shape;
+                let _ = int.ui_sender.send(UiEvent::TurtleShape(
                     turtle.name.clone(),
-                    turtle.color.clone(),
+                    turtle.shape.clone(),
                 ));
                 Ok(Token::Void)
             },
@@ -315,22 +349,6 @@ impl Command {
                 let _ = int
                     .ui_sender
                     .send(UiEvent::ObjectVisible(turtle.name.clone(), false));
-                Ok(Token::Void)
-            },
-        }
-    }
-
-    pub fn settc() -> Self {
-        Command {
-            name: String::from("settc"),
-            params: Params::Fixed(1),
-            action: |int: &mut Interpreter, _com: &String, args: Vec<Token>| {
-                let color = decode_number(args.get(0))?;
-                let text = int.state.current_text()?;
-                text.color = color;
-                let _ = int
-                    .ui_sender
-                    .send(UiEvent::ObjectColor(text.name.clone(), text.color.clone()));
                 Ok(Token::Void)
             },
         }
@@ -558,7 +576,7 @@ impl Command {
             name: String::from("cc"),
             params: Params::None,
             action: |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                let _ = int.ui_sender.send(UiEvent::Print(String::new()));
+                let _ = int.ui_sender.send(UiEvent::ClearConsole);
                 Ok(Token::Void)
             },
         }

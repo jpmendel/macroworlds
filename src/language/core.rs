@@ -119,6 +119,18 @@ impl Command {
         }
     }
 
+    pub fn turtlesown() -> Self {
+        Command {
+            name: String::from("turtlesown"),
+            params: Params::Fixed(1),
+            action: |int: &mut Interpreter, _com: &String, args: Vec<Token>| {
+                let name = decode_word(args.get(0))?;
+                int.define_object_property(name);
+                Ok(Token::Void)
+            },
+        }
+    }
+
     pub fn key() -> Self {
         Command {
             name: String::from("key?"),

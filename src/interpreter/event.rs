@@ -1,4 +1,4 @@
-use crate::state::object::Line;
+use crate::state::object::{Line, TurtleShape};
 
 #[derive(Debug, Clone)]
 pub enum UiEvent {
@@ -12,10 +12,12 @@ pub enum UiEvent {
     ObjectColor(String, f32),
     ObjectVisible(String, bool),
     TurtleHeading(String, f32),
+    TurtleShape(String, TurtleShape),
     TextText(String, String),
     TextSize(String, f32),
     AddLine(Line),
     Clean,
+    ClearConsole,
 }
 
 #[derive(Debug, Clone)]

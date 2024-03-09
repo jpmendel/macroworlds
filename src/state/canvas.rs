@@ -1,12 +1,14 @@
+use crate::language::token::Token;
 use crate::state::object::{CanvasObject, Line, Text, Turtle};
 use crate::state::state::State;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 
 #[derive(Debug)]
 pub struct Canvas {
     pub objects: HashMap<String, CanvasObject>,
     pub current_object_name: String,
+    pub turtle_backpack: HashSet<String>,
     pub lines: Vec<Line>,
 }
 
@@ -19,6 +21,7 @@ impl Canvas {
                 .into_iter()
                 .collect(),
             current_object_name: name,
+            turtle_backpack: HashSet::new(),
             lines: vec![],
         }
     }
@@ -88,6 +91,17 @@ impl State {
             self.canvas.current_object_name = name.clone();
         } else {
             self.canvas.current_object_name = String::new();
+        }
+    }
+
+    pub fn init_backpack_property(&mut self, name: String) {
+        self.canvas.turtle_backpack.insert(name.clone());
+        for (_, obj) in &mut self.canvas.objects {
+            if let CanvasObject::Turtle(turtle) = obj {
+                turtle
+                    .backpack
+                    .insert(name.clone(), Token::Word(String::new()));
+            }
         }
     }
 

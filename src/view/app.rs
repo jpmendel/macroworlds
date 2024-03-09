@@ -1,7 +1,7 @@
 use crate::interpreter::event::{InputEvent, UiEvent};
 use crate::interpreter::interpreter::Interpreter;
-use crate::view::canvas::Canvas;
-use crate::view::object::CanvasView;
+use crate::view::canvas::CanvasView;
+use crate::view::object::ObjectView;
 use eframe::egui::*;
 use std::collections::HashSet;
 use std::sync::mpsc;
@@ -11,9 +11,8 @@ use std::time::Duration;
 
 pub struct App {
     pub interpreter: Arc<Mutex<Interpreter>>,
-    pub canvas: Arc<Mutex<Canvas>>,
+    pub canvas: Arc<Mutex<CanvasView>>,
     pub code: String,
-    pub canvas_pos: Pos2,
     pub canvas_size: Vec2,
     pub input_sender: mpsc::Sender<InputEvent>,
     pub ui_receiver: Arc<Mutex<mpsc::Receiver<UiEvent>>>,
@@ -22,18 +21,20 @@ pub struct App {
 }
 
 impl App {
+    const EDITOR_WIDTH: f32 = 480.0;
+    const CONSOLE_HEIGHT: f32 = 160.0;
+    const DEFAULT_CANVAS_SIZE: Vec2 = vec2(600.0, 400.0);
+
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let (ui_sender, ui_receiver) = mpsc::channel::<UiEvent>();
         let (input_sender, input_receiver) = mpsc::channel::<InputEvent>();
         let interpreter = Interpreter::new(ui_sender, input_receiver);
-        let canvas_pos = pos2(50.0, 50.0);
-        let canvas_size = vec2(500.0, 400.0);
+        let canvas_size = App::DEFAULT_CANVAS_SIZE.clone();
         App {
             interpreter: Arc::from(Mutex::from(interpreter)),
             code: String::new(),
-            canvas_pos,
             canvas_size,
-            canvas: Arc::from(Mutex::from(Canvas::new(canvas_pos, canvas_size))),
+            canvas: Arc::from(Mutex::from(CanvasView::with(canvas_size))),
             input_sender,
             ui_receiver: Arc::from(Mutex::from(ui_receiver)),
             is_running: Arc::from(Mutex::from(false)),
@@ -89,32 +90,16 @@ impl App {
 impl eframe::App for App {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         let size = ctx.input(|i| i.viewport().outer_rect).unwrap();
+        let main_frame_width = size.width() - App::EDITOR_WIDTH;
+        let main_frame_height = size.height() - App::CONSOLE_HEIGHT;
 
         // Canvas and Console
         SidePanel::left("left")
-            .frame(Frame::none())
-            .exact_width(size.width() * 0.6)
+            .frame(Frame::default().fill(Color32::from_gray(20)))
+            .exact_width(main_frame_width)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
-                let canvas = self.canvas.lock().unwrap();
-
-                // Output Console
-                TopBottomPanel::bottom("bottom_left")
-                    .frame(Frame::none())
-                    .exact_height(size.height() * 0.2)
-                    .resizable(false)
-                    .show_inside(ui, |ui: &mut Ui| {
-                        ui.add_space(6.0);
-
-                        ui.horizontal(|ui: &mut Ui| {
-                            ui.add_space(6.0);
-                            let print_output = RichText::new(canvas.console_text.clone())
-                                .font(FontId::proportional(16.0))
-                                .color(Color32::from_gray(255));
-                            let print_output_label = Label::new(print_output);
-                            ui.add(print_output_label);
-                        });
-                    });
+                let mut canvas = self.canvas.lock().unwrap();
 
                 ui.add_space(10.0);
 
@@ -131,9 +116,14 @@ impl eframe::App for App {
 
                 // Blank Canvas
                 let painter = ui.painter();
+                let canvas_pos = pos2(
+                    main_frame_width / 2.0 - self.canvas_size.x / 2.0,
+                    main_frame_height / 2.0 - self.canvas_size.y / 2.0,
+                );
+                canvas.pos = canvas_pos;
                 let rect = Rect::from_x_y_ranges(
-                    Rangef::new(self.canvas_pos.x, self.canvas_pos.x + self.canvas_size.x),
-                    Rangef::new(self.canvas_pos.y, self.canvas_pos.y + self.canvas_size.y),
+                    Rangef::new(canvas_pos.x, canvas_pos.x + self.canvas_size.x),
+                    Rangef::new(canvas_pos.y, canvas_pos.y + self.canvas_size.y),
                 );
                 painter.rect_filled(rect, Rounding::same(0.0), Color32::from_gray(255));
 
@@ -141,23 +131,27 @@ impl eframe::App for App {
                 let content_painter = ui.painter_at(rect);
                 for line in &canvas.lines {
                     content_painter.line_segment(
-                        [line.start.clone(), line.end.clone()],
+                        [
+                            canvas.to_canvas_coordinates(line.start),
+                            canvas.to_canvas_coordinates(line.end),
+                        ],
                         Stroke::new(3.0, line.color),
                     );
                 }
 
-                // Turtles
+                // Turtles and Text
                 for (_, obj) in &canvas.objects {
                     match obj {
-                        CanvasView::Turtle(turtle) => {
+                        ObjectView::Turtle(turtle) => {
                             if turtle.is_visible {
-                                content_painter.circle_filled(turtle.pos, 5.0, turtle.color);
+                                let shape = canvas.shape_for_turtle(turtle);
+                                content_painter.add(shape);
                             }
                         }
-                        CanvasView::Text(text) => {
+                        ObjectView::Text(text) => {
                             if text.is_visible {
                                 content_painter.text(
-                                    text.pos,
+                                    canvas.to_canvas_coordinates(text.pos),
                                     Align2::CENTER_CENTER,
                                     text.text.to_string(),
                                     FontId::proportional(text.font_size),
@@ -167,18 +161,36 @@ impl eframe::App for App {
                         }
                     }
                 }
+
+                // Output Console
+                TopBottomPanel::bottom("bottom_left")
+                    .frame(Frame::default().fill(Color32::from_gray(40)))
+                    .exact_height(App::CONSOLE_HEIGHT)
+                    .resizable(false)
+                    .show_inside(ui, |ui: &mut Ui| {
+                        ui.add_space(6.0);
+
+                        ui.horizontal(|ui: &mut Ui| {
+                            ui.add_space(6.0);
+                            let print_output = RichText::new(canvas.console_text.clone())
+                                .font(FontId::proportional(16.0))
+                                .color(Color32::from_gray(255));
+                            let print_output_label = Label::new(print_output);
+                            ui.add(print_output_label);
+                        });
+                    });
             });
 
         // Code Editor
         SidePanel::right("right")
-            .frame(Frame::none())
-            .exact_width(size.width() * 0.4)
+            .frame(Frame::default().fill(Color32::from_gray(20)))
+            .exact_width(App::EDITOR_WIDTH)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
                 // Buttons
                 TopBottomPanel::bottom("bottom_right")
-                    .frame(Frame::none())
-                    .exact_height(size.height() * 0.1)
+                    .frame(Frame::default().fill(Color32::from_gray(20)))
+                    .exact_height(60.0)
                     .resizable(false)
                     .show_inside(ui, |ui: &mut Ui| {
                         let is_running = *self.is_running.lock().unwrap();
@@ -191,8 +203,7 @@ impl eframe::App for App {
                             .font(FontId::proportional(16.0))
                             .color(Color32::from_gray(255));
                         let button = Button::new(button_label);
-                        let button_ref =
-                            ui.add_sized(vec2(size.width() * 0.4, ui.available_height()), button);
+                        let button_ref = ui.add_sized(ui.available_size(), button);
                         if button_ref.clicked() {
                             if is_running {
                                 self.interrupt_code();
@@ -222,7 +233,7 @@ impl eframe::App for App {
                         .code_editor()
                         .font(FontId::monospace(16.0));
                     ui.add_sized(
-                        vec2(size.width() * 0.396, ui.available_height()),
+                        vec2(ui.available_width() - 2.0, ui.available_height()),
                         text_field,
                     );
                 });

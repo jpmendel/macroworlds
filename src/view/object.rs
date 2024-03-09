@@ -1,29 +1,30 @@
+use crate::state::object::TurtleShape;
 use eframe::egui::{Color32, Pos2};
 
-pub enum CanvasView {
+pub enum ObjectView {
     Turtle(TurtleView),
     Text(TextView),
 }
 
-impl CanvasView {
+impl ObjectView {
     pub fn set_pos(&mut self, pos: Pos2) {
         match self {
-            CanvasView::Turtle(turtle) => turtle.pos = pos,
-            CanvasView::Text(text) => text.pos = pos,
+            ObjectView::Turtle(turtle) => turtle.pos = pos,
+            ObjectView::Text(text) => text.pos = pos,
         }
     }
 
     pub fn set_color(&mut self, color: Color32) {
         match self {
-            CanvasView::Turtle(turtle) => turtle.color = color,
-            CanvasView::Text(text) => text.color = color,
+            ObjectView::Turtle(turtle) => turtle.color = color,
+            ObjectView::Text(text) => text.color = color,
         }
     }
 
     pub fn set_visible(&mut self, is_visible: bool) {
         match self {
-            CanvasView::Turtle(turtle) => turtle.is_visible = is_visible,
-            CanvasView::Text(text) => text.is_visible = is_visible,
+            ObjectView::Turtle(turtle) => turtle.is_visible = is_visible,
+            ObjectView::Text(text) => text.is_visible = is_visible,
         }
     }
 }
@@ -32,6 +33,7 @@ pub struct TurtleView {
     pub pos: Pos2,
     pub heading: f32,
     pub color: Color32,
+    pub shape: TurtleShape,
     pub is_visible: bool,
 }
 
@@ -39,8 +41,9 @@ impl TurtleView {
     pub fn with(pos: Pos2) -> Self {
         TurtleView {
             pos,
-            heading: 90.0,
+            heading: 270.0,
             color: Color32::from_gray(0),
+            shape: TurtleShape::Triangle,
             is_visible: true,
         }
     }

@@ -1,3 +1,6 @@
+use crate::language::token::Token;
+use std::collections::HashMap;
+
 #[derive(Debug, Clone)]
 pub enum CanvasObject {
     Turtle(Turtle),
@@ -32,6 +35,13 @@ impl CanvasObject {
             CanvasObject::Text(text) => &text.color,
         }
     }
+
+    pub fn set_color(&mut self, color: f32) {
+        match self {
+            CanvasObject::Turtle(turtle) => turtle.color = color,
+            CanvasObject::Text(text) => text.color = color,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -40,8 +50,10 @@ pub struct Turtle {
     pub pos: (f32, f32),
     pub heading: f32,
     pub color: f32,
+    pub shape: TurtleShape,
     pub is_visible: bool,
     pub is_drawing: bool,
+    pub backpack: HashMap<String, Token>,
 }
 
 impl Turtle {
@@ -51,8 +63,27 @@ impl Turtle {
             pos: (0.0, 0.0),
             heading: 0.0,
             color: 0.0,
+            shape: TurtleShape::Triangle,
             is_visible: true,
             is_drawing: true,
+            backpack: HashMap::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum TurtleShape {
+    Triangle,
+    Circle,
+    Square,
+}
+
+impl TurtleShape {
+    pub fn to_string(&self) -> String {
+        match self {
+            Self::Triangle => String::from("triangle"),
+            Self::Circle => String::from("circle"),
+            Self::Square => String::from("square"),
         }
     }
 }

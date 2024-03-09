@@ -3,6 +3,7 @@ use crate::interpreter::lexer::Lexer;
 use crate::language::command::{Params, Procedure};
 use crate::language::dictionary::CommandDictionary;
 use crate::language::token::Token;
+use crate::language::util::decode_token;
 use crate::state::state::State;
 use crate::DEBUG;
 use std::error::Error;
@@ -145,6 +146,38 @@ impl Interpreter {
             },
         );
         self.state.set_procedure(procedure);
+    }
+
+    pub fn define_object_property(&mut self, name: String) {
+        // Getter
+        self.lexer.define(
+            name.clone(),
+            Params::None,
+            |int: &mut Interpreter, com: &String, _args: Vec<Token>| {
+                let turtle = int.state.current_turtle()?;
+                if let Some(value) = turtle.backpack.get(com) {
+                    Ok(value.clone())
+                } else {
+                    Err(Box::from(format!("turtle does not own {}", com)))
+                }
+            },
+        );
+
+        // Setter
+        self.lexer.define(
+            format!("set{}", name.clone()),
+            Params::Fixed(1),
+            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+                let token = decode_token(args.get(0))?;
+                let turtle = int.state.current_turtle()?;
+                let item_name: String = com.chars().skip(3).collect();
+                turtle.backpack.insert(item_name, token.clone());
+                Ok(Token::Void)
+            },
+        );
+
+        // Add to Backpack
+        self.state.init_backpack_property(name);
     }
 
     pub fn parse_list(&mut self, list: &String) -> Result<Vec<Token>, Box<dyn Error>> {

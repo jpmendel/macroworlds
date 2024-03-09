@@ -11,8 +11,8 @@ static DEBUG: bool = false;
 fn main() {
     let native_options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
-            .with_inner_size(vec2(1000.0, 600.0))
-            .with_resizable(false),
+            .with_inner_size(vec2(1200.0, 700.0))
+            .with_resizable(true),
         ..Default::default()
     };
     let result = eframe::run_native(

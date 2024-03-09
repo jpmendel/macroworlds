@@ -76,15 +76,17 @@ impl CommandDictionary {
         dictionary.add(Command::setfontsize());
         dictionary.add(Command::seth());
         dictionary.add(Command::setpos());
-        dictionary.add(Command::settc());
+        dictionary.add(Command::setsh());
         dictionary.add(Command::setx());
         dictionary.add(Command::sety());
+        dictionary.add(Command::shape());
         dictionary.add(Command::show());
         dictionary.add(Command::showtext());
         dictionary.add(Command::st());
         dictionary.add(Command::sum());
         dictionary.add(Command::to());
         dictionary.add(Command::tto());
+        dictionary.add(Command::turtlesown());
         dictionary.add(Command::wait());
         dictionary.add(Command::who());
         dictionary.add(Command::word());

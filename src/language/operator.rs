@@ -3,9 +3,8 @@ use crate::language::command::{Command, Params};
 use crate::language::token::Token;
 use crate::language::util::{
     are_tokens_equal, decode_boolean, decode_list, decode_number, decode_token, decode_word,
+    join_to_list_string,
 };
-
-use super::util::join_to_list_string;
 
 impl Command {
     pub fn sum() -> Self {
@@ -13,12 +12,12 @@ impl Command {
             name: String::from("sum"),
             params: Params::Variadic(2),
             action: |_int: &mut Interpreter, _com: &String, args: Vec<Token>| {
-                let mut sum = 0.0;
+                let mut result = 0.0;
                 for arg in &args {
                     let num = decode_number(Some(arg))?;
-                    sum += num;
+                    result += num;
                 }
-                Ok(Token::Number(sum))
+                Ok(Token::Number(result))
             },
         }
     }
@@ -30,8 +29,8 @@ impl Command {
             action: |_int: &mut Interpreter, _com: &String, args: Vec<Token>| {
                 let num1 = decode_number(args.get(0))?;
                 let num2 = decode_number(args.get(1))?;
-                let diff = num1 - num2;
-                Ok(Token::Number(diff))
+                let result = num1 - num2;
+                Ok(Token::Number(result))
             },
         }
     }
@@ -41,12 +40,12 @@ impl Command {
             name: String::from("product"),
             params: Params::Variadic(2),
             action: |_int: &mut Interpreter, _com: &String, args: Vec<Token>| {
-                let mut product = 0.0;
+                let mut result = 0.0;
                 for arg in &args {
                     let num = decode_number(Some(arg))?;
-                    product *= num;
+                    result *= num;
                 }
-                Ok(Token::Number(product))
+                Ok(Token::Number(result))
             },
         }
     }
@@ -61,8 +60,33 @@ impl Command {
                 if num2 == 0.0 {
                     return Err(Box::from("cannot divide by zero"));
                 }
-                let quotient = num1 / num2;
-                Ok(Token::Number(quotient))
+                let result = num1 / num2;
+                Ok(Token::Number(result))
+            },
+        }
+    }
+
+    pub fn power() -> Self {
+        Command {
+            name: String::from("power"),
+            params: Params::Fixed(2),
+            action: |_int: &mut Interpreter, _com: &String, args: Vec<Token>| {
+                let num1 = decode_number(args.get(0))?;
+                let num2 = decode_number(args.get(1))?;
+                let result = num1.powf(num2);
+                Ok(Token::Number(result))
+            },
+        }
+    }
+
+    pub fn minus() -> Self {
+        Command {
+            name: String::from("minus"),
+            params: Params::Fixed(1),
+            action: |_int: &mut Interpreter, _com: &String, args: Vec<Token>| {
+                let number = decode_number(args.get(0))?;
+                let result = -number;
+                Ok(Token::Number(result))
             },
         }
     }

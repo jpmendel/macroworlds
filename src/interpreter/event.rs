@@ -1,4 +1,4 @@
-use crate::state::turtle::Line;
+use crate::state::object::Line;
 
 #[derive(Debug, Clone)]
 pub enum UiEvent {
@@ -6,11 +6,14 @@ pub enum UiEvent {
     Wait(u64),
     Print(String),
     NewTurtle(String),
-    RemoveTurtle(String),
-    TurtlePos(String, (f32, f32)),
+    NewText(String),
+    RemoveObject(String),
+    ObjectPos(String, (f32, f32)),
+    ObjectColor(String, f32),
+    ObjectVisible(String, bool),
     TurtleHeading(String, f32),
-    TurtleColor(String, f32),
-    TurtleVisible(String, bool),
+    TextText(String, String),
+    TextSize(String, f32),
     AddLine(Line),
     Clean,
 }

@@ -1,3 +1,3 @@
 pub mod app;
 pub mod canvas;
-pub mod turtle;
+pub mod object;

@@ -1,64 +1,93 @@
+use crate::state::object::{CanvasObject, Line, Text, Turtle};
 use crate::state::state::State;
-use crate::state::turtle::{Line, Turtle};
 use std::collections::HashMap;
+use std::error::Error;
 
 #[derive(Debug)]
 pub struct Canvas {
-    pub turtles: Vec<Turtle>,
-    pub turtle_lookup: HashMap<String, usize>,
-    pub current_turtle_index: usize,
+    pub objects: HashMap<String, CanvasObject>,
+    pub current_object_name: String,
     pub lines: Vec<Line>,
 }
 
 impl Canvas {
     pub fn new() -> Self {
-        let turtle_name = String::from("t1");
+        let name = String::from("t1");
+        let turtle = Turtle::with(name.clone());
         Canvas {
-            turtles: vec![Turtle::with(turtle_name.clone())],
-            turtle_lookup: [(turtle_name, 0)].into_iter().collect(),
-            current_turtle_index: 0,
+            objects: [(name.clone(), CanvasObject::Turtle(turtle))]
+                .into_iter()
+                .collect(),
+            current_object_name: name,
             lines: vec![],
         }
     }
 }
 
 impl State {
-    pub fn current_turtle(&mut self) -> &mut Turtle {
-        self.canvas
-            .turtles
-            .get_mut(self.canvas.current_turtle_index)
-            .unwrap()
+    pub fn current_object(&mut self) -> Result<&mut CanvasObject, Box<dyn Error>> {
+        if let Some(obj) = self
+            .canvas
+            .objects
+            .get_mut(&self.canvas.current_object_name)
+        {
+            Ok(obj)
+        } else {
+            Err(Box::from("current object does not exist"))
+        }
     }
 
-    pub fn set_current_turtle(&mut self, name: &String) -> bool {
-        if let Some(index) = self.canvas.turtle_lookup.get(name) {
-            self.canvas.current_turtle_index = index.clone();
+    pub fn current_turtle(&mut self) -> Result<&mut Turtle, Box<dyn Error>> {
+        if let Some(CanvasObject::Turtle(turtle)) = self
+            .canvas
+            .objects
+            .get_mut(&self.canvas.current_object_name)
+        {
+            Ok(turtle)
+        } else {
+            Err(Box::from("current object is not a turtle"))
+        }
+    }
+
+    pub fn current_text(&mut self) -> Result<&mut Text, Box<dyn Error>> {
+        if let Some(CanvasObject::Text(text)) = self
+            .canvas
+            .objects
+            .get_mut(&self.canvas.current_object_name)
+        {
+            Ok(text)
+        } else {
+            Err(Box::from("current object is not a text"))
+        }
+    }
+
+    pub fn set_current_object(&mut self, name: String) -> bool {
+        if self.canvas.objects.get(&name).is_some() {
+            self.canvas.current_object_name = name;
             true
         } else {
             false
         }
     }
 
-    pub fn create_turtle(&mut self, name: String) -> &Turtle {
+    pub fn create_turtle(&mut self, name: String) {
         let turtle = Turtle::with(name.clone());
-        self.canvas.turtles.push(turtle);
         self.canvas
-            .turtle_lookup
-            .insert(name, self.canvas.turtles.len() - 1);
-        self.canvas.turtles.last().unwrap()
+            .objects
+            .insert(name, CanvasObject::Turtle(turtle));
     }
 
-    pub fn remove_turtle(&mut self, name: &String) {
-        if let Some(index) = self.canvas.turtle_lookup.get(name) {
-            let index = index.clone();
-            self.canvas.turtles.remove(index);
-            self.canvas.turtle_lookup.remove(name);
-            for (index, turtle) in self.canvas.turtles.iter().enumerate() {
-                self.canvas.turtle_lookup.insert(turtle.name.clone(), index);
-            }
-            if self.canvas.current_turtle_index == index {
-                self.canvas.current_turtle_index = 0;
-            }
+    pub fn create_text(&mut self, name: String) {
+        let text = Text::with(name.clone());
+        self.canvas.objects.insert(name, CanvasObject::Text(text));
+    }
+
+    pub fn remove_object(&mut self, name: &String) {
+        self.canvas.objects.remove(name);
+        if let Some((name, _)) = self.canvas.objects.iter().next() {
+            self.canvas.current_object_name = name.clone();
+        } else {
+            self.canvas.current_object_name = String::new();
         }
     }
 

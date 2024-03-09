@@ -1,6 +1,7 @@
 use crate::interpreter::event::{InputEvent, UiEvent};
 use crate::interpreter::interpreter::Interpreter;
 use crate::view::canvas::Canvas;
+use crate::view::object::CanvasView;
 use eframe::egui::*;
 use std::collections::HashSet;
 use std::sync::mpsc;
@@ -107,7 +108,7 @@ impl eframe::App for App {
 
                         ui.horizontal(|ui: &mut Ui| {
                             ui.add_space(6.0);
-                            let print_output = RichText::new(canvas.text.clone())
+                            let print_output = RichText::new(canvas.console_text.clone())
                                 .font(FontId::proportional(16.0))
                                 .color(Color32::from_gray(255));
                             let print_output_label = Label::new(print_output);
@@ -146,8 +147,25 @@ impl eframe::App for App {
                 }
 
                 // Turtles
-                for (_, turtle) in &canvas.turtles {
-                    content_painter.circle_filled(turtle.pos, 5.0, turtle.color);
+                for (_, obj) in &canvas.objects {
+                    match obj {
+                        CanvasView::Turtle(turtle) => {
+                            if turtle.is_visible {
+                                content_painter.circle_filled(turtle.pos, 5.0, turtle.color);
+                            }
+                        }
+                        CanvasView::Text(text) => {
+                            if text.is_visible {
+                                content_painter.text(
+                                    text.pos,
+                                    Align2::CENTER_CENTER,
+                                    text.text.to_string(),
+                                    FontId::proportional(text.font_size),
+                                    text.color,
+                                );
+                            }
+                        }
+                    }
                 }
             });
 

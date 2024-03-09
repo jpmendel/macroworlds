@@ -65,7 +65,7 @@ impl Command {
             name: String::from("who"),
             params: Params::None,
             action: |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                let turtle = int.state.current_turtle();
+                let turtle = int.state.current_turtle()?;
                 Ok(Token::Word(turtle.name.clone()))
             },
         }
@@ -77,7 +77,7 @@ impl Command {
             params: Params::Fixed(1),
             action: |int: &mut Interpreter, _com: &String, args: Vec<Token>| {
                 let name = decode_word(args.get(0))?;
-                let success = int.state.set_current_turtle(&name);
+                let success = int.state.set_current_object(name.clone());
                 if !success {
                     return Err(Box::from(format!("no turtle named {}", name)));
                 }
@@ -100,11 +100,11 @@ impl Command {
                         Ok(token)
                     }
                     Token::List(list) => {
-                        let current_turtle_name = int.state.current_turtle().name.clone();
-                        let success = int.state.set_current_turtle(&name);
+                        let current_obj_name = int.state.current_object()?.name().clone();
+                        let success = int.state.set_current_object(name.clone());
                         if success {
                             let _ = int.interpret(&list);
-                            int.state.set_current_turtle(&current_turtle_name);
+                            int.state.set_current_object(current_obj_name);
                             Ok(Token::Void)
                         } else {
                             Err(Box::from(format!("no turtle named {}", name)))

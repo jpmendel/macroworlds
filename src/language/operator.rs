@@ -91,6 +91,18 @@ impl Command {
         }
     }
 
+    pub fn abs() -> Self {
+        Command {
+            name: String::from("abs"),
+            params: Params::Fixed(1),
+            action: |_int: &mut Interpreter, _com: &String, args: Vec<Token>| {
+                let number = decode_number(args.get(0))?;
+                let result = number.abs();
+                Ok(Token::Number(result))
+            },
+        }
+    }
+
     pub fn equal() -> Self {
         Command {
             name: String::from("equal?"),
@@ -183,6 +195,21 @@ impl Command {
                     result += &word;
                 }
                 Ok(Token::Word(result))
+            },
+        }
+    }
+
+    pub fn ascii() -> Self {
+        Command {
+            name: String::from("ascii"),
+            params: Params::Fixed(1),
+            action: |_int: &mut Interpreter, _com: &String, args: Vec<Token>| {
+                let chr = decode_word(args.get(0))?;
+                if chr.len() != 1 {
+                    return Err(Box::from("input must be a character"));
+                }
+                let result = chr.chars().next().unwrap().to_ascii_lowercase() as u8;
+                Ok(Token::Number(result as f32))
             },
         }
     }

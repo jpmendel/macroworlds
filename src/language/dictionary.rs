@@ -14,7 +14,9 @@ impl CommandDictionary {
         };
 
         // General Commands
+        dictionary.add(Command::abs());
         dictionary.add(Command::and());
+        dictionary.add(Command::ascii());
         dictionary.add(Command::ask());
         dictionary.add(Command::bk());
         dictionary.add(Command::butfirst());
@@ -57,12 +59,15 @@ impl CommandDictionary {
         dictionary.add(Command::op());
         dictionary.add(Command::or());
         dictionary.add(Command::pd());
+        dictionary.add(Command::pi());
+        dictionary.add(Command::pick());
         dictionary.add(Command::pos());
         dictionary.add(Command::power());
         dictionary.add(Command::print());
         dictionary.add(Command::product());
         dictionary.add(Command::pu());
         dictionary.add(Command::quotient());
+        dictionary.add(Command::random());
         dictionary.add(Command::readchar());
         dictionary.add(Command::remove());
         dictionary.add(Command::repeat());

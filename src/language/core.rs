@@ -2,6 +2,9 @@ use crate::interpreter::interpreter::Interpreter;
 use crate::language::command::{Command, Params, Procedure};
 use crate::language::token::Token;
 use crate::language::util::{decode_proc, decode_token, decode_word, join_to_list_string};
+use rand::Rng;
+
+use super::util::decode_number;
 
 impl Command {
     pub fn make() -> Self {
@@ -137,6 +140,53 @@ impl Command {
                 } else {
                     Ok(Token::Word(String::from("")))
                 }
+            },
+        }
+    }
+
+    pub fn random() -> Self {
+        Command {
+            name: String::from("random"),
+            params: Params::Fixed(1),
+            action: |_int: &mut Interpreter, _com: &String, args: Vec<Token>| {
+                let max = decode_number(args.get(0))? as u32;
+                let random = rand::thread_rng().gen_range(0..max);
+                Ok(Token::Number(random as f32))
+            },
+        }
+    }
+
+    pub fn pick() -> Self {
+        Command {
+            name: String::from("pick"),
+            params: Params::Fixed(1),
+            action: |int: &mut Interpreter, _com: &String, args: Vec<Token>| {
+                let token = decode_token(args.get(0))?;
+                match token {
+                    Token::Word(word) => {
+                        let random = rand::thread_rng().gen_range(0..word.len());
+                        let chr = word.chars().nth(random).unwrap().to_string();
+                        Ok(Token::Word(chr))
+                    }
+                    Token::List(list) => {
+                        let items = int.parse_list(list)?;
+                        let random = rand::thread_rng().gen_range(0..items.len());
+                        let item = items.get(random).unwrap().clone();
+                        Ok(item)
+                    }
+                    _ => Err(Box::from("expected a word or list")),
+                }
+            },
+        }
+    }
+
+    pub fn pi() -> Self {
+        Command {
+            name: String::from("pi"),
+            params: Params::None,
+            action: |_int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+                let pi = std::f32::consts::PI;
+                Ok(Token::Number(pi))
             },
         }
     }

@@ -1,6 +1,6 @@
 use crate::interpreter::event::UiEvent;
 use crate::state::object::TurtleShape;
-use crate::view::object::{LineView, ObjectView, TextView, TurtleView};
+use crate::view::object::{ObjectView, TextView, TurtleView};
 use eframe::egui::*;
 use eframe::epaint::{CircleShape, Hsva, PathShape, RectShape};
 use std::collections::HashMap;
@@ -11,7 +11,8 @@ pub struct CanvasView {
     pub size: Vec2,
     pub objects: HashMap<String, ObjectView>,
     pub bg_color: Color32,
-    pub lines: Vec<LineView>,
+    pub current_turtle_paths: HashMap<String, PathShape>,
+    pub drawn_paths: Vec<PathShape>,
     pub console_text: String,
 }
 
@@ -25,7 +26,8 @@ impl CanvasView {
                 .into_iter()
                 .collect(),
             bg_color: Color32::from_gray(255),
-            lines: vec![],
+            current_turtle_paths: HashMap::new(),
+            drawn_paths: vec![],
             console_text: String::new(),
         }
     }
@@ -188,16 +190,28 @@ impl CanvasView {
                 let color = self.to_canvas_color(hue);
                 self.bg_color = color;
             }
-            UiEvent::AddLine(line) => {
+            UiEvent::AddLine(name, line) => {
+                let start = self.to_canvas_coordinates(pos2(line.start.0, line.start.1));
+                let end = self.to_canvas_coordinates(pos2(line.end.0, line.end.1));
                 let color = self.to_canvas_color(line.color);
-                self.lines.push(LineView {
-                    start: pos2(line.start.0, line.start.1),
-                    end: pos2(line.end.0, line.end.1),
-                    color,
-                })
+                if let Some(path) = self.current_turtle_paths.get_mut(&name) {
+                    if path.stroke.color == color {
+                        if let Some(point) = path.points.last() {
+                            if *point == start {
+                                path.points.push(end);
+                            }
+                        }
+                    }
+                    if let Some(path) = self.current_turtle_paths.remove(&name) {
+                        self.drawn_paths.push(path);
+                    }
+                }
+                let path = PathShape::line(vec![start, end], Stroke::new(3.0, color));
+                self.current_turtle_paths.insert(name, path);
             }
             UiEvent::Clean => {
-                self.lines.clear();
+                self.current_turtle_paths.clear();
+                self.drawn_paths.clear();
             }
             UiEvent::ClearConsole => {
                 self.console_text = String::new();

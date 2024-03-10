@@ -18,7 +18,7 @@ pub enum UiEvent {
     TextSize(String, f32),
     CanvasSize(f32, f32),
     BgColor(f32),
-    AddLine(Line),
+    AddLine(String, Line),
     Clean,
     ClearConsole,
 }

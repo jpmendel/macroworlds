@@ -18,25 +18,25 @@ impl CommandDictionary {
         dictionary.add(Command::and());
         dictionary.add(Command::ascii());
         dictionary.add(Command::ask());
+        dictionary.add(Command::back());
         dictionary.add(Command::bg());
-        dictionary.add(Command::bk());
         dictionary.add(Command::butfirst());
         dictionary.add(Command::butlast());
         dictionary.add(Command::carefully());
         dictionary.add(Command::cc());
         dictionary.add(Command::cg());
         dictionary.add(Command::clean());
+        dictionary.add(Command::cleartext());
         dictionary.add(Command::color());
-        dictionary.add(Command::ct());
         dictionary.add(Command::difference());
         dictionary.add(Command::distance());
         dictionary.add(Command::dolist());
         dictionary.add(Command::dotimes());
         dictionary.add(Command::empty());
         dictionary.add(Command::equal());
-        dictionary.add(Command::fd());
         dictionary.add(Command::first());
         dictionary.add(Command::forever());
+        dictionary.add(Command::forward());
         dictionary.add(Command::fput());
         dictionary.add(Command::greater());
         dictionary.add(Command::heading());
@@ -49,11 +49,11 @@ impl CommandDictionary {
         dictionary.add(Command::item());
         dictionary.add(Command::key());
         dictionary.add(Command::last());
+        dictionary.add(Command::left());
         dictionary.add(Command::less());
         dictionary.add(Command::list());
         dictionary.add(Command::local());
         dictionary.add(Command::lput());
-        dictionary.add(Command::lt());
         dictionary.add(Command::make());
         dictionary.add(Command::member());
         dictionary.add(Command::minus());
@@ -61,8 +61,8 @@ impl CommandDictionary {
         dictionary.add(Command::newtext());
         dictionary.add(Command::newturtle());
         dictionary.add(Command::not());
-        dictionary.add(Command::op());
         dictionary.add(Command::or());
+        dictionary.add(Command::output());
         dictionary.add(Command::pd());
         dictionary.add(Command::pi());
         dictionary.add(Command::pick());
@@ -78,7 +78,8 @@ impl CommandDictionary {
         dictionary.add(Command::remove());
         dictionary.add(Command::repeat());
         dictionary.add(Command::resett());
-        dictionary.add(Command::rt());
+        dictionary.add(Command::right());
+        dictionary.add(Command::round());
         dictionary.add(Command::setbg());
         dictionary.add(Command::setc());
         dictionary.add(Command::setfontsize());
@@ -93,10 +94,10 @@ impl CommandDictionary {
         dictionary.add(Command::sqrt());
         dictionary.add(Command::st());
         dictionary.add(Command::sum());
+        dictionary.add(Command::talkto());
         dictionary.add(Command::timer());
         dictionary.add(Command::to());
         dictionary.add(Command::towards());
-        dictionary.add(Command::tto());
         dictionary.add(Command::turtlesown());
         dictionary.add(Command::wait());
         dictionary.add(Command::who());
@@ -104,9 +105,17 @@ impl CommandDictionary {
         dictionary.add(Command::xcor());
         dictionary.add(Command::ycor());
 
-        // Hidden Commands
-        dictionary.add(Command::paren());
-        dictionary.add(Command::loopback());
+        // Alias
+        dictionary.add_alias(String::from("bf"), Command::butfirst());
+        dictionary.add_alias(String::from("bk"), Command::back());
+        dictionary.add_alias(String::from("bl"), Command::butlast());
+        dictionary.add_alias(String::from("ct"), Command::cleartext());
+        dictionary.add_alias(String::from("fd"), Command::forward());
+        dictionary.add_alias(String::from("lt"), Command::left());
+        dictionary.add_alias(String::from("op"), Command::output());
+        dictionary.add_alias(String::from("pr"), Command::print());
+        dictionary.add_alias(String::from("rt"), Command::right());
+        dictionary.add_alias(String::from("tto"), Command::talkto());
 
         // Infix Operators
         dictionary.add_infix(String::from("+"), Command::sum());
@@ -117,6 +126,10 @@ impl CommandDictionary {
         dictionary.add_infix(String::from("="), Command::equal());
         dictionary.add_infix(String::from(">"), Command::greater());
         dictionary.add_infix(String::from("<"), Command::less());
+
+        // Hidden Commands
+        dictionary.add(Command::paren());
+        dictionary.add(Command::loopback());
 
         dictionary
     }
@@ -130,6 +143,10 @@ impl CommandDictionary {
 
     pub fn add(&mut self, command: Command) {
         self.functions.insert(command.name.clone(), command);
+    }
+
+    pub fn add_alias(&mut self, alias: String, command: Command) {
+        self.functions.insert(alias, command);
     }
 
     pub fn lookup_infix(&self, command_name: &String) -> Option<Command> {

@@ -131,6 +131,28 @@ impl Command {
         )
     }
 
+    pub fn int() -> Self {
+        Command::reserved(
+            String::from("int"),
+            Params::Variadic(1),
+            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+                let number = decode_number(com, &args, 0)?;
+                Ok(Token::Number(number.floor()))
+            },
+        )
+    }
+
+    pub fn round() -> Self {
+        Command::reserved(
+            String::from("round"),
+            Params::Variadic(1),
+            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+                let number = decode_number(com, &args, 0)?;
+                Ok(Token::Number(number.round()))
+            },
+        )
+    }
+
     pub fn equal() -> Self {
         Command::reserved(
             String::from("equal?"),
@@ -208,17 +230,6 @@ impl Command {
                 let boolean = decode_boolean(com, &args, 0)?;
                 let result = !boolean;
                 Ok(Token::Boolean(result))
-            },
-        )
-    }
-
-    pub fn int() -> Self {
-        Command::reserved(
-            String::from("int"),
-            Params::Variadic(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
-                Ok(Token::Number(number.floor()))
             },
         )
     }

@@ -105,7 +105,7 @@ impl Lexer {
             Ok(with_infix)
         } else if identifier.ends_with(',') {
             let sanitized = identifier[..identifier.len() - 1].to_string();
-            let token = Token::Command(Command::tto(), vec![Token::Word(sanitized)]);
+            let token = Token::Command(Command::talkto(), vec![Token::Word(sanitized)]);
             Ok(token)
         } else if identifier.ends_with("\'s") {
             let sanitized = identifier[..identifier.len() - 2].to_string();

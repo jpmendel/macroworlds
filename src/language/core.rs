@@ -52,9 +52,9 @@ impl Command {
         )
     }
 
-    pub fn op() -> Self {
+    pub fn output() -> Self {
         Command::reserved(
-            String::from("op"),
+            String::from("output"),
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let return_value = decode_token(com, &args, 0)?;
@@ -74,9 +74,9 @@ impl Command {
         )
     }
 
-    pub fn tto() -> Self {
+    pub fn talkto() -> Self {
         Command::reserved(
-            String::from("tto"),
+            String::from("talkto"),
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;

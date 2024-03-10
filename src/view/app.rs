@@ -11,7 +11,6 @@ use std::io::{Read, Write};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
 
 pub struct App {
     pub interpreter: Arc<Mutex<Interpreter>>,
@@ -51,12 +50,11 @@ impl App {
 
         // Set up a background thread to listen to UI events coming over the channel.
         let canvas_mutex = self.canvas.clone();
-        let receiver_mutex = self.ui_receiver.clone();
+        let ui_receiver_mutex = self.ui_receiver.clone();
         let ctx_mutex = Arc::from(Mutex::from(ctx.clone())).clone();
         thread::spawn(move || {
-            let event_receiver = receiver_mutex.lock().unwrap();
-            let timeout = Duration::from_secs(2);
-            while let Ok(event) = event_receiver.recv_timeout(timeout) {
+            let ui_receiver = ui_receiver_mutex.lock().unwrap();
+            while let Ok(event) = ui_receiver.recv() {
                 if let UiEvent::Done = event {
                     break;
                 }
@@ -64,7 +62,7 @@ impl App {
                 let ctx = ctx_mutex.lock().unwrap();
                 canvas.handle_ui_event(&ctx, event);
             }
-            while event_receiver.try_recv().is_ok() {
+            while ui_receiver.try_recv().is_ok() {
                 // Consume remaining events.
             }
         });
@@ -179,14 +177,11 @@ impl eframe::App for App {
 
                 // Lines
                 let content_painter = ui.painter_at(rect);
-                for line in &canvas.lines {
-                    content_painter.line_segment(
-                        [
-                            canvas.to_canvas_coordinates(line.start),
-                            canvas.to_canvas_coordinates(line.end),
-                        ],
-                        Stroke::new(3.0, line.color),
-                    );
+                for path in &canvas.drawn_paths {
+                    content_painter.add(path.clone());
+                }
+                for (_, path) in &canvas.current_turtle_paths {
+                    content_painter.add(path.clone());
                 }
 
                 // Turtles and Text

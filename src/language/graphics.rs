@@ -11,9 +11,9 @@ use std::thread;
 use std::time::Duration;
 
 impl Command {
-    pub fn fd() -> Self {
+    pub fn forward() -> Self {
         Command::reserved(
-            String::from("fd"),
+            String::from("forward"),
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let dist = decode_number(com, &args, 0)?;
@@ -28,18 +28,19 @@ impl Command {
                     .ui_sender
                     .send(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
                 if turtle.is_drawing {
+                    let name = turtle.name.clone();
                     let color = turtle.color.clone();
                     let line = int.state.add_line(original_pos, new_pos, color);
-                    let _ = int.ui_sender.send(UiEvent::AddLine(line.clone()));
+                    let _ = int.ui_sender.send(UiEvent::AddLine(name, line.clone()));
                 }
                 Ok(Token::Void)
             },
         )
     }
 
-    pub fn bk() -> Self {
+    pub fn back() -> Self {
         Command::reserved(
-            String::from("bk"),
+            String::from("back"),
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let dist = decode_number(com, &args, 0)?;
@@ -54,18 +55,19 @@ impl Command {
                     .ui_sender
                     .send(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
                 if turtle.is_drawing {
+                    let name = turtle.name.clone();
                     let color = turtle.color.clone();
                     let line = int.state.add_line(original_pos, new_pos, color);
-                    let _ = int.ui_sender.send(UiEvent::AddLine(line.clone()));
+                    let _ = int.ui_sender.send(UiEvent::AddLine(name, line.clone()));
                 }
                 Ok(Token::Void)
             },
         )
     }
 
-    pub fn lt() -> Self {
+    pub fn left() -> Self {
         Command::reserved(
-            String::from("lt"),
+            String::from("left"),
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let angle = decode_number(com, &args, 0)?;
@@ -80,9 +82,9 @@ impl Command {
         )
     }
 
-    pub fn rt() -> Self {
+    pub fn right() -> Self {
         Command::reserved(
-            String::from("rt"),
+            String::from("right"),
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let angle = decode_number(com, &args, 0)?;
@@ -178,9 +180,10 @@ impl Command {
                     .send(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
                 if let CanvasObject::Turtle(turtle) = obj {
                     if turtle.is_drawing {
+                        let name = turtle.name.clone();
                         let color = turtle.color.clone();
                         let line = int.state.add_line(original_pos, new_pos, color);
-                        let _ = int.ui_sender.send(UiEvent::AddLine(line.clone()));
+                        let _ = int.ui_sender.send(UiEvent::AddLine(name, line.clone()));
                     }
                 }
                 Ok(Token::Void)
@@ -203,9 +206,10 @@ impl Command {
                     .send(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
                 if let CanvasObject::Turtle(turtle) = obj {
                     if turtle.is_drawing {
+                        let name = turtle.name.clone();
                         let color = turtle.color.clone();
                         let line = int.state.add_line(original_pos, new_pos, color);
-                        let _ = int.ui_sender.send(UiEvent::AddLine(line.clone()));
+                        let _ = int.ui_sender.send(UiEvent::AddLine(name, line.clone()));
                     }
                 }
                 Ok(Token::Void)
@@ -234,9 +238,10 @@ impl Command {
                     .send(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
                 if let CanvasObject::Turtle(turtle) = obj {
                     if turtle.is_drawing {
+                        let name = turtle.name.clone();
                         let color = turtle.color.clone();
                         let line = int.state.add_line(original_pos, new_pos, color);
-                        let _ = int.ui_sender.send(UiEvent::AddLine(line.clone()));
+                        let _ = int.ui_sender.send(UiEvent::AddLine(name, line.clone()));
                     }
                 }
                 Ok(Token::Void)
@@ -464,9 +469,9 @@ impl Command {
         )
     }
 
-    pub fn ct() -> Self {
+    pub fn cleartext() -> Self {
         Command::reserved(
-            String::from("ct"),
+            String::from("cleartext"),
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
                 let text = int.state.current_text()?;
@@ -538,9 +543,10 @@ impl Command {
                     turtle.heading.clone(),
                 ));
                 if turtle.is_drawing {
+                    let name = turtle.name.clone();
                     let color = turtle.color.clone();
                     let line = int.state.add_line(original_pos, new_pos, color);
-                    let _ = int.ui_sender.send(UiEvent::AddLine(line.clone()));
+                    let _ = int.ui_sender.send(UiEvent::AddLine(name, line.clone()));
                 }
                 Ok(Token::Void)
             },

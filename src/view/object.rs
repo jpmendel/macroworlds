@@ -68,9 +68,3 @@ impl TextView {
         }
     }
 }
-
-pub struct LineView {
-    pub start: Pos2,
-    pub end: Pos2,
-    pub color: Color32,
-}

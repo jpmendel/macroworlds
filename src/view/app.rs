@@ -1,9 +1,13 @@
 use crate::interpreter::event::{InputEvent, UiEvent};
 use crate::interpreter::interpreter::Interpreter;
+use crate::state::state::State;
 use crate::view::canvas::CanvasView;
 use crate::view::object::ObjectView;
 use eframe::egui::*;
+use rfd::FileDialog;
 use std::collections::HashSet;
+use std::fs::File;
+use std::io::{Read, Write};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -13,7 +17,6 @@ pub struct App {
     pub interpreter: Arc<Mutex<Interpreter>>,
     pub canvas: Arc<Mutex<CanvasView>>,
     pub code: String,
-    pub canvas_size: Vec2,
     pub input_sender: mpsc::Sender<InputEvent>,
     pub ui_receiver: Arc<Mutex<mpsc::Receiver<UiEvent>>>,
     pub is_running: Arc<Mutex<bool>>,
@@ -23,17 +26,18 @@ pub struct App {
 impl App {
     const EDITOR_WIDTH: f32 = 480.0;
     const CONSOLE_HEIGHT: f32 = 160.0;
-    const DEFAULT_CANVAS_SIZE: Vec2 = vec2(600.0, 400.0);
 
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let (ui_sender, ui_receiver) = mpsc::channel::<UiEvent>();
         let (input_sender, input_receiver) = mpsc::channel::<InputEvent>();
         let interpreter = Interpreter::new(ui_sender, input_receiver);
-        let canvas_size = App::DEFAULT_CANVAS_SIZE.clone();
+        let canvas_size = vec2(
+            State::DEFAULT_CANVAS_WIDTH.clone(),
+            State::DEFAULT_CANVAS_HEIGHT.clone(),
+        );
         App {
             interpreter: Arc::from(Mutex::from(interpreter)),
             code: String::new(),
-            canvas_size,
             canvas: Arc::from(Mutex::from(CanvasView::with(canvas_size))),
             input_sender,
             ui_receiver: Arc::from(Mutex::from(ui_receiver)),
@@ -74,7 +78,7 @@ impl App {
             while interpreter.input_receiver.try_recv().is_ok() {
                 // Consume remaining events.
             }
-            let _ = interpreter.interpret(&code);
+            let _ = interpreter.interpret_main(&code);
             let mut is_running = is_running_mutex.lock().unwrap();
             *is_running = false;
         });
@@ -84,6 +88,38 @@ impl App {
 
     pub fn interrupt_code(&mut self) {
         self.input_sender.send(InputEvent::Interrupt).unwrap_or(());
+    }
+
+    pub fn open_file(&mut self) {
+        let file_name = FileDialog::new()
+            .add_filter("logo", &["txt", "logo"])
+            .set_directory(".")
+            .pick_file();
+        if let Some(file_name) = file_name {
+            if let Ok(mut file) = File::open(file_name) {
+                let mut contents = String::new();
+                if let Err(err) = file.read_to_string(&mut contents) {
+                    println!("Failed to load file: {}", err);
+                } else {
+                    self.code = contents;
+                }
+            }
+        }
+    }
+
+    pub fn save_file(&self) {
+        let file_name = FileDialog::new()
+            .set_file_name("untitled.logo")
+            .set_directory(".")
+            .save_file();
+        if let Some(file_name) = file_name {
+            if let Ok(mut file) = File::create(file_name) {
+                let code = self.code.clone();
+                if let Err(err) = file.write_all(code.as_bytes()) {
+                    println!("Failed to save file: {}", err);
+                }
+            }
+        }
     }
 }
 
@@ -117,15 +153,15 @@ impl eframe::App for App {
                 // Blank Canvas
                 let painter = ui.painter();
                 let canvas_pos = pos2(
-                    main_frame_width / 2.0 - self.canvas_size.x / 2.0,
-                    main_frame_height / 2.0 - self.canvas_size.y / 2.0,
+                    main_frame_width / 2.0 - canvas.size.x / 2.0,
+                    main_frame_height / 2.0 - canvas.size.y / 2.0,
                 );
                 canvas.pos = canvas_pos;
                 let rect = Rect::from_x_y_ranges(
-                    Rangef::new(canvas_pos.x, canvas_pos.x + self.canvas_size.x),
-                    Rangef::new(canvas_pos.y, canvas_pos.y + self.canvas_size.y),
+                    Rangef::new(canvas_pos.x, canvas_pos.x + canvas.size.x),
+                    Rangef::new(canvas_pos.y, canvas_pos.y + canvas.size.y),
                 );
-                painter.rect_filled(rect, Rounding::same(0.0), Color32::from_gray(255));
+                painter.rect_filled(rect, Rounding::same(0.0), canvas.bg_color);
 
                 // Lines
                 let content_painter = ui.painter_at(rect);
@@ -187,6 +223,52 @@ impl eframe::App for App {
             .exact_width(App::EDITOR_WIDTH)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
+                // Save/Load
+                TopBottomPanel::top("top_right")
+                    .frame(Frame::default().fill(Color32::from_gray(20)))
+                    .resizable(false)
+                    .show_inside(ui, |ui: &mut Ui| {
+                        ui.add_space(10.0);
+
+                        ui.horizontal(|ui: &mut Ui| {
+                            ui.add_space(10.0);
+                            let title = RichText::new(String::from("Editor"))
+                                .font(FontId::proportional(18.0))
+                                .color(Color32::from_gray(255));
+                            let title_label = Label::new(title);
+                            ui.add(title_label);
+
+                            let open_button_label = RichText::new(String::from("Open"))
+                                .font(FontId::proportional(14.0))
+                                .color(Color32::from_gray(255));
+                            let open_button = Button::new(open_button_label);
+                            let open_button_ref = ui.add_sized(vec2(60.0, 20.0), open_button);
+                            if open_button_ref.clicked() {
+                                self.open_file();
+                            }
+
+                            let save_button_label = RichText::new(String::from("Save"))
+                                .font(FontId::proportional(14.0))
+                                .color(Color32::from_gray(255));
+                            let save_button = Button::new(save_button_label);
+                            let save_button_ref = ui.add_sized(vec2(60.0, 20.0), save_button);
+                            if save_button_ref.clicked() {
+                                self.save_file()
+                            }
+
+                            let docs_button_label = RichText::new(String::from("Docs"))
+                                .font(FontId::proportional(14.0))
+                                .color(Color32::from_gray(255));
+                            let docs_button = Button::new(docs_button_label);
+                            let docs_button_ref = ui.add_sized(vec2(60.0, 20.0), docs_button);
+                            if docs_button_ref.clicked() {
+                                // Show Documentation
+                            }
+                        });
+
+                        ui.add_space(10.0);
+                    });
+
                 // Buttons
                 TopBottomPanel::bottom("bottom_right")
                     .frame(Frame::default().fill(Color32::from_gray(20)))
@@ -212,20 +294,6 @@ impl eframe::App for App {
                             }
                         }
                     });
-
-                ui.add_space(10.0);
-
-                // Title
-                ui.horizontal(|ui: &mut Ui| {
-                    ui.add_space(10.0);
-                    let title = RichText::new(String::from("Editor"))
-                        .font(FontId::proportional(18.0))
-                        .color(Color32::from_gray(255));
-                    let title_label = Label::new(title);
-                    ui.add(title_label);
-                });
-
-                ui.add_space(10.0);
 
                 // Text Area
                 ScrollArea::vertical().show(ui, |ui: &mut Ui| {

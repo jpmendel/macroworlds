@@ -32,8 +32,17 @@ impl Interpreter {
         }
     }
 
+    pub fn interpret_main(&mut self, code: &str) -> Result<Token, Box<dyn Error>> {
+        self.state.reset_timer();
+        self.execute_code(code, false, true)
+    }
+
     pub fn interpret(&mut self, code: &str) -> Result<Token, Box<dyn Error>> {
-        self.execute_code(code, false)
+        self.execute_code(code, false, false)
+    }
+
+    pub fn interpret_in_parenthesis(&mut self, code: &str) -> Result<Token, Box<dyn Error>> {
+        self.execute_code(code, true, false)
     }
 
     pub fn interpret_in_new_scope(
@@ -53,13 +62,13 @@ impl Interpreter {
         return_value
     }
 
-    pub fn interpret_in_parenthesis(&mut self, code: &str) -> Result<Token, Box<dyn Error>> {
-        self.execute_code(code, true)
-    }
-
-    fn execute_code(&mut self, code: &str, in_paren: bool) -> Result<Token, Box<dyn Error>> {
+    fn execute_code(
+        &mut self,
+        code: &str,
+        in_paren: bool,
+        handle_error: bool,
+    ) -> Result<Token, Box<dyn Error>> {
         if code.is_empty() {
-            self.exit_scope();
             return Ok(Token::Void);
         }
         self.lexer.push_frame(code, in_paren);
@@ -70,11 +79,17 @@ impl Interpreter {
             let token = match self.lexer.read_token() {
                 Ok(token) => token,
                 Err(err) => {
-                    if err.to_string() == "reached end of file" {
+                    if err.to_string() == "eof" {
                         self.exit_scope();
                         break;
                     }
-                    self.clean_up();
+                    if handle_error {
+                        println!("error: {}", err);
+                        let _ = self.ui_sender.send(UiEvent::Print(err.to_string()));
+                        self.clean_up();
+                    } else {
+                        self.exit_scope();
+                    }
                     return Err(err);
                 }
             };
@@ -90,13 +105,17 @@ impl Interpreter {
                     }
                 }
                 Err(err) => {
-                    if err.to_string() == "interrupt" {
-                        println!("Program Ended");
+                    if handle_error {
+                        if err.to_string() == "interrupt" {
+                            println!("Program Ended");
+                        } else {
+                            println!("error: {}", err);
+                            let _ = self.ui_sender.send(UiEvent::Print(err.to_string()));
+                        }
+                        self.clean_up();
                     } else {
-                        println!("error: {}", err);
-                        let _ = self.ui_sender.send(UiEvent::Print(err.to_string()));
+                        self.exit_scope();
                     }
-                    self.clean_up();
                     return Err(err);
                 }
             }
@@ -128,14 +147,18 @@ impl Interpreter {
         }
     }
 
-    pub fn define_procedure(&mut self, procedure: Procedure) {
+    pub fn define_procedure(&mut self, procedure: Procedure) -> Result<(), Box<dyn Error>> {
         self.lexer.define(
             procedure.name.clone(),
             Params::Fixed(procedure.params.len()),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let proc = int.state.get_procedure(com).unwrap();
                 if proc.params.len() != args.len() {
-                    return Err(Box::from("wrong number of inputs"));
+                    return Err(Box::from(format!(
+                        "{} expected {} inputs",
+                        proc.name,
+                        proc.params.len()
+                    )));
                 }
                 let code = proc.code.clone();
                 let mut local_params = vec![];
@@ -144,11 +167,12 @@ impl Interpreter {
                 }
                 int.interpret_in_new_scope(&code, local_params)
             },
-        );
+        )?;
         self.state.set_procedure(procedure);
+        Ok(())
     }
 
-    pub fn define_object_property(&mut self, name: String) {
+    pub fn define_object_property(&mut self, name: String) -> Result<(), Box<dyn Error>> {
         // Getter
         self.lexer.define(
             name.clone(),
@@ -161,23 +185,24 @@ impl Interpreter {
                     Err(Box::from(format!("turtle does not own {}", com)))
                 }
             },
-        );
+        )?;
 
         // Setter
         self.lexer.define(
             format!("set{}", name.clone()),
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
-                let token = decode_token(args.get(0))?;
+                let token = decode_token(com, &args, 0)?;
                 let turtle = int.state.current_turtle()?;
                 let item_name: String = com.chars().skip(3).collect();
-                turtle.backpack.insert(item_name, token.clone());
+                turtle.backpack.insert(item_name, token);
                 Ok(Token::Void)
             },
-        );
+        )?;
 
         // Add to Backpack
         self.state.init_backpack_property(name);
+        Ok(())
     }
 
     pub fn parse_list(&mut self, list: &String) -> Result<Vec<Token>, Box<dyn Error>> {

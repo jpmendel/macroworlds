@@ -2,7 +2,7 @@ use crate::interpreter::event::UiEvent;
 use crate::state::object::TurtleShape;
 use crate::view::object::{LineView, ObjectView, TextView, TurtleView};
 use eframe::egui::*;
-use eframe::epaint::{CircleShape, Hsva, PathShape};
+use eframe::epaint::{CircleShape, Hsva, PathShape, RectShape};
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
@@ -10,6 +10,7 @@ pub struct CanvasView {
     pub pos: Pos2,
     pub size: Vec2,
     pub objects: HashMap<String, ObjectView>,
+    pub bg_color: Color32,
     pub lines: Vec<LineView>,
     pub console_text: String,
 }
@@ -23,6 +24,7 @@ impl CanvasView {
             objects: [(String::from("t1"), ObjectView::Turtle(turtle))]
                 .into_iter()
                 .collect(),
+            bg_color: Color32::from_gray(255),
             lines: vec![],
             console_text: String::new(),
         }
@@ -39,6 +41,16 @@ impl CanvasView {
     pub fn to_canvas_angle(&self, angle: f32) -> f32 {
         // Translate from "clockwise, 0 == north" to "counterclockwise, 0 == east" system.
         (-angle - 90.0) % 360.0
+    }
+
+    pub fn to_canvas_color(&self, hue: f32) -> Color32 {
+        if hue == 0.0 {
+            Color32::from_gray(0)
+        } else if hue == 255.0 {
+            Color32::from_gray(255)
+        } else {
+            Color32::from(Hsva::new((hue % 256.0) / 255.0, 1.0, 1.0, 1.0))
+        }
     }
 
     pub fn print_to_console(&mut self, text: String) {
@@ -70,7 +82,12 @@ impl CanvasView {
                 turtle.color,
                 Stroke::new(1.0, turtle.color),
             )),
-            _ => Shape::Circle(CircleShape::filled(pos, 8.0, turtle.color)),
+            TurtleShape::Circle => Shape::Circle(CircleShape::filled(pos, 8.0, turtle.color)),
+            TurtleShape::Square => Shape::Rect(RectShape::filled(
+                Rect::from_center_size(pos, vec2(16.0, 16.0)),
+                Rounding::default(),
+                turtle.color,
+            )),
         }
     }
 
@@ -113,12 +130,9 @@ impl CanvasView {
                 }
             }
             UiEvent::ObjectColor(name, hue) => {
+                let color = self.to_canvas_color(hue);
                 if let Some(obj) = self.objects.get_mut(&name) {
-                    if hue == 0.0 {
-                        obj.set_color(Color32::from_gray(0));
-                    } else {
-                        obj.set_color(Color32::from(Hsva::new(hue / 255.0, 1.0, 1.0, 1.0)));
-                    }
+                    obj.set_color(color)
                 } else {
                     self.print_to_console(format!("object named {} does not exist", name));
                 }
@@ -135,36 +149,47 @@ impl CanvasView {
                 if let Some(ObjectView::Turtle(turtle)) = self.objects.get_mut(&name) {
                     turtle.heading = heading;
                 } else {
-                    self.print_to_console(format!("object named {} does not exist", name));
+                    self.print_to_console(format!("turtle named {} does not exist", name));
                 }
             }
             UiEvent::TurtleShape(name, shape) => {
                 if let Some(ObjectView::Turtle(turtle)) = self.objects.get_mut(&name) {
                     turtle.shape = shape;
                 } else {
-                    self.print_to_console(format!("object named {} does not exist", name));
+                    self.print_to_console(format!("turtle named {} does not exist", name));
                 }
             }
-            UiEvent::TextText(name, text_string) => {
+            UiEvent::TextAddText(name, text_string) => {
                 if let Some(ObjectView::Text(text)) = self.objects.get_mut(&name) {
-                    text.text = text_string;
+                    text.text += &text_string;
                 } else {
-                    self.print_to_console(format!("object named {} does not exist", name));
+                    self.print_to_console(format!("text named {} does not exist", name));
+                }
+            }
+            UiEvent::TextClear(name) => {
+                if let Some(ObjectView::Text(text)) = self.objects.get_mut(&name) {
+                    text.text = String::new();
+                } else {
+                    self.print_to_console(format!("text named {} does not exist", name));
                 }
             }
             UiEvent::TextSize(name, font_size) => {
                 if let Some(ObjectView::Text(text)) = self.objects.get_mut(&name) {
                     text.font_size = font_size;
                 } else {
-                    self.print_to_console(format!("object named {} does not exist", name));
+                    self.print_to_console(format!("text named {} does not exist", name));
                 }
             }
+            UiEvent::CanvasSize(width, height) => {
+                self.size.x = width;
+                self.size.y = height;
+            }
+            UiEvent::BgColor(hue) => {
+                let color = self.to_canvas_color(hue);
+                self.bg_color = color;
+            }
             UiEvent::AddLine(line) => {
-                let color = if line.color == 0.0 {
-                    Color32::from_gray(0)
-                } else {
-                    Color32::from(Hsva::new(line.color / 255.0, 1.0, 1.0, 1.0))
-                };
+                let color = self.to_canvas_color(line.color);
                 self.lines.push(LineView {
                     start: pos2(line.start.0, line.start.1),
                     end: pos2(line.end.0, line.end.1),

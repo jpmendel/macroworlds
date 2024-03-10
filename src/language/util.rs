@@ -1,59 +1,86 @@
 use crate::language::token::Token;
 use std::error::Error;
 
-pub fn decode_number(arg: Option<&Token>) -> Result<f32, Box<dyn Error>> {
-    let number: f32;
-    if let Some(Token::Number(num)) = arg {
-        number = num.clone();
+pub fn decode_number(com: &String, args: &Vec<Token>, index: usize) -> Result<f32, Box<dyn Error>> {
+    if let Some(Token::Number(num)) = args.get(index) {
+        Ok(num.clone())
     } else {
-        return Err(Box::from("expected number as input"));
+        Err(Box::from(format!(
+            "{} expected number for input {}",
+            com, index
+        )))
     }
-    Ok(number)
 }
 
-pub fn decode_word(arg: Option<&Token>) -> Result<String, Box<dyn Error>> {
-    let string: String;
-    if let Some(Token::Word(w)) = arg {
-        string = w.clone();
+pub fn decode_word(
+    com: &String,
+    args: &Vec<Token>,
+    index: usize,
+) -> Result<String, Box<dyn Error>> {
+    if let Some(Token::Word(word)) = args.get(index) {
+        Ok(word.clone())
     } else {
-        return Err(Box::from("expected string as input"));
+        Err(Box::from(format!(
+            "{} expected word for input {}",
+            com, index
+        )))
     }
-    Ok(string)
 }
 
-pub fn decode_boolean(arg: Option<&Token>) -> Result<bool, Box<dyn Error>> {
-    let boolean: bool;
-    if let Some(Token::Boolean(b)) = arg {
-        boolean = b.clone();
+pub fn decode_boolean(
+    com: &String,
+    args: &Vec<Token>,
+    index: usize,
+) -> Result<bool, Box<dyn Error>> {
+    if let Some(Token::Boolean(boolean)) = args.get(index) {
+        Ok(boolean.clone())
     } else {
-        return Err(Box::from("expected boolean as input"));
+        Err(Box::from(format!(
+            "{} expected boolean for input {}",
+            com, index
+        )))
     }
-    Ok(boolean)
 }
 
-pub fn decode_list(arg: Option<&Token>) -> Result<String, Box<dyn Error>> {
-    let list: String;
-    if let Some(Token::List(l)) = arg {
-        list = l.clone();
+pub fn decode_list(
+    com: &String,
+    args: &Vec<Token>,
+    index: usize,
+) -> Result<String, Box<dyn Error>> {
+    if let Some(Token::List(list)) = args.get(index) {
+        Ok(list.clone())
     } else {
-        return Err(Box::from("expected list as input"));
+        Err(Box::from(format!(
+            "{} expected list for input {}",
+            com, index
+        )))
     }
-    Ok(list)
 }
 
-pub fn decode_proc(arg: Option<&Token>) -> Result<(String, Vec<String>, String), Box<dyn Error>> {
-    if let Some(Token::Procedure(name, params, code)) = arg {
+pub fn decode_proc(
+    com: &String,
+    args: &Vec<Token>,
+    index: usize,
+) -> Result<(String, Vec<String>, String), Box<dyn Error>> {
+    if let Some(Token::Procedure(name, params, code)) = args.get(index) {
         Ok((name.clone(), params.clone(), code.clone()))
     } else {
-        Err(Box::from("expected block as input"))
+        Err(Box::from(format!(
+            "{} expected code block for input {}",
+            com, index
+        )))
     }
 }
 
-pub fn decode_token(arg: Option<&Token>) -> Result<&Token, Box<dyn Error>> {
-    if let Some(token) = arg {
-        Ok(token)
+pub fn decode_token(
+    com: &String,
+    args: &Vec<Token>,
+    index: usize,
+) -> Result<Token, Box<dyn Error>> {
+    if let Some(token) = args.get(index) {
+        Ok(token.clone())
     } else {
-        Err(Box::from("expected an input"))
+        Err(Box::from(format!("{} expected an input at {}", com, index)))
     }
 }
 

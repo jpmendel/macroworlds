@@ -5,8 +5,29 @@ use std::error::Error;
 #[derive(Debug, Clone)]
 pub struct Command {
     pub name: String,
+    pub is_reserved: bool,
     pub params: Params,
     pub action: CommandAction,
+}
+
+impl Command {
+    pub fn reserved(name: String, params: Params, action: CommandAction) -> Self {
+        Command {
+            name,
+            is_reserved: true,
+            params,
+            action,
+        }
+    }
+
+    pub fn user_defined(name: String, params: Params, action: CommandAction) -> Self {
+        Command {
+            name,
+            is_reserved: false,
+            params,
+            action,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

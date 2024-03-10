@@ -1,0 +1,14 @@
+make "dist 0.2
+make "color 1
+
+to rainbow
+setc :color
+fd :dist
+rt 30
+make "dist :dist + 0.2
+make "color :color + 1
+wait 5
+end
+
+cg
+forever [rainbow]

@@ -1,0 +1,84 @@
+;;; TRON ;;;
+
+carefully [remove "t1] []
+carefully [newturtle "p1] []
+carefully [newturtle "p2] []
+carefully [newtext "title] []
+carefully [newtext "info] []
+
+setbg 0
+
+make "gamestate "start
+
+to startpage
+cg
+
+p1, ht
+p2, ht
+
+title,
+setpos [0 100]
+setfontsize 60
+setc 130
+ct print "TRON
+showtext
+
+info,
+setpos [0 -100]
+setfontsize 20
+setc 130
+ct print [Press Space to Start]
+showtext
+end
+
+to ready
+info, hidetext
+p1, setc 1 setpos [-100 0] seth 0 st
+p2, setc 150 setpos [100 0] seth 0 st
+clean
+
+title,
+setpos [0 0]
+ct print "3
+wait 1000
+ct print "2
+wait 1000
+ct print "1
+wait 1000
+hidetext
+end
+
+to move
+make "key readchar
+p1,
+if :key = "w [seth 0]
+if :key = "s [seth 180]
+if :key = "a [seth 270]
+if :key = "d [seth 90]
+fd 2
+
+p2,
+if :key = "i [seth 0]
+if :key = "k [seth 180]
+if :key = "j [seth 270]
+if :key = "l [seth 90]
+fd 2
+
+wait 5
+end
+
+to game
+if :gamestate = "start [
+ make "key readchar
+ if :key = "space [
+  ready
+  make "gamestate "play
+ ]
+ wait 5
+]
+
+if :gamestate = "play [move]
+end
+
+startpage
+forever [game]

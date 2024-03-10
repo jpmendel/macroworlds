@@ -10,3 +10,4 @@ path = "src/main.rs"
 [dependencies]
 eframe = "0.26.2"
 rand = "0.8.5"
+rfd = "0.14.0"

@@ -47,19 +47,27 @@ impl Lexer {
         self.stack.back_mut().unwrap()
     }
 
-    pub fn define(&mut self, name: String, params: Params, action: CommandAction) {
-        self.dictionary.add(Command {
-            name,
-            params,
-            action,
-        })
+    pub fn define(
+        &mut self,
+        name: String,
+        params: Params,
+        action: CommandAction,
+    ) -> Result<(), Box<dyn Error>> {
+        if let Some(command) = self.dictionary.lookup(&name) {
+            if command.is_reserved {
+                return Err(Box::from(format!("{} is reserved", name)));
+            }
+        }
+        self.dictionary
+            .add(Command::user_defined(name, params, action));
+        Ok(())
     }
 
     pub fn read_token(&mut self) -> Result<Token, Box<dyn Error>> {
         self.consume_whitespace();
         let frame = self.get_top_frame();
         if frame.current_char() == '\0' {
-            return Err(Box::from("reached end of file"));
+            return Err(Box::from("eof"));
         }
         if frame.current_char() == '(' {
             let token = self.read_parenthesis()?;
@@ -108,6 +116,8 @@ impl Lexer {
             let token = Token::Command(command, args);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
+        } else if identifier.is_empty() {
+            Err(Box::from("eof"))
         } else {
             Ok(Token::Undefined(identifier))
         }
@@ -135,18 +145,21 @@ impl Lexer {
         self.consume_whitespace();
         let frame = self.get_top_frame();
         let mut command_name = String::new();
-        let mut list_count = 0;
-        while (!frame.current_char().is_whitespace() || list_count > 0)
+        let mut bracket_count = 0;
+        while (!frame.current_char().is_whitespace() || bracket_count != 0)
             && frame.current_char() != '\0'
         {
             let chr = frame.current_char().clone();
             if chr == '[' {
-                list_count += 1;
+                bracket_count += 1;
             } else if chr == ']' {
-                list_count -= 1;
+                bracket_count -= 1;
             }
             command_name.push(chr);
             frame.next();
+        }
+        if bracket_count != 0 {
+            return Err(Box::from("found unmatched brackets"));
         }
         Ok(command_name)
     }
@@ -195,15 +208,27 @@ impl Lexer {
     fn read_parenthesis(&mut self) -> Result<Token, Box<dyn Error>> {
         let frame = self.get_top_frame();
         let mut code = String::new();
+        let mut paren_count = 0;
         if frame.current_char() == '(' {
+            paren_count += 1;
             frame.next();
         }
-        while frame.current_char() != ')' && frame.current_char() != '\0' {
+        while paren_count != 0 && frame.current_char() != '\0' {
+            if frame.current_char() == '(' {
+                paren_count += 1;
+            } else if frame.current_char() == ')' {
+                paren_count -= 1;
+            }
+            // If we get matched parenthesis, exit early so we
+            // don't add the closing paren to the code.
+            if paren_count == 0 {
+                break;
+            }
             code.push(frame.current_char().clone());
             frame.next();
         }
-        if frame.current_char() == '\0' {
-            return Err(Box::from("found unclosed parenthesis"));
+        if paren_count != 0 {
+            return Err(Box::from("found unmatched parenthesis"));
         }
         frame.next();
         Ok(Token::Command(Command::paren(), vec![Token::List(code)]))

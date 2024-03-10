@@ -90,7 +90,7 @@ impl App {
 
     pub fn open_file(&mut self) {
         let file_name = FileDialog::new()
-            .add_filter("logo", &["txt", "lgo", "logo"])
+            .add_filter("logo", &["txt", "logo"])
             .set_directory(".")
             .pick_file();
         if let Some(file_name) = file_name {
@@ -108,7 +108,7 @@ impl App {
 
     pub fn save_file(&self) {
         let file_name = FileDialog::new()
-            .set_file_name("untitled.lgo")
+            .set_file_name("untitled.logo")
             .set_directory(".")
             .save_file();
         if let Some(file_name) = file_name {

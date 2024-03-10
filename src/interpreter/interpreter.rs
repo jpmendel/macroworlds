@@ -1,7 +1,6 @@
 use crate::interpreter::event::{InputEvent, UiEvent};
 use crate::interpreter::lexer::Lexer;
 use crate::language::command::{Params, Procedure};
-use crate::language::dictionary::CommandDictionary;
 use crate::language::token::Token;
 use crate::language::util::decode_token;
 use crate::state::state::State;
@@ -21,12 +20,9 @@ impl Interpreter {
         ui_sender: mpsc::Sender<UiEvent>,
         input_receiver: mpsc::Receiver<InputEvent>,
     ) -> Self {
-        let dictionary = CommandDictionary::default();
-        let lexer = Lexer::with(dictionary);
-        let state = State::new();
         Interpreter {
-            lexer,
-            state,
+            lexer: Lexer::new(),
+            state: State::new(),
             ui_sender,
             input_receiver,
         }
@@ -270,5 +266,10 @@ impl Interpreter {
         self.lexer.clear_frames();
         self.state.reset_scope();
         let _ = self.ui_sender.send(UiEvent::Done);
+    }
+
+    pub fn reset(&mut self) {
+        self.lexer = Lexer::new();
+        self.state = State::new();
     }
 }

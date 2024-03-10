@@ -10,9 +10,9 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn with(dictionary: CommandDictionary) -> Self {
+    pub fn new() -> Self {
         Lexer {
-            dictionary,
+            dictionary: CommandDictionary::default(),
             stack: VecDeque::new(),
         }
     }

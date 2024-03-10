@@ -142,7 +142,6 @@ impl eframe::App for App {
                 // Title
                 ui.horizontal(|ui: &mut Ui| {
                     ui.add_space(10.0);
-                    // Title text.
                     let title = RichText::new(String::from("MicroWorlds.rs"))
                         .font(FontId::proportional(18.0))
                         .color(Color32::from_gray(255));
@@ -254,6 +253,23 @@ impl eframe::App for App {
                             let save_button_ref = ui.add_sized(vec2(60.0, 20.0), save_button);
                             if save_button_ref.clicked() {
                                 self.save_file()
+                            }
+
+                            let reset_button_label = RichText::new(String::from("Reset"))
+                                .font(FontId::proportional(14.0))
+                                .color(Color32::from_gray(255));
+                            let reset_button = Button::new(reset_button_label);
+                            let reset_button_ref = ui.add_sized(vec2(60.0, 20.0), reset_button);
+                            if reset_button_ref.clicked() {
+                                // Delete all state from the interpreter.
+                                let mut interpreter = self.interpreter.lock().unwrap();
+                                interpreter.reset();
+
+                                // Create a new blank canvas.
+                                self.canvas = Arc::from(Mutex::from(CanvasView::with(vec2(
+                                    State::DEFAULT_CANVAS_WIDTH.clone(),
+                                    State::DEFAULT_CANVAS_HEIGHT.clone(),
+                                ))));
                             }
 
                             let docs_button_label = RichText::new(String::from("Docs"))

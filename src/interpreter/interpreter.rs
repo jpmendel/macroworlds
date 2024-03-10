@@ -91,7 +91,7 @@ impl Interpreter {
             };
             let mut is_return = false;
             if let Token::Command(command, _) = &token {
-                is_return = command.name == "op";
+                is_return = command.name == "output";
             }
             match self.execute_command(token) {
                 Ok(token) => {

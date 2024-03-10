@@ -1,4 +1,5 @@
 use crate::state::object::{Line, TurtleShape};
+use std::sync::mpsc;
 
 #[derive(Debug, Clone)]
 pub enum UiEvent {
@@ -27,4 +28,25 @@ pub enum UiEvent {
 pub enum InputEvent {
     Interrupt,
     Key(String),
+}
+
+pub struct EventHandler {
+    pub ui_sender: mpsc::Sender<UiEvent>,
+    pub input_receiver: mpsc::Receiver<InputEvent>,
+}
+
+impl EventHandler {
+    pub fn from(
+        ui_sender: mpsc::Sender<UiEvent>,
+        input_receiver: mpsc::Receiver<InputEvent>,
+    ) -> Self {
+        EventHandler {
+            ui_sender,
+            input_receiver,
+        }
+    }
+
+    pub fn send_ui_event(&self, event: UiEvent) {
+        let _ = self.ui_sender.send(event);
+    }
 }

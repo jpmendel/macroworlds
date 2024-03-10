@@ -50,6 +50,7 @@ pub struct Turtle {
     pub pos: (f32, f32),
     pub heading: f32,
     pub color: f32,
+    pub pen_size: f32,
     pub shape: TurtleShape,
     pub is_visible: bool,
     pub is_drawing: bool,
@@ -63,11 +64,17 @@ impl Turtle {
             pos: (0.0, 0.0),
             heading: 0.0,
             color: 0.0,
+            pen_size: 1.0,
             shape: TurtleShape::Triangle,
             is_visible: true,
             is_drawing: true,
             backpack: HashMap::new(),
         }
+    }
+
+    pub fn true_heading(&self) -> f32 {
+        // Translate heading from a "clockwise, 0 == north" to a "counterclockwise, 0 == east" system.
+        (-self.heading + 90.0).to_radians()
     }
 }
 
@@ -116,4 +123,16 @@ pub struct Line {
     pub start: (f32, f32),
     pub end: (f32, f32),
     pub color: f32,
+    pub stroke_width: f32,
+}
+
+impl Line {
+    pub fn from(start: (f32, f32), end: (f32, f32), color: f32, stroke_width: f32) -> Self {
+        Line {
+            start,
+            end,
+            color,
+            stroke_width,
+        }
+    }
 }

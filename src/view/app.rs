@@ -73,7 +73,7 @@ impl App {
         let code = self.code.clone();
         thread::spawn(move || {
             let mut interpreter = interpreter_mutex.lock().unwrap();
-            while interpreter.input_receiver.try_recv().is_ok() {
+            while interpreter.event.input_receiver.try_recv().is_ok() {
                 // Consume remaining events.
             }
             let _ = interpreter.interpret_main(&code);

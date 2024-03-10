@@ -1,4 +1,4 @@
-use crate::interpreter::event::{InputEvent, UiEvent};
+use crate::interpreter::event::{EventHandler, InputEvent, UiEvent};
 use crate::interpreter::lexer::Lexer;
 use crate::language::command::{Params, Procedure};
 use crate::language::token::Token;
@@ -11,8 +11,7 @@ use std::sync::mpsc;
 pub struct Interpreter {
     pub lexer: Lexer,
     pub state: State,
-    pub ui_sender: mpsc::Sender<UiEvent>,
-    pub input_receiver: mpsc::Receiver<InputEvent>,
+    pub event: EventHandler,
 }
 
 impl Interpreter {
@@ -23,8 +22,7 @@ impl Interpreter {
         Interpreter {
             lexer: Lexer::new(),
             state: State::new(),
-            ui_sender,
-            input_receiver,
+            event: EventHandler::from(ui_sender, input_receiver),
         }
     }
 
@@ -46,15 +44,15 @@ impl Interpreter {
         code: &str,
         local_params: Vec<(String, Token)>,
     ) -> Result<Token, Box<dyn Error>> {
-        self.state.push_scope();
+        self.state.data.push_scope();
         for (param, arg) in &local_params {
-            self.state.set_variable(param.clone(), arg.clone());
+            self.state.data.set_variable(param.clone(), arg.clone());
         }
         let return_value = self.interpret(code);
         for (param, _) in &local_params {
-            self.state.remove_variable(&param);
+            self.state.data.remove_variable(&param);
         }
-        self.state.pop_scope();
+        self.state.data.pop_scope();
         return_value
     }
 
@@ -69,7 +67,7 @@ impl Interpreter {
         }
         self.lexer.push_frame(code, in_paren);
         loop {
-            while let Ok(input_event) = self.input_receiver.try_recv() {
+            while let Ok(input_event) = self.event.input_receiver.try_recv() {
                 self.handle_input(input_event)?;
             }
             let token = match self.lexer.read_token() {
@@ -81,7 +79,7 @@ impl Interpreter {
                     }
                     if handle_error {
                         println!("error: {}", err);
-                        let _ = self.ui_sender.send(UiEvent::Print(err.to_string()));
+                        self.event.send_ui_event(UiEvent::Print(err.to_string()));
                         self.clean_up();
                     } else {
                         self.exit_scope();
@@ -106,7 +104,7 @@ impl Interpreter {
                             println!("Program Ended");
                         } else {
                             println!("error: {}", err);
-                            let _ = self.ui_sender.send(UiEvent::Print(err.to_string()));
+                            self.event.send_ui_event(UiEvent::Print(err.to_string()));
                         }
                         self.clean_up();
                     } else {
@@ -132,7 +130,7 @@ impl Interpreter {
                 }
                 (command.action)(self, &command.name, results)
             }
-            Token::Variable(variable) => match self.state.get_variable(&variable) {
+            Token::Variable(variable) => match self.state.data.get_variable(&variable) {
                 Some(stored) => Ok(stored.clone()),
                 None => Err(Box::from(format!("{} has no value", variable))),
             },
@@ -148,7 +146,7 @@ impl Interpreter {
             procedure.name.clone(),
             Params::Fixed(procedure.params.len()),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
-                let proc = int.state.get_procedure(com).unwrap();
+                let proc = int.state.data.get_procedure(com).unwrap();
                 if proc.params.len() != args.len() {
                     return Err(Box::from(format!(
                         "{} expected {} inputs",
@@ -164,7 +162,7 @@ impl Interpreter {
                 int.interpret_in_new_scope(&code, local_params)
             },
         )?;
-        self.state.set_procedure(procedure);
+        self.state.data.set_procedure(procedure);
         Ok(())
     }
 
@@ -174,7 +172,7 @@ impl Interpreter {
             name.clone(),
             Params::None,
             |int: &mut Interpreter, com: &String, _args: Vec<Token>| {
-                let turtle = int.state.current_turtle()?;
+                let turtle = int.state.canvas.current_turtle()?;
                 if let Some(value) = turtle.backpack.get(com) {
                     Ok(value.clone())
                 } else {
@@ -189,7 +187,7 @@ impl Interpreter {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
-                let turtle = int.state.current_turtle()?;
+                let turtle = int.state.canvas.current_turtle()?;
                 let item_name: String = com.chars().skip(3).collect();
                 turtle.backpack.insert(item_name, token);
                 Ok(Token::Void)
@@ -197,7 +195,7 @@ impl Interpreter {
         )?;
 
         // Add to Backpack
-        self.state.init_backpack_property(name);
+        self.state.canvas.init_backpack_property(name);
         Ok(())
     }
 
@@ -234,7 +232,7 @@ impl Interpreter {
     fn parse_list_token(&self, text: String) -> Result<Token, Box<dyn Error>> {
         if text.starts_with(':') {
             let var_name = text[1..].to_string();
-            if let Some(var) = self.state.get_variable(&var_name) {
+            if let Some(var) = self.state.data.get_variable(&var_name) {
                 Ok(var.clone())
             } else {
                 Err(Box::from(format!("{} has no value", var_name)))
@@ -248,7 +246,7 @@ impl Interpreter {
         match event {
             InputEvent::Interrupt => Err(Box::from("interrupt")),
             InputEvent::Key(key) => {
-                self.state.add_key_to_buffer(key);
+                self.state.input.add_key_to_buffer(key);
                 Ok(())
             }
         }
@@ -264,8 +262,8 @@ impl Interpreter {
 
     fn clean_up(&mut self) {
         self.lexer.clear_frames();
-        self.state.reset_scope();
-        let _ = self.ui_sender.send(UiEvent::Done);
+        self.state.data.reset_scope();
+        self.event.send_ui_event(UiEvent::Done);
     }
 
     pub fn reset(&mut self) {

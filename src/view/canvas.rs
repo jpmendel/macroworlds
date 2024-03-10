@@ -206,7 +206,7 @@ impl CanvasView {
                         self.drawn_paths.push(path);
                     }
                 }
-                let path = PathShape::line(vec![start, end], Stroke::new(3.0, color));
+                let path = PathShape::line(vec![start, end], Stroke::new(line.stroke_width, color));
                 self.current_turtle_paths.insert(name, path);
             }
             UiEvent::Clean => {

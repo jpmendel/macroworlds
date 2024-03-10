@@ -17,14 +17,14 @@ p1, ht
 p2, ht
 
 title,
-setpos [0 100]
+setpos [0 50]
 setfontsize 60
 setc 130
 ct print "TRON
 showtext
 
 info,
-setpos [0 -100]
+setpos [0 -50]
 setfontsize 20
 setc 130
 ct print [Press Space to Start]
@@ -33,8 +33,19 @@ end
 
 to ready
 info, hidetext
-p1, setc 1 setpos [-100 0] seth 0 st
-p2, setc 150 setpos [100 0] seth 0 st
+p1,
+setc 1
+setpensize 3
+setpos [-100 0]
+seth 0
+st
+
+p2,
+setc 150
+setpensize 3
+setpos [100 0]
+seth 0
+st
 clean
 
 title,
@@ -48,21 +59,58 @@ wait 1000
 hidetext
 end
 
+to boundary
+op (or xcor < -300 xcor > 300 ycor < -200 ycor > 200)
+end
+
+to oppangle :a
+if :a = 0 [op 180]
+if :a = 180 [op 0]
+if :
+end
+
 to move
 make "key readchar
 p1,
-if :key = "w [seth 0]
-if :key = "s [seth 180]
-if :key = "a [seth 270]
-if :key = "d [seth 90]
+if and :key = "w not heading = 180 [seth 0]
+if and :key = "s not heading = 0 [seth 180]
+if and :key = "a not heading = 90 [seth 270]
+if and :key = "d not heading = 270 [seth 90]
 fd 5
 
+if or boundary not colorunder = 0 [
+ win "p2
+ make "gamestate "win
+]
+
 p2,
-if :key = "i [seth 0]
-if :key = "k [seth 180]
-if :key = "j [seth 270]
-if :key = "l [seth 90]
+if and :key = "i not heading = 180 [seth 0]
+if and :key = "k not heading = 0 [seth 180]
+if and :key = "j not heading = 90 [seth 270]
+if and :key = "l not heading = 270 [seth 90]
 fd 5
+
+if or boundary not colorunder = 0 [
+ win "p1
+ make "gamestate "win
+]
+end
+
+to win :player
+title,
+setpos [0 50]
+ct
+ifelse :player = "p1 [
+ print [Red Wins!]
+] [
+ print [Blue Wins!]
+]
+showtext
+
+info,
+setpos [0 -50]
+ct print [Press Space to Play Again]
+showtext
 end
 
 to game
@@ -75,6 +123,14 @@ if :gamestate = "start [
 ]
 
 if :gamestate = "play [move]
+
+if :gamestate = "win [
+ make "key readchar
+ if :key = "space [
+  ready
+  make "gamestate "play
+ ]
+]
 
 wait 30
 end

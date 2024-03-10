@@ -7,40 +7,35 @@ use std::error::Error;
 #[derive(Debug)]
 pub struct Canvas {
     pub size: (f32, f32),
+    pub pixels: Vec<u8>,
+    pub bg_color: u8,
     pub objects: HashMap<String, CanvasObject>,
     pub current_object_name: String,
     pub turtle_backpack: HashSet<String>,
-    pub bg_color: f32,
-    pub lines: Vec<Line>,
 }
 
 impl Canvas {
     pub fn new() -> Self {
         let name = String::from("t1");
         let turtle = Turtle::with(name.clone());
+        let pixel_count = (State::DEFAULT_CANVAS_WIDTH * State::DEFAULT_CANVAS_HEIGHT) as usize;
         Canvas {
             size: (
                 State::DEFAULT_CANVAS_WIDTH.clone(),
                 State::DEFAULT_CANVAS_HEIGHT.clone(),
             ),
+            pixels: vec![255; pixel_count],
+            bg_color: 255,
             objects: [(name.clone(), CanvasObject::Turtle(turtle))]
                 .into_iter()
                 .collect(),
             current_object_name: name,
             turtle_backpack: HashSet::new(),
-            bg_color: 255.0,
-            lines: vec![],
         }
     }
-}
 
-impl State {
     pub fn current_object(&mut self) -> Result<&mut CanvasObject, Box<dyn Error>> {
-        if let Some(obj) = self
-            .canvas
-            .objects
-            .get_mut(&self.canvas.current_object_name)
-        {
+        if let Some(obj) = self.objects.get_mut(&self.current_object_name) {
             Ok(obj)
         } else {
             Err(Box::from("current object does not exist"))
@@ -48,10 +43,7 @@ impl State {
     }
 
     pub fn current_turtle(&mut self) -> Result<&mut Turtle, Box<dyn Error>> {
-        if let Some(CanvasObject::Turtle(turtle)) = self
-            .canvas
-            .objects
-            .get_mut(&self.canvas.current_object_name)
+        if let Some(CanvasObject::Turtle(turtle)) = self.objects.get_mut(&self.current_object_name)
         {
             Ok(turtle)
         } else {
@@ -60,11 +52,7 @@ impl State {
     }
 
     pub fn current_text(&mut self) -> Result<&mut Text, Box<dyn Error>> {
-        if let Some(CanvasObject::Text(text)) = self
-            .canvas
-            .objects
-            .get_mut(&self.canvas.current_object_name)
-        {
+        if let Some(CanvasObject::Text(text)) = self.objects.get_mut(&self.current_object_name) {
             Ok(text)
         } else {
             Err(Box::from("current object is not a text"))
@@ -72,8 +60,8 @@ impl State {
     }
 
     pub fn set_current_object(&mut self, name: String) -> bool {
-        if self.canvas.objects.get(&name).is_some() {
-            self.canvas.current_object_name = name;
+        if self.objects.get(&name).is_some() {
+            self.current_object_name = name;
             true
         } else {
             false
@@ -81,7 +69,7 @@ impl State {
     }
 
     pub fn get_turtle(&mut self, name: &String) -> Result<&mut Turtle, Box<dyn Error>> {
-        if let Some(CanvasObject::Turtle(turtle)) = self.canvas.objects.get_mut(name) {
+        if let Some(CanvasObject::Turtle(turtle)) = self.objects.get_mut(name) {
             Ok(turtle)
         } else {
             Err(Box::from(format!("turtle {} does not exist", name)))
@@ -89,45 +77,42 @@ impl State {
     }
 
     pub fn create_turtle(&mut self, name: String) -> Result<(), Box<dyn Error>> {
-        if self.canvas.objects.get(&name).is_some() {
+        if self.objects.get(&name).is_some() {
             return Err(Box::from(format!("object {} already exists", name)));
         }
         let turtle = Turtle::with(name.clone());
-        self.canvas
-            .objects
+        self.objects
             .insert(name.clone(), CanvasObject::Turtle(turtle));
-        if self.canvas.objects.len() == 1 {
-            self.canvas.current_object_name = name;
+        if self.objects.len() == 1 {
+            self.current_object_name = name;
         }
         Ok(())
     }
 
     pub fn create_text(&mut self, name: String) -> Result<(), Box<dyn Error>> {
-        if self.canvas.objects.get(&name).is_some() {
+        if self.objects.get(&name).is_some() {
             return Err(Box::from(format!("object {} already exists", name)));
         }
         let text = Text::with(name.clone());
-        self.canvas
-            .objects
-            .insert(name.clone(), CanvasObject::Text(text));
-        if self.canvas.objects.len() == 1 {
-            self.canvas.current_object_name = name;
+        self.objects.insert(name.clone(), CanvasObject::Text(text));
+        if self.objects.len() == 1 {
+            self.current_object_name = name;
         }
         Ok(())
     }
 
     pub fn remove_object(&mut self, name: &String) {
-        self.canvas.objects.remove(name);
-        if let Some((name, _)) = self.canvas.objects.iter().next() {
-            self.canvas.current_object_name = name.clone();
+        self.objects.remove(name);
+        if let Some((name, _)) = self.objects.iter().next() {
+            self.current_object_name = name.clone();
         } else {
-            self.canvas.current_object_name = String::new();
+            self.current_object_name = String::new();
         }
     }
 
     pub fn init_backpack_property(&mut self, name: String) {
-        self.canvas.turtle_backpack.insert(name.clone());
-        for (_, obj) in &mut self.canvas.objects {
+        self.turtle_backpack.insert(name.clone());
+        for (_, obj) in &mut self.objects {
             if let CanvasObject::Turtle(turtle) = obj {
                 turtle
                     .backpack
@@ -136,18 +121,83 @@ impl State {
         }
     }
 
-    pub fn set_canvas_size(&mut self, width: f32, height: f32) {
-        self.canvas.size.0 = width;
-        self.canvas.size.1 = height;
+    pub fn set_size(&mut self, width: f32, height: f32) {
+        self.size.0 = width;
+        self.size.1 = height;
+        self.pixels = vec![self.bg_color; (width * height) as usize];
     }
 
-    pub fn set_bg_color(&mut self, color: f32) {
-        self.canvas.bg_color = color;
+    pub fn set_bg_color(&mut self, color: u8) {
+        self.bg_color = color;
     }
 
-    pub fn add_line(&mut self, start: (f32, f32), end: (f32, f32), color: f32) -> &Line {
-        let line = Line { start, end, color };
-        self.canvas.lines.push(line);
-        self.canvas.lines.last().unwrap()
+    pub fn color_at_point(&self, point: &(f32, f32)) -> f32 {
+        let x = (point.0 + self.size.0 / 2.0) as i32;
+        let y = (point.1 + self.size.1 / 2.0) as i32;
+        let index = (y * (self.size.0 as i32) + x) as usize;
+        self.pixels.get(index).unwrap_or(&self.bg_color).clone() as f32
+    }
+
+    pub fn add_line(&mut self, line: Line) {
+        let color = line.color as u8;
+        let stroke = line.stroke_width as i32;
+        let start_x = (line.start.0 + self.size.0 / 2.0) as i32;
+        let end_x = (line.end.0 + self.size.0 / 2.0) as i32;
+        let start_y = (line.start.1 + self.size.1 / 2.0) as i32;
+        let end_y = (line.end.1 + self.size.1 / 2.0) as i32;
+        let (x1, x2) = if start_x < end_x {
+            (start_x, end_x)
+        } else {
+            (end_x + 1, start_x + 1)
+        };
+        let (y1, y2) = if start_y < end_y {
+            (start_y, end_y)
+        } else {
+            (end_y + 1, start_y + 1)
+        };
+        let x_diff = x2 - x1;
+        let y_diff = y2 - y1;
+        if x_diff == 0 {
+            for step in 0..y_diff {
+                let y = y1 + step;
+                let span = stroke - 1;
+                for i in -span..=span {
+                    let index = (y * (self.size.0 as i32) + x1 + i) as usize;
+                    if let Some(pixel) = self.pixels.get_mut(index) {
+                        *pixel = color;
+                    }
+                }
+            }
+        } else if y_diff == 0 {
+            for step in 0..x_diff {
+                let x = x1 + step;
+                let span = stroke - 1;
+                for i in -span..=span {
+                    let index = ((y1 + i) * (self.size.0 as i32) + x) as usize;
+                    if let Some(pixel) = self.pixels.get_mut(index) {
+                        *pixel = color;
+                    }
+                }
+            }
+        } else {
+            let slope = y_diff / x_diff;
+            for step in 0..x_diff {
+                let x = x1 + step;
+                let y = y1 + slope * step;
+                let span = stroke - 1;
+                for i in -span..=span {
+                    for j in -span..=span {
+                        let index = ((y + j) * (self.size.0 as i32) + x + i) as usize;
+                        if let Some(pixel) = self.pixels.get_mut(index) {
+                            *pixel = color;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.pixels = vec![self.bg_color; (self.size.0 * self.size.1) as usize];
     }
 }

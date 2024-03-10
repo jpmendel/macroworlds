@@ -165,12 +165,13 @@ impl Command {
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
                 let loop_var_name = String::from("__loopcount");
-                let count_token = int.state.get_variable(&loop_var_name);
+                let count_token = int.state.data.get_variable(&loop_var_name);
                 if let Some(Token::Number(count)) = count_token {
                     let next_count = count - 1.0;
                     if next_count > 0.0 {
                         int.lexer.return_to_start_of_top_frame();
                         int.state
+                            .data
                             .set_variable(loop_var_name, Token::Number(next_count));
                     }
                 } else {

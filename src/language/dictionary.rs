@@ -28,6 +28,7 @@ impl CommandDictionary {
         dictionary.add(Command::clean());
         dictionary.add(Command::cleartext());
         dictionary.add(Command::color());
+        dictionary.add(Command::colorunder());
         dictionary.add(Command::difference());
         dictionary.add(Command::distance());
         dictionary.add(Command::dolist());
@@ -64,6 +65,7 @@ impl CommandDictionary {
         dictionary.add(Command::or());
         dictionary.add(Command::output());
         dictionary.add(Command::pd());
+        dictionary.add(Command::pensize());
         dictionary.add(Command::pi());
         dictionary.add(Command::pick());
         dictionary.add(Command::pos());
@@ -84,6 +86,7 @@ impl CommandDictionary {
         dictionary.add(Command::setc());
         dictionary.add(Command::setfontsize());
         dictionary.add(Command::seth());
+        dictionary.add(Command::setpensize());
         dictionary.add(Command::setpos());
         dictionary.add(Command::setsh());
         dictionary.add(Command::setx());

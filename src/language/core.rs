@@ -22,7 +22,7 @@ impl Command {
                     }
                     token => token,
                 };
-                int.state.set_variable(name, value);
+                int.state.data.set_variable(name, value);
                 Ok(Token::Void)
             },
         )
@@ -46,7 +46,7 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
-                int.state.set_local(name);
+                int.state.data.set_local(name);
                 Ok(Token::Void)
             },
         )
@@ -68,7 +68,7 @@ impl Command {
             String::from("who"),
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                let turtle = int.state.current_turtle()?;
+                let turtle = int.state.canvas.current_turtle()?;
                 Ok(Token::Word(turtle.name.clone()))
             },
         )
@@ -80,7 +80,7 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
-                let success = int.state.set_current_object(name.clone());
+                let success = int.state.canvas.set_current_object(name.clone());
                 if !success {
                     return Err(Box::from(format!("no turtle named {}", name)));
                 }
@@ -103,11 +103,11 @@ impl Command {
                         Ok(token)
                     }
                     Token::List(list) => {
-                        let current_obj_name = int.state.current_object()?.name().clone();
-                        let success = int.state.set_current_object(name.clone());
+                        let current_obj_name = int.state.canvas.current_object()?.name().clone();
+                        let success = int.state.canvas.set_current_object(name.clone());
                         if success {
                             let _ = int.interpret(&list);
-                            int.state.set_current_object(current_obj_name);
+                            int.state.canvas.set_current_object(current_obj_name);
                             Ok(Token::Void)
                         } else {
                             Err(Box::from(format!("no turtle named {}", name)))
@@ -161,7 +161,7 @@ impl Command {
             String::from("key?"),
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                let has_key = int.state.has_key();
+                let has_key = int.state.input.has_key();
                 Ok(Token::Boolean(has_key))
             },
         )
@@ -172,7 +172,7 @@ impl Command {
             String::from("readchar"),
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                if let Some(key) = int.state.get_one_key() {
+                if let Some(key) = int.state.input.get_one_key() {
                     Ok(Token::Word(key))
                 } else {
                     Ok(Token::Word(String::from("")))

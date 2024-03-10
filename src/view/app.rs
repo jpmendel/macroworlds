@@ -102,6 +102,7 @@ impl App {
                     println!("Failed to load file: {}", err);
                 } else {
                     self.code = contents;
+                    self.reset_state();
                 }
             }
         }
@@ -120,6 +121,20 @@ impl App {
                 }
             }
         }
+    }
+
+    pub fn reset_state(&mut self) {
+        // Delete all state from the interpreter.
+        let mut interpreter = self.interpreter.lock().unwrap();
+        interpreter.reset();
+
+        // Create a new blank canvas.
+        let new_canvas = CanvasView::with(vec2(
+            State::DEFAULT_CANVAS_WIDTH.clone(),
+            State::DEFAULT_CANVAS_HEIGHT.clone(),
+        ));
+        let mut canvas = self.canvas.lock().unwrap();
+        *canvas = new_canvas;
     }
 }
 
@@ -261,15 +276,7 @@ impl eframe::App for App {
                             let reset_button = Button::new(reset_button_label);
                             let reset_button_ref = ui.add_sized(vec2(60.0, 20.0), reset_button);
                             if reset_button_ref.clicked() {
-                                // Delete all state from the interpreter.
-                                let mut interpreter = self.interpreter.lock().unwrap();
-                                interpreter.reset();
-
-                                // Create a new blank canvas.
-                                self.canvas = Arc::from(Mutex::from(CanvasView::with(vec2(
-                                    State::DEFAULT_CANVAS_WIDTH.clone(),
-                                    State::DEFAULT_CANVAS_HEIGHT.clone(),
-                                ))));
+                                self.reset_state();
                             }
 
                             let docs_button_label = RichText::new(String::from("Docs"))

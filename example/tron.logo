@@ -55,16 +55,14 @@ if :key = "w [seth 0]
 if :key = "s [seth 180]
 if :key = "a [seth 270]
 if :key = "d [seth 90]
-fd 2
+fd 5
 
 p2,
 if :key = "i [seth 0]
 if :key = "k [seth 180]
 if :key = "j [seth 270]
 if :key = "l [seth 90]
-fd 2
-
-wait 5
+fd 5
 end
 
 to game
@@ -74,10 +72,11 @@ if :gamestate = "start [
   ready
   make "gamestate "play
  ]
- wait 5
 ]
 
 if :gamestate = "play [move]
+
+wait 30
 end
 
 startpage

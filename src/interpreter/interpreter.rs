@@ -1,4 +1,5 @@
 use crate::interpreter::event::{EventHandler, InputEvent, UiEvent};
+use crate::interpreter::event::{UiContext, UiEventHandler};
 use crate::interpreter::lexer::Lexer;
 use crate::language::command::{Params, Procedure};
 use crate::language::token::Token;
@@ -6,29 +7,29 @@ use crate::language::util::decode_token;
 use crate::state::state::State;
 use crate::DEBUG;
 use std::error::Error;
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 
 pub struct Interpreter {
     pub lexer: Lexer,
     pub state: State,
     pub event: EventHandler,
+    pub input_receiver: mpsc::Receiver<InputEvent>,
 }
 
 impl Interpreter {
-    pub fn new(
-        ui_sender: mpsc::Sender<UiEvent>,
-        input_receiver: mpsc::Receiver<InputEvent>,
-    ) -> Self {
+    pub fn new(input_receiver: mpsc::Receiver<InputEvent>) -> Self {
         Interpreter {
             lexer: Lexer::new(),
             state: State::new(),
-            event: EventHandler::from(ui_sender, input_receiver),
+            event: EventHandler::new(),
+            input_receiver,
         }
     }
 
-    pub fn interpret_main(&mut self, code: &str) -> Result<Token, Box<dyn Error>> {
+    pub fn interpret_main(&mut self, code: &str) {
         self.state.reset_timer();
-        self.execute_code(code, false, true)
+        let _ = self.execute_code(code, false, true);
+        self.clear_event_handler();
     }
 
     pub fn interpret(&mut self, code: &str) -> Result<Token, Box<dyn Error>> {
@@ -67,7 +68,7 @@ impl Interpreter {
         }
         self.lexer.push_frame(code, in_paren);
         loop {
-            while let Ok(input_event) = self.event.input_receiver.try_recv() {
+            while let Ok(input_event) = self.input_receiver.try_recv() {
                 self.handle_input(input_event)?;
             }
             let token = match self.lexer.read_token() {
@@ -242,6 +243,20 @@ impl Interpreter {
         } else {
             Ok(Token::Word(text.clone()))
         }
+    }
+
+    pub fn configure_event_handler(
+        &mut self,
+        handler: Arc<Mutex<dyn UiEventHandler>>,
+        context: Arc<Mutex<dyn UiContext>>,
+    ) {
+        self.event.ui_handler = Some(handler);
+        self.event.ui_context = Some(context);
+    }
+
+    fn clear_event_handler(&mut self) {
+        self.event.ui_handler = None;
+        self.event.ui_context = None;
     }
 
     fn handle_input(&mut self, event: InputEvent) -> Result<(), Box<dyn Error>> {

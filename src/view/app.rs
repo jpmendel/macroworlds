@@ -1,4 +1,4 @@
-use crate::interpreter::event::{InputEvent, UiEvent};
+use crate::interpreter::event::InputEvent;
 use crate::interpreter::interpreter::Interpreter;
 use crate::state::state::State;
 use crate::view::canvas::CanvasView;
@@ -17,7 +17,6 @@ pub struct App {
     pub canvas: Arc<Mutex<CanvasView>>,
     pub code: String,
     pub input_sender: mpsc::Sender<InputEvent>,
-    pub ui_receiver: Arc<Mutex<mpsc::Receiver<UiEvent>>>,
     pub is_running: Arc<Mutex<bool>>,
     pub key_buffer: HashSet<String>,
 }
@@ -27,9 +26,8 @@ impl App {
     const CONSOLE_HEIGHT: f32 = 160.0;
 
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-        let (ui_sender, ui_receiver) = mpsc::channel::<UiEvent>();
         let (input_sender, input_receiver) = mpsc::channel::<InputEvent>();
-        let interpreter = Interpreter::new(ui_sender, input_receiver);
+        let interpreter = Interpreter::new(input_receiver);
         let canvas_size = vec2(
             State::DEFAULT_CANVAS_WIDTH.clone(),
             State::DEFAULT_CANVAS_HEIGHT.clone(),
@@ -39,7 +37,6 @@ impl App {
             code: String::new(),
             canvas: Arc::from(Mutex::from(CanvasView::with(canvas_size))),
             input_sender,
-            ui_receiver: Arc::from(Mutex::from(ui_receiver)),
             is_running: Arc::from(Mutex::from(false)),
             key_buffer: HashSet::new(),
         }
@@ -48,40 +45,25 @@ impl App {
     pub fn run_code(&mut self, ctx: &Context) {
         self.key_buffer.clear();
 
-        // Set up a background thread to listen to UI events coming over the channel.
-        let canvas_mutex = self.canvas.clone();
-        let ui_receiver_mutex = self.ui_receiver.clone();
-        let ctx_mutex = Arc::from(Mutex::from(ctx.clone())).clone();
-        thread::spawn(move || {
-            let ui_receiver = ui_receiver_mutex.lock().unwrap();
-            while let Ok(event) = ui_receiver.recv() {
-                if let UiEvent::Done = event {
-                    break;
-                }
-                let mut canvas = canvas_mutex.lock().unwrap();
-                let ctx = ctx_mutex.lock().unwrap();
-                canvas.handle_ui_event(&ctx, event);
-            }
-            while ui_receiver.try_recv().is_ok() {
-                // Consume remaining events.
-            }
-        });
-
         // Set up a background thread to run interpreter and send any UI updates.
         let interpreter_mutex = self.interpreter.clone();
+        let canvas_mutex = self.canvas.clone();
+        let ctx_mutex = Arc::from(Mutex::from(ctx.clone())).clone();
         let is_running_mutex = self.is_running.clone();
         let code = self.code.clone();
         thread::spawn(move || {
             let mut interpreter = interpreter_mutex.lock().unwrap();
-            while interpreter.event.input_receiver.try_recv().is_ok() {
+            while interpreter.input_receiver.try_recv().is_ok() {
                 // Consume remaining events.
             }
-            let _ = interpreter.interpret_main(&code);
+            interpreter.configure_event_handler(canvas_mutex, ctx_mutex);
+            interpreter.interpret_main(&code);
             let mut is_running = is_running_mutex.lock().unwrap();
             *is_running = false;
         });
 
-        *self.is_running.lock().unwrap() = true;
+        let mut is_running = self.is_running.lock().unwrap();
+        *is_running = true;
     }
 
     pub fn interrupt_code(&mut self) {

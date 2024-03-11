@@ -130,7 +130,7 @@ if :gamestate = "win [
  ]
 ]
 
-wait 30
+wait 20
 end
 
 startpage

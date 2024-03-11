@@ -15,14 +15,14 @@ impl CanvasObject {
         }
     }
 
-    pub fn pos(&self) -> &(f32, f32) {
+    pub fn pos(&self) -> &Point {
         match self {
             CanvasObject::Turtle(turtle) => &turtle.pos,
             CanvasObject::Text(text) => &text.pos,
         }
     }
 
-    pub fn set_pos(&mut self, pos: (f32, f32)) {
+    pub fn set_pos(&mut self, pos: Point) {
         match self {
             CanvasObject::Turtle(turtle) => turtle.pos = pos,
             CanvasObject::Text(text) => text.pos = pos,
@@ -47,7 +47,7 @@ impl CanvasObject {
 #[derive(Debug, Clone)]
 pub struct Turtle {
     pub name: String,
-    pub pos: (f32, f32),
+    pub pos: Point,
     pub heading: f32,
     pub color: f32,
     pub pen_size: f32,
@@ -61,7 +61,7 @@ impl Turtle {
     pub fn with(name: String) -> Self {
         Turtle {
             name,
-            pos: (0.0, 0.0),
+            pos: Point::zero(),
             heading: 0.0,
             color: 0.0,
             pen_size: 1.0,
@@ -98,7 +98,7 @@ impl TurtleShape {
 #[derive(Debug, Clone)]
 pub struct Text {
     pub name: String,
-    pub pos: (f32, f32),
+    pub pos: Point,
     pub color: f32,
     pub is_visible: bool,
     pub text: String,
@@ -109,7 +109,7 @@ impl Text {
     pub fn with(name: String) -> Self {
         Text {
             name,
-            pos: (0.0, 0.0),
+            pos: Point::zero(),
             color: 0.0,
             is_visible: true,
             text: String::from("New Text"),
@@ -119,15 +119,43 @@ impl Text {
 }
 
 #[derive(Debug, Clone)]
+pub struct Point {
+    pub x: f32,
+    pub y: f32,
+}
+
+impl Point {
+    pub fn with(x: f32, y: f32) -> Self {
+        Point { x, y }
+    }
+
+    pub fn zero() -> Self {
+        Point { x: 0.0, y: 0.0 }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Size {
+    pub w: f32,
+    pub h: f32,
+}
+
+impl Size {
+    pub fn from(w: f32, h: f32) -> Self {
+        Size { w, h }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Line {
-    pub start: (f32, f32),
-    pub end: (f32, f32),
+    pub start: Point,
+    pub end: Point,
     pub color: f32,
     pub stroke_width: f32,
 }
 
 impl Line {
-    pub fn from(start: (f32, f32), end: (f32, f32), color: f32, stroke_width: f32) -> Self {
+    pub fn from(start: Point, end: Point, color: f32, stroke_width: f32) -> Self {
         Line {
             start,
             end,

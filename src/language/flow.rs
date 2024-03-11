@@ -45,9 +45,9 @@ impl Command {
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let count = decode_number(com, &args, 0)? as usize;
                 let code = decode_list(com, &args, 1)?;
-                let local_params = vec![(String::from("__loopcount"), Token::Number(count as f32))];
-                let looping_code = code + "\n__loopback";
-                int.interpret_in_new_scope(&looping_code, local_params)?;
+                for _ in 0..count {
+                    int.interpret_in_new_scope(&code, vec![])?;
+                }
                 Ok(Token::Void)
             },
         )
@@ -60,7 +60,7 @@ impl Command {
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let code = decode_list(com, &args, 0)?;
                 let local_params = vec![];
-                let looping_code = code + "\n__loopback";
+                let looping_code = code + "\n__loop";
                 int.interpret_in_new_scope(&looping_code, local_params)?;
                 Ok(Token::Void)
             },
@@ -72,25 +72,20 @@ impl Command {
             String::from("dotimes"),
             Params::Fixed(2),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
-                let setup = decode_list(com, &args, 0)?;
+                let loop_config = decode_list(com, &args, 0)?;
                 let code = decode_list(com, &args, 1)?;
-                let items = int.parse_list(&setup)?;
-                if let Some(Token::Word(var_name)) = items.get(0) {
-                    if let Some(Token::Word(count)) = items.get(1) {
-                        if let Ok(count) = count.parse::<f32>() {
-                            let local_params = vec![
-                                (String::from("__loopcount"), Token::Number(count)),
-                                (var_name.clone(), Token::Number(0.0)),
-                            ];
-                            let looping_code =
-                                format!("make \"{} difference {} :__loopcount\n", var_name, count)
-                                    + &code
-                                    + "\n__loopback";
-                            int.interpret_in_new_scope(&looping_code, local_params)?;
-                            return Ok(Token::Void);
+                let list_items = int.parse_list(&loop_config, true)?;
+                if let Some(Token::Word(var_name)) = list_items.get(0) {
+                    if let Some(Token::Number(count)) = list_items.get(1) {
+                        for index in 0..(*count as usize) {
+                            let local_params =
+                                vec![(var_name.clone(), Token::Number(index as f32))];
+                            int.interpret_in_new_scope(&code, local_params)?;
                         }
+                        Ok(Token::Void)
+                    } else {
+                        Err(Box::from("dotimes expected number for input 1 in input 0"))
                     }
-                    Err(Box::from("dotimes expected number for input 1 in input 0"))
                 } else {
                     Err(Box::from("dotimes expected word for input 0 in input 0"))
                 }
@@ -103,24 +98,16 @@ impl Command {
             String::from("dolist"),
             Params::Fixed(2),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
-                let setup = decode_list(com, &args, 0)?;
+                let loop_config = decode_list(com, &args, 0)?;
                 let code = decode_list(com, &args, 1)?;
-                let items = int.parse_list(&setup)?;
-                if let Some(Token::Word(var_name)) = items.get(0) {
-                    if let Some(Token::List(list)) = items.get(1) {
-                        let items = int.parse_list(&list)?;
-                        let count = items.len() as f32;
-                        let joined = join_to_list_string(items);
-                        let local_params = vec![
-                            (String::from("__loopcount"), Token::Number(count.clone())),
-                            (var_name.clone(), Token::Word(String::new())),
-                        ];
-                        let looping_code = format!(
-                            "make \"{} item {} - :__loopcount [{}]\n",
-                            var_name, count, joined
-                        ) + &code
-                            + "\n__loopback";
-                        int.interpret_in_new_scope(&looping_code, local_params)?;
+                let list_items = int.parse_list(&loop_config, false)?;
+                if let Some(Token::Word(var_name)) = list_items.get(0) {
+                    if let Some(Token::List(list)) = list_items.get(1) {
+                        let list_items = int.parse_list(&list, true)?;
+                        for item in list_items {
+                            let local_params = vec![(var_name.clone(), item)];
+                            int.interpret_in_new_scope(&code, local_params)?;
+                        }
                         Ok(Token::Void)
                     } else {
                         Err(Box::from("dolist expected list for input 1 in input 0"))
@@ -139,10 +126,22 @@ impl Command {
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let check_code = decode_list(com, &args, 0)?;
                 let error_code = decode_list(com, &args, 1)?;
-                if let Err(..) = int.interpret(&check_code) {
+                if let Err(err) = int.interpret(&check_code) {
+                    int.state.data.set_last_error_message(err.to_string());
                     int.interpret(&error_code)?;
                 }
                 Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn errormessage() -> Self {
+        Command::reserved(
+            String::from("errormessage"),
+            Params::None,
+            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+                let error = int.state.data.get_last_error_message();
+                Ok(Token::Word(error))
             },
         )
     }
@@ -155,29 +154,6 @@ impl Command {
                 let code = decode_list(com, &args, 0)?;
                 let code_with_return = format!("op {}", code);
                 int.interpret_in_parenthesis(&code_with_return)
-            },
-        )
-    }
-
-    pub fn loopback() -> Self {
-        Command::reserved(
-            String::from("__loopback"),
-            Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                let loop_var_name = String::from("__loopcount");
-                let count_token = int.state.data.get_variable(&loop_var_name);
-                if let Some(Token::Number(count)) = count_token {
-                    let next_count = count - 1.0;
-                    if next_count > 0.0 {
-                        int.lexer.return_to_start_of_top_frame();
-                        int.state
-                            .data
-                            .set_variable(loop_var_name, Token::Number(next_count));
-                    }
-                } else {
-                    int.lexer.return_to_start_of_top_frame();
-                }
-                Ok(Token::Void)
             },
         )
     }

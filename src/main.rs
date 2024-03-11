@@ -1,6 +1,7 @@
 mod interpreter;
 mod language;
 mod state;
+mod test;
 mod view;
 
 use eframe::egui::vec2;

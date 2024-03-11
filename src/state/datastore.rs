@@ -6,19 +6,7 @@ use std::collections::{HashMap, VecDeque};
 pub struct DataStore {
     scopes: VecDeque<Scope>,
     procedures: HashMap<String, Procedure>,
-}
-
-#[derive(Debug)]
-struct Scope {
-    variables: HashMap<String, Token>,
-}
-
-impl Scope {
-    fn new() -> Self {
-        Scope {
-            variables: HashMap::new(),
-        }
-    }
+    last_error_message: String,
 }
 
 impl DataStore {
@@ -29,6 +17,7 @@ impl DataStore {
         DataStore {
             scopes: VecDeque::from([global_scope]),
             procedures: HashMap::new(),
+            last_error_message: String::new(),
         }
     }
 
@@ -74,9 +63,9 @@ impl DataStore {
         global_scope.variables.insert(name, value);
     }
 
-    pub fn set_local(&mut self, name: String) {
+    pub fn set_local(&mut self, name: String, value: Token) {
         let local_scope = self.scopes.front_mut().unwrap();
-        local_scope.variables.insert(name, Token::Void);
+        local_scope.variables.insert(name, value);
     }
 
     pub fn remove_variable(&mut self, name: &str) {
@@ -90,5 +79,26 @@ impl DataStore {
 
     pub fn set_procedure(&mut self, procedure: Procedure) {
         self.procedures.insert(procedure.name.clone(), procedure);
+    }
+
+    pub fn get_last_error_message(&self) -> String {
+        self.last_error_message.clone()
+    }
+
+    pub fn set_last_error_message(&mut self, message: String) {
+        self.last_error_message = message;
+    }
+}
+
+#[derive(Debug)]
+struct Scope {
+    variables: HashMap<String, Token>,
+}
+
+impl Scope {
+    fn new() -> Self {
+        Scope {
+            variables: HashMap::new(),
+        }
     }
 }

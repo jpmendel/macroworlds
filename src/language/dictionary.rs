@@ -17,6 +17,7 @@ impl CommandDictionary {
         dictionary.add(Command::abs());
         dictionary.add(Command::and());
         dictionary.add(Command::announce());
+        dictionary.add(Command::arctan());
         dictionary.add(Command::ascii());
         dictionary.add(Command::ask());
         dictionary.add(Command::back());
@@ -26,17 +27,22 @@ impl CommandDictionary {
         dictionary.add(Command::carefully());
         dictionary.add(Command::cc());
         dictionary.add(Command::cg());
+        dictionary.add(Command::char());
         dictionary.add(Command::clean());
         dictionary.add(Command::cleartext());
         dictionary.add(Command::color());
         dictionary.add(Command::colorunder());
+        dictionary.add(Command::cos());
+        dictionary.add(Command::count());
         dictionary.add(Command::difference());
         dictionary.add(Command::distance());
         dictionary.add(Command::dolist());
         dictionary.add(Command::dotimes());
         dictionary.add(Command::empty());
         dictionary.add(Command::equal());
+        dictionary.add(Command::errormessage());
         dictionary.add(Command::first());
+        dictionary.add(Command::fontsize());
         dictionary.add(Command::forever());
         dictionary.add(Command::forward());
         dictionary.add(Command::fput());
@@ -48,11 +54,15 @@ impl CommandDictionary {
         dictionary.add(Command::ifelse());
         dictionary.add(Command::ifthen());
         dictionary.add(Command::int());
+        dictionary.add(Command::islist());
+        dictionary.add(Command::isnumber());
+        dictionary.add(Command::isword());
         dictionary.add(Command::item());
         dictionary.add(Command::key());
         dictionary.add(Command::last());
         dictionary.add(Command::left());
         dictionary.add(Command::less());
+        dictionary.add(Command::letvar());
         dictionary.add(Command::list());
         dictionary.add(Command::local());
         dictionary.add(Command::lput());
@@ -95,10 +105,12 @@ impl CommandDictionary {
         dictionary.add(Command::shape());
         dictionary.add(Command::show());
         dictionary.add(Command::showtext());
+        dictionary.add(Command::sin());
         dictionary.add(Command::sqrt());
         dictionary.add(Command::st());
         dictionary.add(Command::sum());
         dictionary.add(Command::talkto());
+        dictionary.add(Command::tan());
         dictionary.add(Command::timer());
         dictionary.add(Command::to());
         dictionary.add(Command::towards());
@@ -133,7 +145,6 @@ impl CommandDictionary {
 
         // Hidden Commands
         dictionary.add(Command::paren());
-        dictionary.add(Command::loopback());
 
         dictionary
     }

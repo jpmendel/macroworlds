@@ -1,4 +1,4 @@
-use crate::state::object::{Line, TurtleShape};
+use crate::state::object::{Line, Point, TurtleShape};
 use std::sync::{mpsc, Arc, Mutex};
 
 #[derive(Debug, Clone)]
@@ -10,7 +10,7 @@ pub enum UiEvent {
     NewTurtle(String),
     NewText(String),
     RemoveObject(String),
-    ObjectPos(String, (f32, f32)),
+    ObjectPos(String, Point),
     ObjectColor(String, f32),
     ObjectVisible(String, bool),
     TurtleHeading(String, f32),
@@ -42,30 +42,31 @@ pub trait UiEventHandler: Send + Sync {
 pub struct EventHandler {
     pub ui_handler: Option<Arc<Mutex<dyn UiEventHandler>>>,
     pub ui_context: Option<Arc<Mutex<dyn UiContext>>>,
-    pub input_receiver: mpsc::Receiver<InputEvent>,
+    pub input_receiver: Option<mpsc::Receiver<InputEvent>>,
 }
 
 impl EventHandler {
-    pub fn new(input_receiver: mpsc::Receiver<InputEvent>) -> Self {
+    pub fn new() -> Self {
         EventHandler {
             ui_handler: None,
             ui_context: None,
-            input_receiver,
+            input_receiver: None,
         }
     }
 
-    pub fn send_ui_event(&self, event: UiEvent) {
+    pub fn send_ui(&self, event: UiEvent) {
         if let Some(handler) = self.ui_handler.clone() {
             if let Some(context) = self.ui_context.clone() {
                 let mut handler = handler.lock().unwrap();
                 handler.handle_ui_event(context, event);
-                return;
             }
         }
-        println!("Event handler not configured");
     }
 
-    pub fn receive_input_event(&self) -> Result<InputEvent, mpsc::TryRecvError> {
-        self.input_receiver.try_recv()
+    pub fn receive_input(&self) -> Result<InputEvent, mpsc::TryRecvError> {
+        if let Some(receiver) = &self.input_receiver {
+            return receiver.try_recv();
+        }
+        Err(mpsc::TryRecvError::Empty)
     }
 }

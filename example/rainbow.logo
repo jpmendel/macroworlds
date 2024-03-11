@@ -4,7 +4,7 @@ make "color 1
 to rainbow
 setc :color
 fd :dist
-rt 30
+rt 20
 make "dist :dist + 0.2
 ifelse :color = 254
  [make "color 1]

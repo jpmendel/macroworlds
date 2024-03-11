@@ -2,7 +2,7 @@ use crate::interpreter::interpreter::Interpreter;
 use crate::language::command::{Command, Params, Procedure};
 use crate::language::token::Token;
 use crate::language::util::{
-    decode_number, decode_proc, decode_token, decode_word, join_to_list_string,
+    decode_list, decode_number, decode_proc, decode_token, decode_word, join_to_list_string,
 };
 use rand::Rng;
 
@@ -16,7 +16,7 @@ impl Command {
                 let token = decode_token(com, &args, 1)?;
                 let value = match token {
                     Token::List(list) => {
-                        let tokens = int.parse_list(&list)?;
+                        let tokens = int.parse_list(&list, false)?;
                         let joined = join_to_list_string(tokens);
                         Token::List(joined)
                     }
@@ -46,7 +46,26 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
-                int.state.data.set_local(name);
+                int.state.data.set_local(name, Token::Void);
+                Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn letvar() -> Self {
+        Command::reserved(
+            String::from("let"),
+            Params::Fixed(1),
+            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+                let list = decode_list(com, &args, 0)?;
+                let list_items = int.parse_list(&list, true)?;
+                for index in (0..list_items.len()).step_by(2) {
+                    if let Some(Token::Word(name)) = list_items.get(index) {
+                        if let Some(value) = list_items.get(index + 1) {
+                            int.state.data.set_local(name.clone(), value.clone());
+                        }
+                    }
+                }
                 Ok(Token::Void)
             },
         )
@@ -206,7 +225,7 @@ impl Command {
                         Ok(Token::Word(chr))
                     }
                     Token::List(list) => {
-                        let items = int.parse_list(&list)?;
+                        let items = int.parse_list(&list, true)?;
                         let random = rand::thread_rng().gen_range(0..items.len());
                         let item = items.get(random).unwrap().clone();
                         Ok(item)

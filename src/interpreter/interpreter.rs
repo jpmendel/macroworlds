@@ -1,6 +1,8 @@
 use crate::interpreter::event::{EventHandler, InputEvent, UiEvent};
 use crate::interpreter::event::{UiContext, UiEventHandler};
 use crate::interpreter::lexer::Lexer;
+use crate::interpreter::performance::PerformanceTracker;
+use crate::interpreter::util::{is_eof, is_interrupt, is_return_command};
 use crate::language::command::{Params, Procedure};
 use crate::language::token::Token;
 use crate::language::util::decode_token;
@@ -8,19 +10,22 @@ use crate::state::state::State;
 use crate::DEBUG;
 use std::error::Error;
 use std::sync::{mpsc, Arc, Mutex};
+use std::time::Instant;
 
 pub struct Interpreter {
     pub lexer: Lexer,
     pub state: State,
     pub event: EventHandler,
+    pub performance: PerformanceTracker,
 }
 
 impl Interpreter {
-    pub fn new(input_receiver: mpsc::Receiver<InputEvent>) -> Self {
+    pub fn new() -> Self {
         Interpreter {
             lexer: Lexer::new(),
             state: State::new(),
-            event: EventHandler::new(input_receiver),
+            event: EventHandler::new(),
+            performance: PerformanceTracker::new(),
         }
     }
 
@@ -65,20 +70,19 @@ impl Interpreter {
         }
         self.lexer.push_frame(code, in_paren);
         loop {
-            while let Ok(input_event) = self.event.receive_input_event() {
+            while let Ok(input_event) = self.event.receive_input() {
                 self.handle_input(input_event)?;
             }
             let token = match self.lexer.read_token() {
                 Ok(token) => token,
                 Err(err) => {
-                    if err.to_string() == "eof" {
+                    if is_eof(&err) {
                         self.exit_scope();
                         break;
                     }
                     if handle_error {
                         println!("error: {}", err);
-                        self.event
-                            .send_ui_event(UiEvent::ConsolePrint(err.to_string()));
+                        self.event.send_ui(UiEvent::ConsolePrint(err.to_string()));
                         self.clean_up();
                     } else {
                         self.exit_scope();
@@ -88,7 +92,7 @@ impl Interpreter {
             };
             let mut is_return = false;
             if let Token::Command(command, _) = &token {
-                is_return = command.name == "output";
+                is_return = is_return_command(command);
             }
             match self.execute_command(token) {
                 Ok(token) => {
@@ -99,12 +103,11 @@ impl Interpreter {
                 }
                 Err(err) => {
                     if handle_error {
-                        if err.to_string() == "interrupt" {
+                        if is_interrupt(&err) {
                             println!("Program Ended");
                         } else {
                             println!("error: {}", err);
-                            self.event
-                                .send_ui_event(UiEvent::ConsolePrint(err.to_string()));
+                            self.event.send_ui(UiEvent::ConsolePrint(err.to_string()));
                         }
                         self.clean_up();
                     } else {
@@ -128,7 +131,23 @@ impl Interpreter {
                 if DEBUG {
                     println!("{} {:?}", command.name, results);
                 }
-                (command.action)(self, &command.name, results)
+                #[cfg(not(feature = "performance"))]
+                {
+                    (command.action)(self, &command.name, results)
+                }
+                #[cfg(feature = "performance")]
+                {
+                    let start = Instant::now();
+                    let result = (command.action)(self, &command.name, results.clone())?;
+                    let time = start.elapsed();
+                    let mut tag = command.name.clone();
+                    for arg in results {
+                        tag += &format!(" {}", arg.to_string());
+                    }
+                    self.performance
+                        .record_command_execution(&command.name, time, tag);
+                    Ok(result)
+                }
             }
             Token::Variable(variable) => match self.state.data.get_variable(&variable) {
                 Some(stored) => Ok(stored.clone()),
@@ -199,7 +218,11 @@ impl Interpreter {
         Ok(())
     }
 
-    pub fn parse_list(&mut self, list: &String) -> Result<Vec<Token>, Box<dyn Error>> {
+    pub fn parse_list(
+        &mut self,
+        list: &String,
+        parse_numbers: bool,
+    ) -> Result<Vec<Token>, Box<dyn Error>> {
         let mut items = vec![];
         let mut current_item = String::new();
         let mut reading_list = false;
@@ -217,29 +240,32 @@ impl Interpreter {
             } else if !chr.is_whitespace() {
                 current_item.push(chr);
             } else if !current_item.is_empty() {
-                let token = self.parse_list_token(current_item)?;
+                let token = self.parse_list_token(current_item, parse_numbers)?;
                 items.push(token);
                 current_item = String::new();
             }
         }
         if !current_item.is_empty() {
-            let token = self.parse_list_token(current_item)?;
+            let token = self.parse_list_token(current_item, parse_numbers)?;
             items.push(token);
         }
         Ok(items)
     }
 
-    fn parse_list_token(&self, text: String) -> Result<Token, Box<dyn Error>> {
+    fn parse_list_token(&self, text: String, parse_numbers: bool) -> Result<Token, Box<dyn Error>> {
         if text.starts_with(':') {
             let var_name = text[1..].to_string();
             if let Some(var) = self.state.data.get_variable(&var_name) {
-                Ok(var.clone())
+                return Ok(var.clone());
             } else {
-                Err(Box::from(format!("{} has no value", var_name)))
+                return Err(Box::from(format!("{} has no value", var_name)));
             }
-        } else {
-            Ok(Token::Word(text.clone()))
+        } else if parse_numbers {
+            if let Ok(number) = text.parse::<f32>() {
+                return Ok(Token::Number(number));
+            }
         }
+        Ok(Token::Word(text.clone()))
     }
 
     pub fn bind_ui_handler(
@@ -256,6 +282,10 @@ impl Interpreter {
         self.event.ui_context = None;
     }
 
+    pub fn bind_input_receiver(&mut self, receiver: mpsc::Receiver<InputEvent>) {
+        self.event.input_receiver = Some(receiver);
+    }
+
     fn handle_input(&mut self, event: InputEvent) -> Result<(), Box<dyn Error>> {
         match event {
             InputEvent::Interrupt => Err(Box::from("interrupt")),
@@ -267,7 +297,7 @@ impl Interpreter {
     }
 
     pub fn clear_input_events(&self) {
-        while self.event.input_receiver.try_recv().is_ok() {
+        while self.event.receive_input().is_ok() {
             // Consume remaining events.
         }
     }
@@ -283,7 +313,7 @@ impl Interpreter {
     fn clean_up(&mut self) {
         self.lexer.clear_frames();
         self.state.data.reset_scope();
-        self.event.send_ui_event(UiEvent::Done);
+        self.event.send_ui(UiEvent::Done);
     }
 
     pub fn reset(&mut self) {

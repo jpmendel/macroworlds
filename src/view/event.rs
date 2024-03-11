@@ -42,8 +42,8 @@ impl UiEventHandler for CanvasView {
             UiEvent::RemoveObject(name) => {
                 self.objects.remove(&name);
             }
-            UiEvent::ObjectPos(name, (x, y)) => {
-                let pos = pos2(x, y);
+            UiEvent::ObjectPos(name, point) => {
+                let pos = pos2(point.x, point.y);
                 if let Some(obj) = self.objects.get_mut(&name) {
                     obj.set_pos(pos);
                 } else {
@@ -110,8 +110,8 @@ impl UiEventHandler for CanvasView {
                 self.bg_color = color;
             }
             UiEvent::AddLine(name, line) => {
-                let start = self.to_canvas_coordinates(pos2(line.start.0, line.start.1));
-                let end = self.to_canvas_coordinates(pos2(line.end.0, line.end.1));
+                let start = self.to_canvas_coordinates(pos2(line.start.x, line.start.y));
+                let end = self.to_canvas_coordinates(pos2(line.end.x, line.end.y));
                 let color = self.to_canvas_color(line.color);
                 if let Some(path) = self.current_turtle_paths.get_mut(&name) {
                     if path.stroke.color == color {

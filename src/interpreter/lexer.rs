@@ -76,38 +76,46 @@ impl Lexer {
         }
         let identifier = self.read_identifier()?;
         if let Some(command) = self.dictionary.lookup(&identifier) {
+            // Command
             let args = self.read_arguments(&command);
             let token = Token::Command(command, args);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if identifier.starts_with(':') {
+            // Variable
             let sanitized = identifier[1..].to_string();
             let token = Token::Variable(sanitized);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if identifier.starts_with('\"') {
+            // Word
             let sanitized = identifier[1..].to_string();
             let token = Token::Word(sanitized);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if let Ok(num) = identifier.parse::<f32>() {
+            // Number
             let token = Token::Number(num);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if identifier == "true" || identifier == "false" {
+            // Boolean
             let token = Token::Boolean(identifier == "true");
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if identifier.starts_with('[') {
+            // List
             let sanitized = identifier[1..identifier.len() - 1].to_string();
             let token = Token::List(sanitized);
             let with_infix = self.handle_parse_infix(token);
             Ok(with_infix)
         } else if identifier.ends_with(',') {
+            // Object "talkto" Command Shortcut
             let sanitized = identifier[..identifier.len() - 1].to_string();
             let token = Token::Command(Command::talkto(), vec![Token::Word(sanitized)]);
             Ok(token)
         } else if identifier.ends_with("\'s") {
+            // Object "ask" Command Shortcut
             let sanitized = identifier[..identifier.len() - 2].to_string();
             let command = Command::ask();
             let mut args = vec![Token::Word(sanitized)];
@@ -267,11 +275,15 @@ impl Lexer {
     fn read_procedure(&mut self) -> Result<Token, Box<dyn Error>> {
         self.consume_whitespace();
         let frame = self.get_top_frame();
+
+        // Read procedure name.
         let mut name = String::new();
         while frame.current_char().is_alphanumeric() {
             name.push(frame.current_char().clone());
             frame.next();
         }
+
+        // Read parameter names.
         let mut params: Vec<String> = vec![];
         while frame.current_char() != '\n' {
             while frame.current_char() != ':'
@@ -299,6 +311,8 @@ impl Lexer {
                 frame.next();
             }
         }
+
+        // Find the "end" keyword to know when to stop.
         self.consume_until_newline();
         let frame = self.get_top_frame();
         let mut block = String::new();

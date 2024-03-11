@@ -2,12 +2,10 @@ use crate::interpreter::event::InputEvent;
 use crate::interpreter::interpreter::Interpreter;
 use crate::state::state::State;
 use crate::view::canvas::CanvasView;
+use crate::view::editor::Editor;
 use crate::view::object::ObjectView;
 use eframe::egui::*;
-use rfd::FileDialog;
 use std::collections::HashSet;
-use std::fs::File;
-use std::io::{Read, Write};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -15,10 +13,10 @@ use std::thread;
 pub struct App {
     interpreter: Arc<Mutex<Interpreter>>,
     canvas: Arc<Mutex<CanvasView>>,
+    editor: Editor,
     input_sender: mpsc::Sender<InputEvent>,
     key_buffer: HashSet<String>,
     is_running: Arc<Mutex<bool>>,
-    code: String,
 }
 
 impl App {
@@ -27,15 +25,16 @@ impl App {
 
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let (input_sender, input_receiver) = mpsc::channel::<InputEvent>();
-        let interpreter = Interpreter::new(input_receiver);
+        let mut interpreter = Interpreter::new();
+        interpreter.bind_input_receiver(input_receiver);
         let canvas_size = vec2(
             State::DEFAULT_CANVAS_WIDTH.clone(),
             State::DEFAULT_CANVAS_HEIGHT.clone(),
         );
         App {
             interpreter: Arc::from(Mutex::from(interpreter)),
-            code: String::new(),
             canvas: Arc::from(Mutex::from(CanvasView::with(canvas_size))),
+            editor: Editor::new(),
             input_sender,
             is_running: Arc::from(Mutex::from(false)),
             key_buffer: HashSet::new(),
@@ -50,7 +49,7 @@ impl App {
         let canvas_mutex = self.canvas.clone();
         let ctx_mutex = Arc::from(Mutex::from(ctx.clone())).clone();
         let is_running_mutex = self.is_running.clone();
-        let code = self.code.clone();
+        let code = self.editor.code.clone();
         thread::spawn(move || {
             let mut interpreter = interpreter_mutex.lock().unwrap();
 
@@ -72,39 +71,6 @@ impl App {
 
     pub fn interrupt_code(&mut self) {
         self.input_sender.send(InputEvent::Interrupt).unwrap_or(());
-    }
-
-    pub fn open_file(&mut self) {
-        let file_name = FileDialog::new()
-            .add_filter("logo", &["txt", "logo"])
-            .set_directory(".")
-            .pick_file();
-        if let Some(file_name) = file_name {
-            if let Ok(mut file) = File::open(file_name) {
-                let mut contents = String::new();
-                if let Err(err) = file.read_to_string(&mut contents) {
-                    println!("Failed to load file: {}", err);
-                } else {
-                    self.code = contents;
-                    self.reset_state();
-                }
-            }
-        }
-    }
-
-    pub fn save_file(&self) {
-        let file_name = FileDialog::new()
-            .set_file_name("untitled.logo")
-            .set_directory(".")
-            .save_file();
-        if let Some(file_name) = file_name {
-            if let Ok(mut file) = File::create(file_name) {
-                let code = self.code.clone();
-                if let Err(err) = file.write_all(code.as_bytes()) {
-                    println!("Failed to save file: {}", err);
-                }
-            }
-        }
     }
 
     pub fn reset_state(&mut self) {
@@ -249,7 +215,7 @@ impl eframe::App for App {
             .exact_width(App::EDITOR_WIDTH)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
-                // Save/Load
+                // Toolbar
                 TopBottomPanel::top("top_right")
                     .frame(Frame::default().fill(Color32::from_gray(20)))
                     .resizable(false)
@@ -257,31 +223,50 @@ impl eframe::App for App {
                         ui.add_space(10.0);
 
                         ui.horizontal(|ui: &mut Ui| {
+                            // Title
                             ui.add_space(10.0);
-                            let title = RichText::new(String::from("Editor"))
+                            let title = RichText::new("Editor")
                                 .font(FontId::proportional(18.0))
                                 .color(Color32::from_gray(255));
-                            let title_label = Label::new(title);
+                            let title_label = Label::new(title).truncate(true);
                             ui.add(title_label);
+                            ui.add_space(70.0);
 
+                            // New File
+                            let new_button_label = RichText::new(String::from("New"))
+                                .font(FontId::proportional(14.0))
+                                .color(Color32::from_gray(255));
+                            let new_button = Button::new(new_button_label);
+                            let new_button_ref = ui.add_sized(vec2(60.0, 20.0), new_button);
+                            if new_button_ref.clicked() {
+                                self.editor.new_file();
+                                self.reset_state();
+                            }
+
+                            // Open File
                             let open_button_label = RichText::new(String::from("Open"))
                                 .font(FontId::proportional(14.0))
                                 .color(Color32::from_gray(255));
                             let open_button = Button::new(open_button_label);
                             let open_button_ref = ui.add_sized(vec2(60.0, 20.0), open_button);
                             if open_button_ref.clicked() {
-                                self.open_file();
+                                let did_open = self.editor.open_file();
+                                if did_open {
+                                    self.reset_state();
+                                }
                             }
 
+                            // Save File
                             let save_button_label = RichText::new(String::from("Save"))
                                 .font(FontId::proportional(14.0))
                                 .color(Color32::from_gray(255));
                             let save_button = Button::new(save_button_label);
                             let save_button_ref = ui.add_sized(vec2(60.0, 20.0), save_button);
                             if save_button_ref.clicked() {
-                                self.save_file()
+                                self.editor.save_file()
                             }
 
+                            // Reset State and Variables
                             let reset_button_label = RichText::new(String::from("Reset"))
                                 .font(FontId::proportional(14.0))
                                 .color(Color32::from_gray(255));
@@ -291,6 +276,7 @@ impl eframe::App for App {
                                 self.reset_state();
                             }
 
+                            // Show Documentation
                             let docs_button_label = RichText::new(String::from("Docs"))
                                 .font(FontId::proportional(14.0))
                                 .color(Color32::from_gray(255));
@@ -301,10 +287,27 @@ impl eframe::App for App {
                             }
                         });
 
-                        ui.add_space(10.0);
+                        ui.add_space(5.0);
+
+                        ui.horizontal(|ui: &mut Ui| {
+                            // File Name
+                            ui.add_space(10.0);
+                            let mut file_name = String::from("untitled.logo");
+                            if let Some(file_desc) = self.editor.current_file.clone() {
+                                file_name = file_desc.name;
+                            }
+                            let file_text = RichText::new(file_name)
+                                .font(FontId::proportional(12.0))
+                                .color(Color32::from_gray(255));
+                            let file_text_label = Label::new(file_text).truncate(true);
+                            ui.add(file_text_label);
+                            ui.add_space(10.0);
+                        });
+
+                        ui.add_space(5.0);
                     });
 
-                // Buttons
+                // Run/Stop Code Button
                 TopBottomPanel::bottom("bottom_right")
                     .frame(Frame::default().fill(Color32::from_gray(20)))
                     .exact_height(60.0)
@@ -332,7 +335,7 @@ impl eframe::App for App {
 
                 // Text Area
                 ScrollArea::vertical().show(ui, |ui: &mut Ui| {
-                    let text_field = TextEdit::multiline(&mut self.code)
+                    let text_field = TextEdit::multiline(&mut self.editor.code)
                         .code_editor()
                         .font(FontId::monospace(16.0));
                     ui.add_sized(

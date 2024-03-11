@@ -5,7 +5,7 @@ use crate::language::token::Token;
 use crate::language::util::{
     decode_list, decode_number, decode_token, decode_word, join_to_list_string,
 };
-use crate::state::object::{CanvasObject, Line, TurtleShape};
+use crate::state::object::{CanvasObject, Line, Point, TurtleShape};
 use std::f32::consts::PI;
 use std::thread;
 use std::time::Duration;
@@ -22,17 +22,17 @@ impl Command {
                 let h = turtle.true_heading();
                 let x = dist * h.cos();
                 let y = dist * h.sin();
-                let new_pos = (original_pos.0 + x, original_pos.1 + y);
+                let new_pos = Point::with(original_pos.x + x, original_pos.y + y);
                 turtle.pos = new_pos.clone();
                 int.event
-                    .send_ui_event(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
+                    .send_ui(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
                 if turtle.is_drawing {
                     let name = turtle.name.clone();
                     let color = turtle.color.clone();
                     let pen_size = turtle.pen_size.clone();
                     let line = Line::from(original_pos, new_pos, color, pen_size);
                     int.state.canvas.add_line(line.clone());
-                    int.event.send_ui_event(UiEvent::AddLine(name, line));
+                    int.event.send_ui(UiEvent::AddLine(name, line));
                 }
                 Ok(Token::Void)
             },
@@ -50,17 +50,17 @@ impl Command {
                 let h = turtle.true_heading();
                 let x = -dist * h.cos();
                 let y = -dist * h.sin();
-                let new_pos = (original_pos.0 + x, original_pos.1 + y);
+                let new_pos = Point::with(original_pos.x + x, original_pos.y + y);
                 turtle.pos = new_pos.clone();
                 int.event
-                    .send_ui_event(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
+                    .send_ui(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
                 if turtle.is_drawing {
                     let name = turtle.name.clone();
                     let color = turtle.color.clone();
                     let pen_size = turtle.pen_size.clone();
                     let line = Line::from(original_pos, new_pos, color, pen_size);
                     int.state.canvas.add_line(line.clone());
-                    int.event.send_ui_event(UiEvent::AddLine(name, line));
+                    int.event.send_ui(UiEvent::AddLine(name, line));
                 }
                 Ok(Token::Void)
             },
@@ -75,7 +75,7 @@ impl Command {
                 let angle = decode_number(com, &args, 0)?;
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.heading -= angle;
-                int.event.send_ui_event(UiEvent::TurtleHeading(
+                int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
                     turtle.heading.clone(),
                 ));
@@ -92,7 +92,7 @@ impl Command {
                 let angle = decode_number(com, &args, 0)?;
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.heading += angle;
-                int.event.send_ui_event(UiEvent::TurtleHeading(
+                int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
                     turtle.heading.clone(),
                 ));
@@ -107,7 +107,7 @@ impl Command {
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
                 let pos = int.state.canvas.current_object()?.pos();
-                Ok(Token::Number(pos.0))
+                Ok(Token::Number(pos.x))
             },
         )
     }
@@ -118,7 +118,7 @@ impl Command {
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
                 let pos = int.state.canvas.current_object()?.pos();
-                Ok(Token::Number(pos.1))
+                Ok(Token::Number(pos.y))
             },
         )
     }
@@ -129,7 +129,7 @@ impl Command {
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
                 let pos = int.state.canvas.current_object()?.pos();
-                Ok(Token::List(format!("{} {}", pos.0, pos.1)))
+                Ok(Token::List(format!("{} {}", pos.x, pos.y)))
             },
         )
     }
@@ -186,10 +186,10 @@ impl Command {
                 let x = decode_number(com, &args, 0)?;
                 let obj = int.state.canvas.current_object()?;
                 let original_pos = obj.pos().clone();
-                let new_pos = (x, original_pos.1);
+                let new_pos = Point::with(x, original_pos.y);
                 obj.set_pos(new_pos.clone());
                 int.event
-                    .send_ui_event(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
+                    .send_ui(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
                 if let CanvasObject::Turtle(turtle) = obj {
                     if turtle.is_drawing {
                         let name = turtle.name.clone();
@@ -197,7 +197,7 @@ impl Command {
                         let pen_size = turtle.pen_size.clone();
                         let line = Line::from(original_pos, new_pos, color, pen_size);
                         int.state.canvas.add_line(line.clone());
-                        int.event.send_ui_event(UiEvent::AddLine(name, line));
+                        int.event.send_ui(UiEvent::AddLine(name, line));
                     }
                 }
                 Ok(Token::Void)
@@ -213,10 +213,10 @@ impl Command {
                 let y = decode_number(com, &args, 0)?;
                 let obj = int.state.canvas.current_object()?;
                 let original_pos = obj.pos().clone();
-                let new_pos = (original_pos.0, y);
+                let new_pos = Point::with(original_pos.x, y);
                 obj.set_pos(new_pos.clone());
                 int.event
-                    .send_ui_event(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
+                    .send_ui(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
                 if let CanvasObject::Turtle(turtle) = obj {
                     if turtle.is_drawing {
                         let name = turtle.name.clone();
@@ -224,7 +224,7 @@ impl Command {
                         let pen_size = turtle.pen_size.clone();
                         let line = Line::from(original_pos, new_pos, color, pen_size);
                         int.state.canvas.add_line(line.clone());
-                        int.event.send_ui_event(UiEvent::AddLine(name, line));
+                        int.event.send_ui(UiEvent::AddLine(name, line));
                     }
                 }
                 Ok(Token::Void)
@@ -238,29 +238,32 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let list = decode_list(com, &args, 0)?;
-                let coords: Vec<&str> = list.split(' ').collect();
-                if coords.len() != 2 {
+                let list_items = int.parse_list(&list, true)?;
+                if list_items.len() != 2 {
                     return Err(Box::from("invalid coordinates"));
                 }
-                let x = coords[0].parse::<f32>()?;
-                let y = coords[1].parse::<f32>()?;
-                let obj = int.state.canvas.current_object()?;
-                let original_pos = obj.pos().clone();
-                let new_pos = (x, y);
-                obj.set_pos(new_pos.clone());
-                int.event
-                    .send_ui_event(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
-                if let CanvasObject::Turtle(turtle) = obj {
-                    if turtle.is_drawing {
-                        let name = turtle.name.clone();
-                        let color = turtle.color.clone();
-                        let pen_size = turtle.pen_size.clone();
-                        let line = Line::from(original_pos, new_pos, color, pen_size);
-                        int.state.canvas.add_line(line.clone());
-                        int.event.send_ui_event(UiEvent::AddLine(name, line));
+                if let Some(Token::Number(x)) = list_items.get(0) {
+                    if let Some(Token::Number(y)) = list_items.get(1) {
+                        let obj = int.state.canvas.current_object()?;
+                        let original_pos = obj.pos().clone();
+                        let new_pos = Point::with(*x, *y);
+                        obj.set_pos(new_pos.clone());
+                        int.event
+                            .send_ui(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
+                        if let CanvasObject::Turtle(turtle) = obj {
+                            if turtle.is_drawing {
+                                let name = turtle.name.clone();
+                                let color = turtle.color.clone();
+                                let pen_size = turtle.pen_size.clone();
+                                let line = Line::from(original_pos, new_pos, color, pen_size);
+                                int.state.canvas.add_line(line.clone());
+                                int.event.send_ui(UiEvent::AddLine(name, line));
+                            }
+                        }
+                        return Ok(Token::Void);
                     }
                 }
-                Ok(Token::Void)
+                Err(Box::from("setpos expected number for coordinates"))
             },
         )
     }
@@ -273,7 +276,7 @@ impl Command {
                 let heading = decode_number(com, &args, 0)?;
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.heading = heading;
-                int.event.send_ui_event(UiEvent::TurtleHeading(
+                int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
                     turtle.heading.clone(),
                 ));
@@ -290,7 +293,7 @@ impl Command {
                 let color = decode_number(com, &args, 0)?;
                 let obj = int.state.canvas.current_object()?;
                 obj.set_color(color);
-                int.event.send_ui_event(UiEvent::ObjectColor(
+                int.event.send_ui(UiEvent::ObjectColor(
                     obj.name().clone(),
                     obj.color().clone(),
                 ));
@@ -326,7 +329,7 @@ impl Command {
                 };
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.shape = shape;
-                int.event.send_ui_event(UiEvent::TurtleShape(
+                int.event.send_ui(UiEvent::TurtleShape(
                     turtle.name.clone(),
                     turtle.shape.clone(),
                 ));
@@ -367,7 +370,7 @@ impl Command {
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.is_visible = true;
                 int.event
-                    .send_ui_event(UiEvent::ObjectVisible(turtle.name.clone(), true));
+                    .send_ui(UiEvent::ObjectVisible(turtle.name.clone(), true));
                 Ok(Token::Void)
             },
         )
@@ -381,7 +384,7 @@ impl Command {
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.is_visible = false;
                 int.event
-                    .send_ui_event(UiEvent::ObjectVisible(turtle.name.clone(), false));
+                    .send_ui(UiEvent::ObjectVisible(turtle.name.clone(), false));
                 Ok(Token::Void)
             },
         )
@@ -395,8 +398,8 @@ impl Command {
                 let other = decode_word(com, &args, 0)?;
                 let current_pos = int.state.canvas.current_turtle()?.pos.clone();
                 let other_pos = int.state.canvas.get_turtle(&other)?.pos.clone();
-                let x = other_pos.0 - current_pos.0;
-                let y = other_pos.1 - current_pos.1;
+                let x = other_pos.x - current_pos.x;
+                let y = other_pos.y - current_pos.y;
                 let dist = (x.powi(2) + y.powi(2)).sqrt();
                 Ok(Token::Number(dist))
             },
@@ -411,12 +414,12 @@ impl Command {
                 let other = decode_word(com, &args, 0)?;
                 let current_pos = int.state.canvas.current_turtle()?.pos.clone();
                 let other_pos = int.state.canvas.get_turtle(&other)?.pos.clone();
-                let x = other_pos.0 - current_pos.0;
-                let y = other_pos.1 - current_pos.1;
+                let x = other_pos.x - current_pos.x;
+                let y = other_pos.y - current_pos.y;
                 let angle = y.atan2(x) * 180.0 / PI;
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.heading = angle;
-                int.event.send_ui_event(UiEvent::TurtleHeading(
+                int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
                     turtle.heading.clone(),
                 ));
@@ -438,6 +441,17 @@ impl Command {
         )
     }
 
+    pub fn fontsize() -> Self {
+        Command::reserved(
+            String::from("fontsize"),
+            Params::None,
+            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+                let text = int.state.canvas.current_text()?;
+                Ok(Token::Number(text.font_size))
+            },
+        )
+    }
+
     pub fn setfontsize() -> Self {
         Command::reserved(
             String::from("setfontsize"),
@@ -447,7 +461,7 @@ impl Command {
                 let text = int.state.canvas.current_text()?;
                 text.font_size = font_size;
                 int.event
-                    .send_ui_event(UiEvent::TextSize(text.name.clone(), text.font_size.clone()));
+                    .send_ui(UiEvent::TextSize(text.name.clone(), text.font_size.clone()));
                 Ok(Token::Void)
             },
         )
@@ -461,7 +475,7 @@ impl Command {
                 let text = int.state.canvas.current_text()?;
                 text.is_visible = true;
                 int.event
-                    .send_ui_event(UiEvent::ObjectVisible(text.name.clone(), true));
+                    .send_ui(UiEvent::ObjectVisible(text.name.clone(), true));
                 Ok(Token::Void)
             },
         )
@@ -475,7 +489,7 @@ impl Command {
                 let text = int.state.canvas.current_text()?;
                 text.is_visible = false;
                 int.event
-                    .send_ui_event(UiEvent::ObjectVisible(text.name.clone(), false));
+                    .send_ui(UiEvent::ObjectVisible(text.name.clone(), false));
                 Ok(Token::Void)
             },
         )
@@ -491,7 +505,7 @@ impl Command {
                     Token::Word(word) => word.clone(),
                     Token::Number(number) => number.to_string(),
                     Token::List(list) => {
-                        let items = int.parse_list(&list)?;
+                        let items = int.parse_list(&list, false)?;
                         join_to_list_string(items)
                     }
                     _ => return Err(Box::from("expected word, number or list")),
@@ -499,7 +513,7 @@ impl Command {
                 let text = int.state.canvas.current_text()?;
                 text.text = string.clone();
                 int.event
-                    .send_ui_event(UiEvent::TextPrint(text.name.clone(), string));
+                    .send_ui(UiEvent::TextPrint(text.name.clone(), string));
                 Ok(Token::Void)
             },
         )
@@ -512,8 +526,7 @@ impl Command {
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
                 let text = int.state.canvas.current_text()?;
                 text.text = String::new();
-                int.event
-                    .send_ui_event(UiEvent::TextClear(text.name.clone()));
+                int.event.send_ui(UiEvent::TextClear(text.name.clone()));
                 Ok(Token::Void)
             },
         )
@@ -532,7 +545,7 @@ impl Command {
                 let width = size[0].parse::<f32>()?;
                 let height = size[1].parse::<f32>()?;
                 int.state.canvas.set_size(width, height);
-                int.event.send_ui_event(UiEvent::CanvasSize(width, height));
+                int.event.send_ui(UiEvent::CanvasSize(width, height));
                 Ok(Token::Void)
             },
         )
@@ -556,7 +569,7 @@ impl Command {
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let color = decode_number(com, &args, 0)?;
                 int.state.canvas.set_bg_color(color as u8);
-                int.event.send_ui_event(UiEvent::BgColor(color));
+                int.event.send_ui(UiEvent::BgColor(color));
                 Ok(Token::Void)
             },
         )
@@ -569,12 +582,12 @@ impl Command {
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 let original_pos = turtle.pos.clone();
-                let new_pos = (0.0, 0.0);
+                let new_pos = Point::zero();
                 turtle.pos = new_pos.clone();
                 turtle.heading = 0.0;
                 int.event
-                    .send_ui_event(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
-                int.event.send_ui_event(UiEvent::TurtleHeading(
+                    .send_ui(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
+                int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
                     turtle.heading.clone(),
                 ));
@@ -584,7 +597,7 @@ impl Command {
                     let pen_size = turtle.pen_size.clone();
                     let line = Line::from(original_pos, new_pos, color, pen_size);
                     int.state.canvas.add_line(line.clone());
-                    int.event.send_ui_event(UiEvent::AddLine(name, line));
+                    int.event.send_ui(UiEvent::AddLine(name, line));
                 }
                 Ok(Token::Void)
             },
@@ -597,7 +610,7 @@ impl Command {
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
                 int.state.canvas.clear();
-                int.event.send_ui_event(UiEvent::Clean);
+                int.event.send_ui(UiEvent::Clean);
                 Ok(Token::Void)
             },
         )
@@ -610,15 +623,15 @@ impl Command {
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
                 int.state.canvas.clear();
                 let turtle = int.state.canvas.current_turtle()?;
-                turtle.pos = (0.0, 0.0);
+                turtle.pos = Point::zero();
                 turtle.heading = 0.0;
                 int.event
-                    .send_ui_event(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
-                int.event.send_ui_event(UiEvent::TurtleHeading(
+                    .send_ui(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
+                int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
                     turtle.heading.clone(),
                 ));
-                int.event.send_ui_event(UiEvent::Clean);
+                int.event.send_ui(UiEvent::Clean);
                 Ok(Token::Void)
             },
         )
@@ -631,7 +644,7 @@ impl Command {
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
                 int.state.canvas.create_turtle(name.clone())?;
-                int.event.send_ui_event(UiEvent::NewTurtle(name));
+                int.event.send_ui(UiEvent::NewTurtle(name));
                 Ok(Token::Void)
             },
         )
@@ -644,7 +657,7 @@ impl Command {
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
                 int.state.canvas.create_text(name.clone())?;
-                int.event.send_ui_event(UiEvent::NewText(name));
+                int.event.send_ui(UiEvent::NewText(name));
                 Ok(Token::Void)
             },
         )
@@ -657,7 +670,7 @@ impl Command {
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
                 int.state.canvas.remove_object(&name);
-                int.event.send_ui_event(UiEvent::RemoveObject(name));
+                int.event.send_ui(UiEvent::RemoveObject(name));
                 Ok(Token::Void)
             },
         )
@@ -669,7 +682,7 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let duration = decode_number(com, &args, 0)? as u64;
-                int.event.send_ui_event(UiEvent::Wait(duration.clone()));
+                int.event.send_ui(UiEvent::Wait(duration.clone()));
                 thread::sleep(Duration::from_millis(duration));
                 Ok(Token::Void)
             },
@@ -682,15 +695,8 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
-                let text: String;
-                match token {
-                    Token::Word(string) => text = string.clone(),
-                    Token::Number(number) => text = number.to_string(),
-                    Token::Boolean(boolean) => text = boolean.to_string(),
-                    Token::List(list) => text = format!("[{}]", list),
-                    _ => text = String::new(),
-                }
-                int.event.send_ui_event(UiEvent::ConsolePrint(text));
+                let text = token.to_string();
+                int.event.send_ui(UiEvent::ConsolePrint(text));
                 Ok(Token::Void)
             },
         )
@@ -710,7 +716,7 @@ impl Command {
                     Token::List(list) => text = list.clone(),
                     _ => text = String::new(),
                 }
-                int.event.send_ui_event(UiEvent::Announce(text));
+                int.event.send_ui(UiEvent::Announce(text));
                 Ok(Token::Void)
             },
         )
@@ -721,7 +727,7 @@ impl Command {
             String::from("cc"),
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                int.event.send_ui_event(UiEvent::ClearConsole);
+                int.event.send_ui(UiEvent::ClearConsole);
                 Ok(Token::Void)
             },
         )

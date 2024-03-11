@@ -1,12 +1,12 @@
 use crate::language::token::Token;
-use crate::state::object::{CanvasObject, Line, Text, Turtle};
+use crate::state::object::{CanvasObject, Line, Point, Size, Text, Turtle};
 use crate::state::state::State;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 
 #[derive(Debug)]
 pub struct Canvas {
-    size: (f32, f32),
+    size: Size,
     pixels: Vec<u8>,
     bg_color: u8,
     objects: HashMap<String, CanvasObject>,
@@ -20,7 +20,7 @@ impl Canvas {
         let turtle = Turtle::with(name.clone());
         let pixel_count = (State::DEFAULT_CANVAS_WIDTH * State::DEFAULT_CANVAS_HEIGHT) as usize;
         Canvas {
-            size: (
+            size: Size::from(
                 State::DEFAULT_CANVAS_WIDTH.clone(),
                 State::DEFAULT_CANVAS_HEIGHT.clone(),
             ),
@@ -122,8 +122,8 @@ impl Canvas {
     }
 
     pub fn set_size(&mut self, width: f32, height: f32) {
-        self.size.0 = width;
-        self.size.1 = height;
+        self.size.w = width;
+        self.size.h = height;
         self.pixels = vec![self.bg_color; (width * height) as usize];
     }
 
@@ -135,20 +135,20 @@ impl Canvas {
         self.bg_color = color;
     }
 
-    pub fn color_at_point(&self, point: &(f32, f32)) -> f32 {
-        let x = (point.0 + self.size.0 / 2.0) as i32;
-        let y = (point.1 + self.size.1 / 2.0) as i32;
-        let index = (y * (self.size.0 as i32) + x) as usize;
+    pub fn color_at_point(&self, point: &Point) -> f32 {
+        let x = (point.x + self.size.w / 2.0) as i32;
+        let y = (point.y + self.size.h / 2.0) as i32;
+        let index = (y * (self.size.w as i32) + x) as usize;
         self.pixels.get(index).unwrap_or(&self.bg_color).clone() as f32
     }
 
     pub fn add_line(&mut self, line: Line) {
         let color = line.color as u8;
         let stroke = line.stroke_width as i32;
-        let start_x = (line.start.0 + self.size.0 / 2.0) as i32;
-        let end_x = (line.end.0 + self.size.0 / 2.0) as i32;
-        let start_y = (line.start.1 + self.size.1 / 2.0) as i32;
-        let end_y = (line.end.1 + self.size.1 / 2.0) as i32;
+        let start_x = (line.start.x + self.size.w / 2.0) as i32;
+        let end_x = (line.end.x + self.size.w / 2.0) as i32;
+        let start_y = (line.start.y + self.size.h / 2.0) as i32;
+        let end_y = (line.end.y + self.size.h / 2.0) as i32;
         let (x1, x2) = if start_x < end_x {
             (start_x, end_x)
         } else {
@@ -166,7 +166,7 @@ impl Canvas {
                 let y = y1 + step;
                 let span = stroke - 1;
                 for i in -span..=span {
-                    let index = (y * (self.size.0 as i32) + x1 + i) as usize;
+                    let index = (y * (self.size.w as i32) + x1 + i) as usize;
                     if let Some(pixel) = self.pixels.get_mut(index) {
                         *pixel = color;
                     }
@@ -177,7 +177,7 @@ impl Canvas {
                 let x = x1 + step;
                 let span = stroke - 1;
                 for i in -span..=span {
-                    let index = ((y1 + i) * (self.size.0 as i32) + x) as usize;
+                    let index = ((y1 + i) * (self.size.w as i32) + x) as usize;
                     if let Some(pixel) = self.pixels.get_mut(index) {
                         *pixel = color;
                     }
@@ -191,7 +191,7 @@ impl Canvas {
                 let span = stroke - 1;
                 for i in -span..=span {
                     for j in -span..=span {
-                        let index = ((y + j) * (self.size.0 as i32) + x + i) as usize;
+                        let index = ((y + j) * (self.size.w as i32) + x + i) as usize;
                         if let Some(pixel) = self.pixels.get_mut(index) {
                             *pixel = color;
                         }
@@ -202,6 +202,6 @@ impl Canvas {
     }
 
     pub fn clear(&mut self) {
-        self.pixels = vec![self.bg_color; (self.size.0 * self.size.1) as usize];
+        self.pixels = vec![self.bg_color; (self.size.w * self.size.h) as usize];
     }
 }

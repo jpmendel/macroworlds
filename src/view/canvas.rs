@@ -14,6 +14,8 @@ pub struct CanvasView {
     pub current_turtle_paths: HashMap<String, PathShape>,
     pub drawn_paths: Vec<PathShape>,
     pub console_text: String,
+    pub announce_text: String,
+    pub is_window_open: bool,
 }
 
 impl CanvasView {
@@ -29,6 +31,8 @@ impl CanvasView {
             current_turtle_paths: HashMap::new(),
             drawn_paths: vec![],
             console_text: String::new(),
+            announce_text: String::new(),
+            is_window_open: false,
         }
     }
 
@@ -101,8 +105,12 @@ impl CanvasView {
             UiEvent::Wait(..) => {
                 ctx.request_repaint();
             }
-            UiEvent::Print(text) => {
+            UiEvent::ConsolePrint(text) => {
                 self.print_to_console(text);
+            }
+            UiEvent::Announce(text) => {
+                self.announce_text = text;
+                self.is_window_open = true;
             }
             UiEvent::NewTurtle(name) => {
                 if let None = self.objects.get(&name) {
@@ -161,7 +169,7 @@ impl CanvasView {
                     self.print_to_console(format!("turtle named {} does not exist", name));
                 }
             }
-            UiEvent::TextAddText(name, text_string) => {
+            UiEvent::TextPrint(name, text_string) => {
                 if let Some(ObjectView::Text(text)) = self.objects.get_mut(&name) {
                     text.text += &text_string;
                 } else {

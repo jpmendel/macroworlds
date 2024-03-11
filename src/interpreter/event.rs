@@ -5,7 +5,8 @@ use std::sync::mpsc;
 pub enum UiEvent {
     Done,
     Wait(u64),
-    Print(String),
+    ConsolePrint(String),
+    Announce(String),
     NewTurtle(String),
     NewText(String),
     RemoveObject(String),
@@ -14,7 +15,7 @@ pub enum UiEvent {
     ObjectVisible(String, bool),
     TurtleHeading(String, f32),
     TurtleShape(String, TurtleShape),
-    TextAddText(String, String),
+    TextPrint(String, String),
     TextClear(String),
     TextSize(String, f32),
     CanvasSize(f32, f32),

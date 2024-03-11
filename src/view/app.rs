@@ -122,6 +122,12 @@ impl App {
     }
 
     pub fn reset_state(&mut self) {
+        let is_running = *self.is_running.lock().unwrap();
+        if is_running {
+            println!("Can't reset when app is running");
+            return;
+        }
+
         // Delete all state from the interpreter.
         let mut interpreter = self.interpreter.lock().unwrap();
         interpreter.reset();
@@ -224,6 +230,31 @@ impl eframe::App for App {
                             ui.add(print_output_label);
                         });
                     });
+
+                // Handle Announcements
+                if canvas.is_window_open.clone() {
+                    let announcement = canvas.announce_text.clone();
+                    Window::new("Announcement")
+                        .open(&mut canvas.is_window_open)
+                        .resizable(false)
+                        .collapsible(false)
+                        .movable(true)
+                        .anchor(
+                            Align2::LEFT_TOP,
+                            vec2(main_frame_width / 2.0, main_frame_height / 2.0),
+                        )
+                        .show(ctx, |ui: &mut Ui| {
+                            ui.add_space(10.0);
+                            ui.horizontal(|ui: &mut Ui| {
+                                ui.add_space(10.0);
+                                ui.label(
+                                    RichText::new(announcement).font(FontId::proportional(18.0)),
+                                );
+                                ui.add_space(10.0);
+                            });
+                            ui.add_space(10.0);
+                        });
+                }
             });
 
         // Code Editor

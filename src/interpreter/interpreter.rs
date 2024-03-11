@@ -79,7 +79,8 @@ impl Interpreter {
                     }
                     if handle_error {
                         println!("error: {}", err);
-                        self.event.send_ui_event(UiEvent::Print(err.to_string()));
+                        self.event
+                            .send_ui_event(UiEvent::ConsolePrint(err.to_string()));
                         self.clean_up();
                     } else {
                         self.exit_scope();
@@ -104,7 +105,8 @@ impl Interpreter {
                             println!("Program Ended");
                         } else {
                             println!("error: {}", err);
-                            self.event.send_ui_event(UiEvent::Print(err.to_string()));
+                            self.event
+                                .send_ui_event(UiEvent::ConsolePrint(err.to_string()));
                         }
                         self.clean_up();
                     } else {

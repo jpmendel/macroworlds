@@ -499,7 +499,7 @@ impl Command {
                 let text = int.state.canvas.current_text()?;
                 text.text = string.clone();
                 int.event
-                    .send_ui_event(UiEvent::TextAddText(text.name.clone(), string));
+                    .send_ui_event(UiEvent::TextPrint(text.name.clone(), string));
                 Ok(Token::Void)
             },
         )
@@ -690,7 +690,27 @@ impl Command {
                     Token::List(list) => text = format!("[{}]", list),
                     _ => text = String::new(),
                 }
-                int.event.send_ui_event(UiEvent::Print(text));
+                int.event.send_ui_event(UiEvent::ConsolePrint(text));
+                Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn announce() -> Self {
+        Command::reserved(
+            String::from("announce"),
+            Params::Fixed(1),
+            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+                let token = decode_token(com, &args, 0)?;
+                let text: String;
+                match token {
+                    Token::Word(string) => text = string.clone(),
+                    Token::Number(number) => text = number.to_string(),
+                    Token::Boolean(boolean) => text = boolean.to_string(),
+                    Token::List(list) => text = list.clone(),
+                    _ => text = String::new(),
+                }
+                int.event.send_ui_event(UiEvent::Announce(text));
                 Ok(Token::Void)
             },
         )

@@ -16,6 +16,7 @@ impl CommandDictionary {
         // General Commands
         dictionary.add(Command::abs());
         dictionary.add(Command::and());
+        dictionary.add(Command::announce());
         dictionary.add(Command::ascii());
         dictionary.add(Command::ask());
         dictionary.add(Command::back());

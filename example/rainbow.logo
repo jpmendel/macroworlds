@@ -6,9 +6,13 @@ setc :color
 fd :dist
 rt 30
 make "dist :dist + 0.2
-make "color :color + 1
+ifelse :color = 254
+ [make "color 1]
+ [make "color :color + 1]
 wait 5
 end
 
 cg
+ht
+setpensize 3
 forever [rainbow]

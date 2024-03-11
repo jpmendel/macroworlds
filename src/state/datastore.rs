@@ -4,17 +4,17 @@ use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug)]
 pub struct DataStore {
-    pub scopes: VecDeque<Scope>,
-    pub procedures: HashMap<String, Procedure>,
+    scopes: VecDeque<Scope>,
+    procedures: HashMap<String, Procedure>,
 }
 
 #[derive(Debug)]
-pub struct Scope {
+struct Scope {
     variables: HashMap<String, Token>,
 }
 
 impl Scope {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Scope {
             variables: HashMap::new(),
         }

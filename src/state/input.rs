@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 #[derive(Debug)]
 pub struct InputManager {
-    pub key_buffer: VecDeque<String>,
+    key_buffer: VecDeque<String>,
 }
 
 impl InputManager {

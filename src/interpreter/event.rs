@@ -1,5 +1,5 @@
 use crate::state::object::{Line, TurtleShape};
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 
 #[derive(Debug, Clone)]
 pub enum UiEvent {
@@ -42,13 +42,15 @@ pub trait UiEventHandler: Send + Sync {
 pub struct EventHandler {
     pub ui_handler: Option<Arc<Mutex<dyn UiEventHandler>>>,
     pub ui_context: Option<Arc<Mutex<dyn UiContext>>>,
+    pub input_receiver: mpsc::Receiver<InputEvent>,
 }
 
 impl EventHandler {
-    pub fn new() -> Self {
+    pub fn new(input_receiver: mpsc::Receiver<InputEvent>) -> Self {
         EventHandler {
             ui_handler: None,
             ui_context: None,
+            input_receiver,
         }
     }
 
@@ -61,5 +63,9 @@ impl EventHandler {
             }
         }
         println!("Event handler not configured");
+    }
+
+    pub fn receive_input_event(&self) -> Result<InputEvent, mpsc::TryRecvError> {
+        self.input_receiver.try_recv()
     }
 }

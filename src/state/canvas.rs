@@ -6,12 +6,12 @@ use std::error::Error;
 
 #[derive(Debug)]
 pub struct Canvas {
-    pub size: (f32, f32),
-    pub pixels: Vec<u8>,
-    pub bg_color: u8,
-    pub objects: HashMap<String, CanvasObject>,
-    pub current_object_name: String,
-    pub turtle_backpack: HashSet<String>,
+    size: (f32, f32),
+    pixels: Vec<u8>,
+    bg_color: u8,
+    objects: HashMap<String, CanvasObject>,
+    current_object_name: String,
+    turtle_backpack: HashSet<String>,
 }
 
 impl Canvas {
@@ -125,6 +125,10 @@ impl Canvas {
         self.size.0 = width;
         self.size.1 = height;
         self.pixels = vec![self.bg_color; (width * height) as usize];
+    }
+
+    pub fn get_bg_color(&self) -> u8 {
+        self.bg_color
     }
 
     pub fn set_bg_color(&mut self, color: u8) {

@@ -13,7 +13,6 @@ pub struct Interpreter {
     pub lexer: Lexer,
     pub state: State,
     pub event: EventHandler,
-    pub input_receiver: mpsc::Receiver<InputEvent>,
 }
 
 impl Interpreter {
@@ -21,15 +20,13 @@ impl Interpreter {
         Interpreter {
             lexer: Lexer::new(),
             state: State::new(),
-            event: EventHandler::new(),
-            input_receiver,
+            event: EventHandler::new(input_receiver),
         }
     }
 
     pub fn interpret_main(&mut self, code: &str) {
         self.state.reset_timer();
         let _ = self.execute_code(code, false, true);
-        self.clear_event_handler();
     }
 
     pub fn interpret(&mut self, code: &str) -> Result<Token, Box<dyn Error>> {
@@ -68,7 +65,7 @@ impl Interpreter {
         }
         self.lexer.push_frame(code, in_paren);
         loop {
-            while let Ok(input_event) = self.input_receiver.try_recv() {
+            while let Ok(input_event) = self.event.receive_input_event() {
                 self.handle_input(input_event)?;
             }
             let token = match self.lexer.read_token() {
@@ -245,7 +242,7 @@ impl Interpreter {
         }
     }
 
-    pub fn configure_event_handler(
+    pub fn bind_ui_handler(
         &mut self,
         handler: Arc<Mutex<dyn UiEventHandler>>,
         context: Arc<Mutex<dyn UiContext>>,
@@ -254,7 +251,7 @@ impl Interpreter {
         self.event.ui_context = Some(context);
     }
 
-    fn clear_event_handler(&mut self) {
+    pub fn clear_ui_handler(&mut self) {
         self.event.ui_handler = None;
         self.event.ui_context = None;
     }
@@ -266,6 +263,12 @@ impl Interpreter {
                 self.state.input.add_key_to_buffer(key);
                 Ok(())
             }
+        }
+    }
+
+    pub fn clear_input_events(&self) {
+        while self.event.input_receiver.try_recv().is_ok() {
+            // Consume remaining events.
         }
     }
 

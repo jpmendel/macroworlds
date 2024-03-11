@@ -13,12 +13,12 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 
 pub struct App {
-    pub interpreter: Arc<Mutex<Interpreter>>,
-    pub canvas: Arc<Mutex<CanvasView>>,
-    pub code: String,
-    pub input_sender: mpsc::Sender<InputEvent>,
-    pub is_running: Arc<Mutex<bool>>,
-    pub key_buffer: HashSet<String>,
+    interpreter: Arc<Mutex<Interpreter>>,
+    canvas: Arc<Mutex<CanvasView>>,
+    input_sender: mpsc::Sender<InputEvent>,
+    key_buffer: HashSet<String>,
+    is_running: Arc<Mutex<bool>>,
+    code: String,
 }
 
 impl App {
@@ -45,7 +45,7 @@ impl App {
     pub fn run_code(&mut self, ctx: &Context) {
         self.key_buffer.clear();
 
-        // Set up a background thread to run interpreter and send any UI updates.
+        // Set up a background thread to run interpreter independent of the UI.
         let interpreter_mutex = self.interpreter.clone();
         let canvas_mutex = self.canvas.clone();
         let ctx_mutex = Arc::from(Mutex::from(ctx.clone())).clone();
@@ -53,15 +53,19 @@ impl App {
         let code = self.code.clone();
         thread::spawn(move || {
             let mut interpreter = interpreter_mutex.lock().unwrap();
-            while interpreter.input_receiver.try_recv().is_ok() {
-                // Consume remaining events.
-            }
-            interpreter.configure_event_handler(canvas_mutex, ctx_mutex);
+
+            // Clear any events in the channel so stale key presses do not immediatley trigger.
+            interpreter.clear_input_events();
+            interpreter.bind_ui_handler(canvas_mutex, ctx_mutex);
             interpreter.interpret_main(&code);
+            interpreter.clear_ui_handler();
+
+            // Signal program no longer running.
             let mut is_running = is_running_mutex.lock().unwrap();
             *is_running = false;
         });
 
+        // Signal program started running.
         let mut is_running = self.is_running.lock().unwrap();
         *is_running = true;
     }

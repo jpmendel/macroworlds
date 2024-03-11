@@ -543,7 +543,7 @@ impl Command {
             String::from("bg"),
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                let bg_color = int.state.canvas.bg_color;
+                let bg_color = int.state.canvas.get_bg_color();
                 Ok(Token::Number(bg_color as f32))
             },
         )

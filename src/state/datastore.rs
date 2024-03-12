@@ -39,6 +39,11 @@ impl DataStore {
         }
     }
 
+    pub fn reached_max_scope_depth(&self) -> bool {
+        // Limit the number of nested scopes to prevent stack overflow.
+        self.scopes.len() >= 100
+    }
+
     pub fn get_variable(&self, name: &String) -> Option<&Token> {
         // Go through each scope from most local to most global
         // and search for the variable name in question.

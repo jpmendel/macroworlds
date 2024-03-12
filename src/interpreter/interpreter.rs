@@ -49,6 +49,9 @@ impl Interpreter {
         code: &str,
         local_params: Vec<(String, Token)>,
     ) -> Result<Token, Box<dyn Error>> {
+        if self.state.data.reached_max_scope_depth() {
+            return Err(Box::from("maximum stack depth exceeded"));
+        }
         self.state.data.push_scope();
         for (param, arg) in &local_params {
             self.state.data.set_variable(param.clone(), arg.clone());
@@ -175,11 +178,11 @@ impl Interpreter {
                         proc.params.len()
                     )));
                 }
-                let code = proc.code.clone();
                 let mut local_params = vec![];
                 for i in 0..proc.params.len() {
                     local_params.push((proc.params[i].clone(), args[i].clone()));
                 }
+                let code = proc.code.clone();
                 int.interpret_in_new_scope(&code, local_params)
             },
         )?;

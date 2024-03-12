@@ -12,6 +12,7 @@ impl PerformanceTracker {
         }
     }
 
+    #[allow(dead_code)]
     pub fn record_command_execution(&mut self, command: &String, time: Duration, tag: String) {
         if let Some(array) = self.command_execution_times.get_mut(command) {
             array.push(PerformanceResult::from(time, tag));
@@ -21,6 +22,7 @@ impl PerformanceTracker {
         }
     }
 
+    #[allow(dead_code)]
     pub fn print_summary(&self, include: HashSet<String>) {
         for (command, results) in &self.command_execution_times {
             if include.get(command).is_none() {
@@ -36,18 +38,20 @@ impl PerformanceTracker {
         }
     }
 
+    #[allow(dead_code)]
     pub fn print_full_report(&self, include: HashSet<String>) {
         for (command, results) in &self.command_execution_times {
             if include.get(command).is_none() {
                 continue;
             }
-            println!("command: {}", command);
+            println!("command: {} ({})", command, results.len());
             for result in results {
                 println!(" ({}) => {} ns", result.tag, result.time.as_nanos());
             }
         }
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         self.command_execution_times.clear();
     }

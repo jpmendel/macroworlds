@@ -10,6 +10,8 @@ use crate::state::state::State;
 use crate::DEBUG;
 use std::error::Error;
 use std::sync::{mpsc, Arc, Mutex};
+
+#[cfg(feature = "performance")]
 use std::time::Instant;
 
 pub struct Interpreter {

@@ -1,5 +1,4 @@
 use crate::language::command::Command;
-use std::error::Error;
 
 #[derive(Debug, Clone)]
 pub enum Token {
@@ -24,20 +23,6 @@ impl Token {
             Self::List(list) => format!("[{}]", list),
             Self::Undefined(undef) => undef.clone(),
             _ => String::new(),
-        }
-    }
-
-    pub fn to_number(&self) -> Result<Token, Box<dyn Error>> {
-        match self {
-            Self::Word(word) => {
-                if let Ok(number) = word.parse::<f32>() {
-                    Ok(Token::Number(number))
-                } else {
-                    Err(Box::from(format!("cannot convert {} to number", word)))
-                }
-            }
-            Self::Number(..) => Ok(self.clone()),
-            _ => Err(Box::from("cannot convert token to number")),
         }
     }
 }

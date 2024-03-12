@@ -57,7 +57,9 @@ mod tests {
         }
 
         let mut interpreter = Interpreter::new();
-        interpreter.interpret_main(&code);
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
         interpreter.performance.print_summary(HashSet::from([
             String::from("sum"),
             String::from("difference"),
@@ -123,7 +125,9 @@ mod tests {
         }
 
         let mut interpreter = Interpreter::new();
-        interpreter.interpret_main(&code);
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
         interpreter.performance.print_summary(HashSet::from([
             String::from("if"),
             String::from("ifelse"),
@@ -138,7 +142,7 @@ mod tests {
     }
 
     #[test]
-    fn looping() {
+    fn loops() {
         let num_executions: usize = 20;
         let mut code = String::new();
         let num_loops = 10;
@@ -151,7 +155,9 @@ mod tests {
         }
 
         let mut interpreter = Interpreter::new();
-        interpreter.interpret_main(&code);
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
         interpreter.performance.print_summary(HashSet::from([
             String::from("repeat"),
             String::from("dotimes"),
@@ -169,23 +175,122 @@ mod tests {
             code += &format!("right {}\n", rand::thread_rng().gen_range(0..360));
             code += &format!("back {}\n", rand::thread_rng().gen_range(0..=50));
             code += &format!("left {}\n", rand::thread_rng().gen_range(0..360));
-            code += &format!(
-                "setpos [{} {}]\n",
-                rand::thread_rng().gen_range(-300..=300),
-                rand::thread_rng().gen_range(-200..=200)
-            );
-            code += &format!("seth {}\n", rand::thread_rng().gen_range(0..360));
         }
 
         let mut interpreter = Interpreter::new();
-        interpreter.interpret_main(&code);
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
         interpreter.performance.print_summary(HashSet::from([
             String::from("forward"),
             String::from("back"),
             String::from("left"),
             String::from("right"),
+        ]));
+    }
+
+    #[test]
+    fn get_set_attributes() {
+        let num_executions: usize = 20;
+        let mut code = String::new();
+        let shapes = vec!["triangle", "circle", "square"];
+
+        for _ in 0..num_executions {
+            code += &format!("setx {}\n", rand::thread_rng().gen_range(-300..=300));
+            code += &format!("xcor\n");
+            code += &format!("sety {}\n", rand::thread_rng().gen_range(-200..=200));
+            code += &format!("ycor\n");
+            code += &format!(
+                "setpos [{} {}]\n",
+                rand::thread_rng().gen_range(-300..=300),
+                rand::thread_rng().gen_range(-200..=200)
+            );
+            code += &format!("pos\n");
+            code += &format!("seth {}\n", rand::thread_rng().gen_range(0..360));
+            code += &format!("heading\n");
+            code += &format!("setc {}\n", rand::thread_rng().gen_range(0..=255));
+            code += &format!("color\n");
+            code += &format!("setpensize {}\n", rand::thread_rng().gen_range(1..=10));
+            code += &format!("pensize\n");
+            code += &format!(
+                "setsh \"{}\n",
+                shapes.choose(&mut rand::thread_rng()).unwrap()
+            );
+            code += &format!("shape\n");
+        }
+
+        let mut interpreter = Interpreter::new();
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
+        interpreter.performance.print_summary(HashSet::from([
+            String::from("setx"),
+            String::from("xcor"),
+            String::from("sety"),
+            String::from("ycor"),
             String::from("setpos"),
+            String::from("pos"),
             String::from("seth"),
+            String::from("heading"),
+            String::from("setc"),
+            String::from("color"),
+            String::from("setpensize"),
+            String::from("pensize"),
+            String::from("setsh"),
+            String::from("shape"),
+        ]));
+    }
+
+    #[test]
+    fn object_creation_deletion() {
+        let num_executions: usize = 20;
+        let mut code = String::new();
+
+        for index in 0..num_executions {
+            let id = index + 2;
+            code += &format!("newturtle \"t{}\n", id);
+            code += &format!("newtext \"text{}\n", id);
+            code += &format!("remove \"t{}\n", id);
+            code += &format!("remove \"text{}\n", id);
+        }
+
+        let mut interpreter = Interpreter::new();
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
+        interpreter.performance.print_summary(HashSet::from([
+            String::from("newturtle"),
+            String::from("newtext"),
+            String::from("remove"),
+        ]));
+    }
+
+    #[test]
+    fn background_colors() {
+        let num_executions: usize = 20;
+        let mut code = String::new();
+
+        for _ in 0..num_executions {
+            code += &format!("setbg {}\n", rand::thread_rng().gen_range(0..=255));
+            code += &format!("bg\n");
+            code += &format!(
+                "setpos [{} {}]\n",
+                rand::thread_rng().gen_range(-400..=400),
+                rand::thread_rng().gen_range(-300..=300)
+            );
+            code += &format!("colorunder\n");
+            code += &format!("clean\n");
+        }
+
+        let mut interpreter = Interpreter::new();
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
+        interpreter.performance.print_summary(HashSet::from([
+            String::from("setbg"),
+            String::from("bg"),
+            String::from("colorunder"),
+            String::from("clean"),
         ]));
     }
 }

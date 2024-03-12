@@ -140,6 +140,7 @@ impl CommandDictionary {
         dictionary.add_infix(String::from("*"), Command::product());
         dictionary.add_infix(String::from("/"), Command::quotient());
         dictionary.add_infix(String::from("^"), Command::power());
+        dictionary.add_infix(String::from("%"), Command::remainder());
         dictionary.add_infix(String::from("="), Command::equal());
         dictionary.add_infix(String::from(">"), Command::greater());
         dictionary.add_infix(String::from("<"), Command::less());

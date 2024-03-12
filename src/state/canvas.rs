@@ -1,5 +1,5 @@
 use crate::language::token::Token;
-use crate::state::object::{CanvasObject, Line, Point, Size, Text, Turtle};
+use crate::state::object::{Line, Object, Point, Size, Text, Turtle};
 use crate::state::state::State;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
@@ -9,7 +9,7 @@ pub struct Canvas {
     size: Size,
     pixels: Vec<u8>,
     bg_color: u8,
-    objects: HashMap<String, CanvasObject>,
+    objects: HashMap<String, Object>,
     current_object_name: String,
     turtle_backpack: HashSet<String>,
 }
@@ -17,16 +17,16 @@ pub struct Canvas {
 impl Canvas {
     pub fn new() -> Self {
         let name = String::from("t1");
-        let turtle = Turtle::with(name.clone());
+        let turtle = Turtle::new(name.clone());
         let pixel_count = (State::DEFAULT_CANVAS_WIDTH * State::DEFAULT_CANVAS_HEIGHT) as usize;
         Canvas {
-            size: Size::from(
+            size: Size::new(
                 State::DEFAULT_CANVAS_WIDTH.clone(),
                 State::DEFAULT_CANVAS_HEIGHT.clone(),
             ),
             pixels: vec![0; pixel_count],
             bg_color: 255,
-            objects: [(name.clone(), CanvasObject::Turtle(turtle))]
+            objects: [(name.clone(), Object::Turtle(turtle))]
                 .into_iter()
                 .collect(),
             current_object_name: name,
@@ -34,28 +34,38 @@ impl Canvas {
         }
     }
 
-    pub fn current_object(&mut self) -> Result<&mut CanvasObject, Box<dyn Error>> {
+    pub fn current_object(&mut self) -> Result<&mut Object, Box<dyn Error>> {
         if let Some(obj) = self.objects.get_mut(&self.current_object_name) {
             Ok(obj)
         } else {
-            Err(Box::from("current object does not exist"))
+            Err(Box::from(format!(
+                "object {} does not exist",
+                self.current_object_name
+            )))
         }
     }
 
     pub fn current_turtle(&mut self) -> Result<&mut Turtle, Box<dyn Error>> {
-        if let Some(CanvasObject::Turtle(turtle)) = self.objects.get_mut(&self.current_object_name)
-        {
+        let current_obj = self.objects.get_mut(&self.current_object_name);
+        if let Some(Object::Turtle(turtle)) = current_obj {
             Ok(turtle)
         } else {
-            Err(Box::from("current object is not a turtle"))
+            Err(Box::from(format!(
+                "object {} is not a turtle",
+                self.current_object_name
+            )))
         }
     }
 
     pub fn current_text(&mut self) -> Result<&mut Text, Box<dyn Error>> {
-        if let Some(CanvasObject::Text(text)) = self.objects.get_mut(&self.current_object_name) {
+        let current_obj = self.objects.get_mut(&self.current_object_name);
+        if let Some(Object::Text(text)) = current_obj {
             Ok(text)
         } else {
-            Err(Box::from("current object is not a text"))
+            Err(Box::from(format!(
+                "object {} is not a text",
+                self.current_object_name
+            )))
         }
     }
 
@@ -69,7 +79,7 @@ impl Canvas {
     }
 
     pub fn get_turtle(&mut self, name: &String) -> Result<&mut Turtle, Box<dyn Error>> {
-        if let Some(CanvasObject::Turtle(turtle)) = self.objects.get_mut(name) {
+        if let Some(Object::Turtle(turtle)) = self.objects.get_mut(name) {
             Ok(turtle)
         } else {
             Err(Box::from(format!("turtle {} does not exist", name)))
@@ -80,9 +90,8 @@ impl Canvas {
         if self.objects.get(&name).is_some() {
             return Err(Box::from(format!("object {} already exists", name)));
         }
-        let turtle = Turtle::with(name.clone());
-        self.objects
-            .insert(name.clone(), CanvasObject::Turtle(turtle));
+        let turtle = Turtle::new(name.clone());
+        self.objects.insert(name.clone(), Object::Turtle(turtle));
         if self.objects.len() == 1 {
             self.current_object_name = name;
         }
@@ -93,8 +102,8 @@ impl Canvas {
         if self.objects.get(&name).is_some() {
             return Err(Box::from(format!("object {} already exists", name)));
         }
-        let text = Text::with(name.clone());
-        self.objects.insert(name.clone(), CanvasObject::Text(text));
+        let text = Text::new(name.clone());
+        self.objects.insert(name.clone(), Object::Text(text));
         if self.objects.len() == 1 {
             self.current_object_name = name;
         }
@@ -113,10 +122,9 @@ impl Canvas {
     pub fn init_backpack_property(&mut self, name: String) {
         self.turtle_backpack.insert(name.clone());
         for (_, obj) in &mut self.objects {
-            if let CanvasObject::Turtle(turtle) = obj {
-                turtle
-                    .backpack
-                    .insert(name.clone(), Token::Word(String::new()));
+            if let Object::Turtle(turtle) = obj {
+                let default_value = Token::Word(String::new());
+                turtle.backpack.insert(name.clone(), default_value);
             }
         }
     }

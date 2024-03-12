@@ -2,29 +2,29 @@ use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
 pub struct PerformanceTracker {
-    pub command_execution_times: HashMap<String, Vec<PerformanceResult>>,
+    pub execution_times: HashMap<String, Vec<PerformanceResult>>,
 }
 
 impl PerformanceTracker {
     pub fn new() -> Self {
         PerformanceTracker {
-            command_execution_times: HashMap::new(),
+            execution_times: HashMap::new(),
         }
     }
 
     #[allow(dead_code)]
-    pub fn record_command_execution(&mut self, command: &String, time: Duration, tag: String) {
-        if let Some(array) = self.command_execution_times.get_mut(command) {
-            array.push(PerformanceResult::from(time, tag));
+    pub fn record(&mut self, command: &String, time: Duration, tag: String) {
+        let perf = PerformanceResult::new(time, tag);
+        if let Some(array) = self.execution_times.get_mut(command) {
+            array.push(perf);
         } else {
-            self.command_execution_times
-                .insert(command.clone(), vec![PerformanceResult::from(time, tag)]);
+            self.execution_times.insert(command.clone(), vec![perf]);
         }
     }
 
     #[allow(dead_code)]
     pub fn print_summary(&self, include: HashSet<String>) {
-        for (command, results) in &self.command_execution_times {
+        for (command, results) in &self.execution_times {
             if include.get(command).is_none() {
                 continue;
             }
@@ -40,7 +40,7 @@ impl PerformanceTracker {
 
     #[allow(dead_code)]
     pub fn print_full_report(&self, include: HashSet<String>) {
-        for (command, results) in &self.command_execution_times {
+        for (command, results) in &self.execution_times {
             if include.get(command).is_none() {
                 continue;
             }
@@ -53,7 +53,7 @@ impl PerformanceTracker {
 
     #[allow(dead_code)]
     pub fn clear(&mut self) {
-        self.command_execution_times.clear();
+        self.execution_times.clear();
     }
 }
 
@@ -63,7 +63,7 @@ pub struct PerformanceResult {
 }
 
 impl PerformanceResult {
-    pub fn from(time: Duration, tag: String) -> Self {
+    pub fn new(time: Duration, tag: String) -> Self {
         PerformanceResult { time, tag }
     }
 }

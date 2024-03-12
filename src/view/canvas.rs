@@ -18,8 +18,8 @@ pub struct CanvasView {
 }
 
 impl CanvasView {
-    pub fn with(size: Vec2) -> Self {
-        let turtle = TurtleView::with(pos2(0.0, 0.0));
+    pub fn new(size: Vec2) -> Self {
+        let turtle = TurtleView::new(pos2(0.0, 0.0));
         CanvasView {
             pos: pos2(0.0, 0.0),
             size,

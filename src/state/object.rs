@@ -2,44 +2,44 @@ use crate::language::token::Token;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
-pub enum CanvasObject {
+pub enum Object {
     Turtle(Turtle),
     Text(Text),
 }
 
-impl CanvasObject {
+impl Object {
     pub fn name(&self) -> &String {
         match self {
-            CanvasObject::Turtle(turtle) => &turtle.name,
-            CanvasObject::Text(text) => &text.name,
+            Self::Turtle(turtle) => &turtle.name,
+            Self::Text(text) => &text.name,
         }
     }
 
     pub fn pos(&self) -> &Point {
         match self {
-            CanvasObject::Turtle(turtle) => &turtle.pos,
-            CanvasObject::Text(text) => &text.pos,
+            Self::Turtle(turtle) => &turtle.pos,
+            Self::Text(text) => &text.pos,
         }
     }
 
     pub fn set_pos(&mut self, pos: Point) {
         match self {
-            CanvasObject::Turtle(turtle) => turtle.pos = pos,
-            CanvasObject::Text(text) => text.pos = pos,
+            Self::Turtle(turtle) => turtle.pos = pos,
+            Self::Text(text) => text.pos = pos,
         }
     }
 
     pub fn color(&self) -> &f32 {
         match self {
-            CanvasObject::Turtle(turtle) => &turtle.color,
-            CanvasObject::Text(text) => &text.color,
+            Self::Turtle(turtle) => &turtle.color,
+            Self::Text(text) => &text.color,
         }
     }
 
     pub fn set_color(&mut self, color: f32) {
         match self {
-            CanvasObject::Turtle(turtle) => turtle.color = color,
-            CanvasObject::Text(text) => text.color = color,
+            Self::Turtle(turtle) => turtle.color = color,
+            Self::Text(text) => text.color = color,
         }
     }
 }
@@ -58,7 +58,7 @@ pub struct Turtle {
 }
 
 impl Turtle {
-    pub fn with(name: String) -> Self {
+    pub fn new(name: String) -> Self {
         Turtle {
             name,
             pos: Point::zero(),
@@ -106,7 +106,7 @@ pub struct Text {
 }
 
 impl Text {
-    pub fn with(name: String) -> Self {
+    pub fn new(name: String) -> Self {
         Text {
             name,
             pos: Point::zero(),
@@ -125,7 +125,7 @@ pub struct Point {
 }
 
 impl Point {
-    pub fn with(x: f32, y: f32) -> Self {
+    pub fn new(x: f32, y: f32) -> Self {
         Point { x, y }
     }
 
@@ -141,7 +141,7 @@ pub struct Size {
 }
 
 impl Size {
-    pub fn from(w: f32, h: f32) -> Self {
+    pub fn new(w: f32, h: f32) -> Self {
         Size { w, h }
     }
 }
@@ -155,7 +155,7 @@ pub struct Line {
 }
 
 impl Line {
-    pub fn from(start: Point, end: Point, color: f32, stroke_width: f32) -> Self {
+    pub fn new(start: Point, end: Point, color: f32, stroke_width: f32) -> Self {
         Line {
             start,
             end,

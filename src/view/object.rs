@@ -38,7 +38,7 @@ pub struct TurtleView {
 }
 
 impl TurtleView {
-    pub fn with(pos: Pos2) -> Self {
+    pub fn new(pos: Pos2) -> Self {
         TurtleView {
             pos,
             heading: 270.0,
@@ -58,7 +58,7 @@ pub struct TextView {
 }
 
 impl TextView {
-    pub fn with(pos: Pos2) -> Self {
+    pub fn new(pos: Pos2) -> Self {
         TextView {
             pos,
             color: Color32::from_gray(0),

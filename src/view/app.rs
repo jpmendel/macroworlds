@@ -33,7 +33,7 @@ impl App {
         );
         App {
             interpreter: Arc::from(Mutex::from(interpreter)),
-            canvas: Arc::from(Mutex::from(CanvasView::with(canvas_size))),
+            canvas: Arc::from(Mutex::from(CanvasView::new(canvas_size))),
             editor: Editor::new(),
             input_sender,
             is_running: Arc::from(Mutex::from(false)),
@@ -85,7 +85,7 @@ impl App {
         interpreter.reset();
 
         // Create a new blank canvas.
-        let new_canvas = CanvasView::with(vec2(
+        let new_canvas = CanvasView::new(vec2(
             State::DEFAULT_CANVAS_WIDTH.clone(),
             State::DEFAULT_CANVAS_HEIGHT.clone(),
         ));

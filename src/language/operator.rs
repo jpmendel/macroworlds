@@ -12,8 +12,8 @@ impl Command {
             String::from("sum"),
             Params::Variadic(2),
             |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
-                let mut result = 0.0;
-                for index in 0..args.len() {
+                let mut result = decode_number(com, &args, 0)?;
+                for index in 1..args.len() {
                     let num = decode_number(com, &args, index)?;
                     result += num;
                 }
@@ -40,8 +40,8 @@ impl Command {
             String::from("product"),
             Params::Variadic(2),
             |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
-                let mut result = 0.0;
-                for index in 0..args.len() {
+                let mut result = decode_number(com, &args, 0)?;
+                for index in 1..args.len() {
                     let num = decode_number(com, &args, index)?;
                     result *= num;
                 }
@@ -535,10 +535,11 @@ impl Command {
         Command::reserved(
             String::from("member?"),
             Params::Fixed(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
-                let item = decode_word(com, &args, 0)?;
+            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+                let item = decode_token(com, &args, 0)?;
                 let list = decode_list(com, &args, 1)?;
-                let result = list.contains(&item);
+                let list_items = int.parse_list(&list, true)?;
+                let result = list_items.contains(&item);
                 Ok(Token::Boolean(result))
             },
         )

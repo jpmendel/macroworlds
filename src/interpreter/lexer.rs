@@ -6,7 +6,7 @@ use std::error::Error;
 
 pub struct Lexer {
     dictionary: CommandDictionary,
-    stack: VecDeque<LexerFrame>,
+    stack: VecDeque<CodeBlock>,
 }
 
 impl Lexer {
@@ -17,16 +17,16 @@ impl Lexer {
         }
     }
 
-    pub fn push_frame(&mut self, text: &str, in_paren: bool) {
-        let frame = LexerFrame {
+    pub fn push_block(&mut self, text: &str, in_paren: bool) {
+        let block = CodeBlock {
             text: String::from(text),
             position: 0,
             in_paren,
         };
-        self.stack.push_back(frame);
+        self.stack.push_back(block);
     }
 
-    pub fn pop_frame(&mut self) -> bool {
+    pub fn pop_block(&mut self) -> bool {
         let exiting_main = self.stack.len() == 1;
         if self.stack.len() > 0 {
             self.stack.pop_back();
@@ -34,16 +34,16 @@ impl Lexer {
         exiting_main
     }
 
-    pub fn clear_frames(&mut self) {
+    pub fn clear_blocks(&mut self) {
         self.stack.clear();
     }
 
-    pub fn return_to_start_of_top_frame(&mut self) {
-        let top_frame = self.stack.back_mut().unwrap();
-        top_frame.position = 0;
+    pub fn return_to_start_of_block(&mut self) {
+        let block = self.stack.back_mut().unwrap();
+        block.position = 0;
     }
 
-    fn get_top_frame(&mut self) -> &mut LexerFrame {
+    fn current_block(&mut self) -> &mut CodeBlock {
         self.stack.back_mut().unwrap()
     }
 
@@ -58,62 +58,51 @@ impl Lexer {
                 return Err(Box::from(format!("{} is reserved", name)));
             }
         }
-        self.dictionary
-            .add(Command::user_defined(name, params, action));
+        let new_command = Command::user_defined(name, params, action);
+        self.dictionary.add(new_command);
         Ok(())
     }
 
     pub fn read_token(&mut self) -> Result<Token, Box<dyn Error>> {
         self.consume_whitespace();
-        let frame = self.get_top_frame();
-        if frame.current_char() == '\0' {
+        let block = self.current_block();
+        if block.current_char() == '\0' {
             return Err(Box::from("eof"));
         }
-        if frame.current_char() == '(' {
+        if block.current_char() == '(' {
             let token = self.read_parenthesis()?;
             let with_infix = self.handle_parse_infix(token);
             return Ok(with_infix);
         }
         let identifier = self.read_identifier()?;
+        let token: Token;
         if let Some(command) = self.dictionary.lookup(&identifier) {
             // Command
             let args = self.read_arguments(&command);
-            let token = Token::Command(command, args);
-            let with_infix = self.handle_parse_infix(token);
-            Ok(with_infix)
+            token = Token::Command(command, args);
         } else if identifier.starts_with(':') {
             // Variable
             let sanitized = identifier[1..].to_string();
-            let token = Token::Variable(sanitized);
-            let with_infix = self.handle_parse_infix(token);
-            Ok(with_infix)
+            token = Token::Variable(sanitized);
         } else if identifier.starts_with('\"') {
             // Word
             let sanitized = identifier[1..].to_string();
-            let token = Token::Word(sanitized);
-            let with_infix = self.handle_parse_infix(token);
-            Ok(with_infix)
+            token = Token::Word(sanitized);
         } else if let Ok(num) = identifier.parse::<f32>() {
             // Number
-            let token = Token::Number(num);
-            let with_infix = self.handle_parse_infix(token);
-            Ok(with_infix)
+            token = Token::Number(num);
         } else if identifier == "true" || identifier == "false" {
             // Boolean
-            let token = Token::Boolean(identifier == "true");
-            let with_infix = self.handle_parse_infix(token);
-            Ok(with_infix)
+            token = Token::Boolean(identifier == "true");
         } else if identifier.starts_with('[') {
             // List
             let sanitized = identifier[1..identifier.len() - 1].to_string();
-            let token = Token::List(sanitized);
-            let with_infix = self.handle_parse_infix(token);
-            Ok(with_infix)
+            token = Token::List(sanitized);
         } else if identifier.ends_with(',') {
             // Object "talkto" Command Shortcut
             let sanitized = identifier[..identifier.len() - 1].to_string();
             let token = Token::Command(Command::talkto(), vec![Token::Word(sanitized)]);
-            Ok(token)
+            return Ok(token);
         } else if identifier.ends_with("\'s") {
             // Object "ask" Command Shortcut
             let sanitized = identifier[..identifier.len() - 2].to_string();
@@ -121,50 +110,53 @@ impl Lexer {
             let mut args = vec![Token::Word(sanitized)];
             let rest_args = self.read_fixed_arguments(&command.name, 1);
             args.extend(rest_args);
-            let token = Token::Command(command, args);
-            let with_infix = self.handle_parse_infix(token);
-            Ok(with_infix)
+            token = Token::Command(command, args);
         } else if identifier.is_empty() {
-            Err(Box::from("eof"))
+            return Err(Box::from("eof"));
         } else {
-            Ok(Token::Undefined(identifier))
+            return Ok(Token::Undefined(identifier));
         }
+
+        // Look for an infix operator like +, -, * or / which will come
+        // after the first argument but before the second.
+        let with_infix = self.handle_parse_infix(token);
+        Ok(with_infix)
     }
 
     fn consume_whitespace(&mut self) {
-        let frame = self.get_top_frame();
-        while frame.current_char().is_whitespace() && frame.current_char() != '\0' {
-            frame.next();
+        let block = self.current_block();
+        while block.current_char().is_whitespace() && block.current_char() != '\0' {
+            block.next();
         }
-        if frame.current_char() == ';' {
+        if block.current_char() == ';' {
             self.consume_until_newline();
         }
     }
 
     fn consume_until_newline(&mut self) {
-        let frame = self.get_top_frame();
-        while frame.current_char() != '\n' && frame.current_char() != '\0' {
-            frame.next();
+        let block = self.current_block();
+        while block.current_char() != '\n' && block.current_char() != '\0' {
+            block.next();
         }
-        frame.next();
+        block.next();
     }
 
     fn read_identifier(&mut self) -> Result<String, Box<dyn Error>> {
         self.consume_whitespace();
-        let frame = self.get_top_frame();
+        let block = self.current_block();
         let mut command_name = String::new();
         let mut bracket_count = 0;
-        while (!frame.current_char().is_whitespace() || bracket_count != 0)
-            && frame.current_char() != '\0'
+        while (!block.current_char().is_whitespace() || bracket_count != 0)
+            && block.current_char() != '\0'
         {
-            let chr = frame.current_char().clone();
+            let chr = block.current_char().clone();
             if chr == '[' {
                 bracket_count += 1;
             } else if chr == ']' {
                 bracket_count -= 1;
             }
             command_name.push(chr);
-            frame.next();
+            block.next();
         }
         if bracket_count != 0 {
             return Err(Box::from("found unmatched brackets"));
@@ -198,8 +190,8 @@ impl Lexer {
 
     fn read_variadic_arguments(&mut self, default_count: usize) -> Vec<Token> {
         let mut args = vec![];
-        let frame = self.get_top_frame();
-        if frame.in_paren {
+        let block = self.current_block();
+        if block.in_paren {
             while let Ok(token) = self.read_token() {
                 args.push(token);
             }
@@ -214,17 +206,17 @@ impl Lexer {
     }
 
     fn read_parenthesis(&mut self) -> Result<Token, Box<dyn Error>> {
-        let frame = self.get_top_frame();
+        let block = self.current_block();
         let mut code = String::new();
         let mut paren_count = 0;
-        if frame.current_char() == '(' {
+        if block.current_char() == '(' {
             paren_count += 1;
-            frame.next();
+            block.next();
         }
-        while paren_count != 0 && frame.current_char() != '\0' {
-            if frame.current_char() == '(' {
+        while paren_count != 0 && block.current_char() != '\0' {
+            if block.current_char() == '(' {
                 paren_count += 1;
-            } else if frame.current_char() == ')' {
+            } else if block.current_char() == ')' {
                 paren_count -= 1;
             }
             // If we get matched parenthesis, exit early so we
@@ -232,13 +224,13 @@ impl Lexer {
             if paren_count == 0 {
                 break;
             }
-            code.push(frame.current_char().clone());
-            frame.next();
+            code.push(block.current_char().clone());
+            block.next();
         }
         if paren_count != 0 {
             return Err(Box::from("found unmatched parenthesis"));
         }
-        frame.next();
+        block.next();
         Ok(Token::Command(Command::paren(), vec![Token::List(code)]))
     }
 
@@ -250,18 +242,18 @@ impl Lexer {
     }
 
     fn peek_infix_operator(&mut self) -> Option<Command> {
-        let saved_position = self.get_top_frame().position.clone();
+        let saved_position = self.current_block().position.clone();
         self.consume_whitespace();
-        let frame = self.get_top_frame();
+        let block = self.current_block();
         let mut operator = String::new();
-        while !frame.current_char().is_whitespace() && frame.current_char() != '\0' {
-            operator.push(frame.current_char().clone());
-            frame.next();
+        while !block.current_char().is_whitespace() && block.current_char() != '\0' {
+            operator.push(block.current_char().clone());
+            block.next();
         }
         if let Some(command) = self.dictionary.lookup_infix(&operator) {
             Some(command)
         } else {
-            self.get_top_frame().position = saved_position;
+            self.current_block().position = saved_position;
             None
         }
     }
@@ -274,65 +266,65 @@ impl Lexer {
 
     fn read_procedure(&mut self) -> Result<Token, Box<dyn Error>> {
         self.consume_whitespace();
-        let frame = self.get_top_frame();
+        let block = self.current_block();
 
         // Read procedure name.
         let mut name = String::new();
-        while frame.current_char().is_alphanumeric() {
-            name.push(frame.current_char().clone());
-            frame.next();
+        while block.current_char().is_alphanumeric() {
+            name.push(block.current_char().clone());
+            block.next();
         }
 
         // Read parameter names.
         let mut params: Vec<String> = vec![];
-        while frame.current_char() != '\n' {
-            while frame.current_char() != ':'
-                && frame.current_char() != '\n'
-                && frame.current_char() != '\0'
+        while block.current_char() != '\n' {
+            while block.current_char() != ':'
+                && block.current_char() != '\n'
+                && block.current_char() != '\0'
             {
-                frame.next();
+                block.next();
             }
-            frame.next();
+            block.next();
             let mut param_name = String::new();
-            while frame.current_char() != ' '
-                && frame.current_char() != '\n'
-                && frame.current_char() != '\0'
+            while block.current_char() != ' '
+                && block.current_char() != '\n'
+                && block.current_char() != '\0'
             {
-                param_name.push(frame.current_char().clone());
-                frame.next();
+                param_name.push(block.current_char().clone());
+                block.next();
             }
             if !param_name.is_empty() {
                 params.push(param_name);
             }
-            while frame.current_char() == ' '
-                && frame.current_char() != '\n'
-                && frame.current_char() != '\0'
+            while block.current_char() == ' '
+                && block.current_char() != '\n'
+                && block.current_char() != '\0'
             {
-                frame.next();
+                block.next();
             }
         }
 
         // Find the "end" keyword to know when to stop.
         self.consume_until_newline();
-        let frame = self.get_top_frame();
-        let mut block = String::new();
-        while !block.ends_with("end\n") && frame.current_char() != '\0' {
-            block.push(frame.current_char().clone());
-            frame.next();
+        let block = self.current_block();
+        let mut code = String::new();
+        while !code.ends_with("end\n") && block.current_char() != '\0' {
+            code.push(block.current_char().clone());
+            block.next();
         }
-        block = block.replacen("end\n", "", 1);
-        Ok(Token::Procedure(name, params, block))
+        code = code.replacen("end\n", "", 1);
+        Ok(Token::Procedure(name, params, code))
     }
 }
 
 #[derive(Debug, Clone)]
-struct LexerFrame {
+struct CodeBlock {
     text: String,
     position: usize,
     in_paren: bool,
 }
 
-impl LexerFrame {
+impl CodeBlock {
     fn current_char(&self) -> char {
         self.text.chars().nth(self.position).unwrap_or('\0')
     }

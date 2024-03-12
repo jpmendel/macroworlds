@@ -5,7 +5,7 @@ use crate::language::token::Token;
 use crate::language::util::{
     decode_list, decode_number, decode_token, decode_word, join_to_list_string,
 };
-use crate::state::object::{CanvasObject, Line, Point, TurtleShape};
+use crate::state::object::{Line, Object, Point, TurtleShape};
 use std::f32::consts::PI;
 use std::thread;
 use std::time::Duration;
@@ -22,7 +22,7 @@ impl Command {
                 let h = turtle.true_heading();
                 let x = dist * h.cos();
                 let y = dist * h.sin();
-                let new_pos = Point::with(original_pos.x + x, original_pos.y + y);
+                let new_pos = Point::new(original_pos.x + x, original_pos.y + y);
                 turtle.pos = new_pos.clone();
                 int.event
                     .send_ui(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
@@ -30,7 +30,7 @@ impl Command {
                     let name = turtle.name.clone();
                     let color = turtle.color.clone();
                     let pen_size = turtle.pen_size.clone();
-                    let line = Line::from(original_pos, new_pos, color, pen_size);
+                    let line = Line::new(original_pos, new_pos, color, pen_size);
                     int.state.canvas.add_line(line.clone());
                     int.event.send_ui(UiEvent::AddLine(name, line));
                 }
@@ -50,7 +50,7 @@ impl Command {
                 let h = turtle.true_heading();
                 let x = -dist * h.cos();
                 let y = -dist * h.sin();
-                let new_pos = Point::with(original_pos.x + x, original_pos.y + y);
+                let new_pos = Point::new(original_pos.x + x, original_pos.y + y);
                 turtle.pos = new_pos.clone();
                 int.event
                     .send_ui(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
@@ -58,7 +58,7 @@ impl Command {
                     let name = turtle.name.clone();
                     let color = turtle.color.clone();
                     let pen_size = turtle.pen_size.clone();
-                    let line = Line::from(original_pos, new_pos, color, pen_size);
+                    let line = Line::new(original_pos, new_pos, color, pen_size);
                     int.state.canvas.add_line(line.clone());
                     int.event.send_ui(UiEvent::AddLine(name, line));
                 }
@@ -150,8 +150,8 @@ impl Command {
             String::from("color"),
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                let obj = int.state.canvas.current_object()?;
-                Ok(Token::Number(obj.color().clone()))
+                let object = int.state.canvas.current_object()?;
+                Ok(Token::Number(object.color().clone()))
             },
         )
     }
@@ -184,18 +184,20 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let x = decode_number(com, &args, 0)?;
-                let obj = int.state.canvas.current_object()?;
-                let original_pos = obj.pos().clone();
-                let new_pos = Point::with(x, original_pos.y);
-                obj.set_pos(new_pos.clone());
-                int.event
-                    .send_ui(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
-                if let CanvasObject::Turtle(turtle) = obj {
+                let object = int.state.canvas.current_object()?;
+                let original_pos = object.pos().clone();
+                let new_pos = Point::new(x, original_pos.y);
+                object.set_pos(new_pos.clone());
+                int.event.send_ui(UiEvent::ObjectPos(
+                    object.name().clone(),
+                    object.pos().clone(),
+                ));
+                if let Object::Turtle(turtle) = object {
                     if turtle.is_drawing {
                         let name = turtle.name.clone();
                         let color = turtle.color.clone();
-                        let pen_size = turtle.pen_size.clone();
-                        let line = Line::from(original_pos, new_pos, color, pen_size);
+                        let stroke_width = turtle.pen_size.clone();
+                        let line = Line::new(original_pos, new_pos, color, stroke_width);
                         int.state.canvas.add_line(line.clone());
                         int.event.send_ui(UiEvent::AddLine(name, line));
                     }
@@ -211,18 +213,20 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let y = decode_number(com, &args, 0)?;
-                let obj = int.state.canvas.current_object()?;
-                let original_pos = obj.pos().clone();
-                let new_pos = Point::with(original_pos.x, y);
-                obj.set_pos(new_pos.clone());
-                int.event
-                    .send_ui(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
-                if let CanvasObject::Turtle(turtle) = obj {
+                let object = int.state.canvas.current_object()?;
+                let original_pos = object.pos().clone();
+                let new_pos = Point::new(original_pos.x, y);
+                object.set_pos(new_pos.clone());
+                int.event.send_ui(UiEvent::ObjectPos(
+                    object.name().clone(),
+                    object.pos().clone(),
+                ));
+                if let Object::Turtle(turtle) = object {
                     if turtle.is_drawing {
                         let name = turtle.name.clone();
                         let color = turtle.color.clone();
-                        let pen_size = turtle.pen_size.clone();
-                        let line = Line::from(original_pos, new_pos, color, pen_size);
+                        let stroke_width = turtle.pen_size.clone();
+                        let line = Line::new(original_pos, new_pos, color, stroke_width);
                         int.state.canvas.add_line(line.clone());
                         int.event.send_ui(UiEvent::AddLine(name, line));
                     }
@@ -240,30 +244,33 @@ impl Command {
                 let list = decode_list(com, &args, 0)?;
                 let list_items = int.parse_list(&list, true)?;
                 if list_items.len() != 2 {
-                    return Err(Box::from("invalid coordinates"));
+                    return Err(Box::from("setpos expected 2 coordinates"));
                 }
-                if let Some(Token::Number(x)) = list_items.get(0) {
-                    if let Some(Token::Number(y)) = list_items.get(1) {
-                        let obj = int.state.canvas.current_object()?;
-                        let original_pos = obj.pos().clone();
-                        let new_pos = Point::with(*x, *y);
-                        obj.set_pos(new_pos.clone());
-                        int.event
-                            .send_ui(UiEvent::ObjectPos(obj.name().clone(), obj.pos().clone()));
-                        if let CanvasObject::Turtle(turtle) = obj {
-                            if turtle.is_drawing {
-                                let name = turtle.name.clone();
-                                let color = turtle.color.clone();
-                                let pen_size = turtle.pen_size.clone();
-                                let line = Line::from(original_pos, new_pos, color, pen_size);
-                                int.state.canvas.add_line(line.clone());
-                                int.event.send_ui(UiEvent::AddLine(name, line));
-                            }
-                        }
-                        return Ok(Token::Void);
+                let Some(Token::Number(x)) = list_items.get(0) else {
+                    return Err(Box::from("setpos expected number for x-coordinate"));
+                };
+                let Some(Token::Number(y)) = list_items.get(1) else {
+                    return Err(Box::from("setpos expected number for y-coordinate"));
+                };
+                let object = int.state.canvas.current_object()?;
+                let original_pos = object.pos().clone();
+                let new_pos = Point::new(*x, *y);
+                object.set_pos(new_pos.clone());
+                int.event.send_ui(UiEvent::ObjectPos(
+                    object.name().clone(),
+                    object.pos().clone(),
+                ));
+                if let Object::Turtle(turtle) = object {
+                    if turtle.is_drawing {
+                        let name = turtle.name.clone();
+                        let color = turtle.color.clone();
+                        let stroke_width = turtle.pen_size.clone();
+                        let line = Line::new(original_pos, new_pos, color, stroke_width);
+                        int.state.canvas.add_line(line.clone());
+                        int.event.send_ui(UiEvent::AddLine(name, line));
                     }
                 }
-                Err(Box::from("setpos expected number for coordinates"))
+                Ok(Token::Void)
             },
         )
     }
@@ -291,11 +298,11 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let color = decode_number(com, &args, 0)?;
-                let obj = int.state.canvas.current_object()?;
-                obj.set_color(color);
+                let object = int.state.canvas.current_object()?;
+                object.set_color(color);
                 int.event.send_ui(UiEvent::ObjectColor(
-                    obj.name().clone(),
-                    obj.color().clone(),
+                    object.name().clone(),
+                    object.color().clone(),
                 ));
                 Ok(Token::Void)
             },
@@ -595,7 +602,7 @@ impl Command {
                     let name = turtle.name.clone();
                     let color = turtle.color.clone();
                     let pen_size = turtle.pen_size.clone();
-                    let line = Line::from(original_pos, new_pos, color, pen_size);
+                    let line = Line::new(original_pos, new_pos, color, pen_size);
                     int.state.canvas.add_line(line.clone());
                     int.event.send_ui(UiEvent::AddLine(name, line));
                 }

@@ -46,7 +46,7 @@ impl Command {
                 let count = decode_number(com, &args, 0)? as usize;
                 let code = decode_list(com, &args, 1)?;
                 for _ in 0..count {
-                    int.interpret_in_new_scope(&code, vec![])?;
+                    int.interpret(&code)?;
                 }
                 Ok(Token::Void)
             },
@@ -60,10 +60,7 @@ impl Command {
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let code = decode_list(com, &args, 0)?;
                 loop {
-                    let result = int.interpret_in_new_scope(&code, vec![]);
-                    if let Err(err) = result {
-                        return Err(err);
-                    }
+                    int.interpret(&code)?;
                 }
             },
         )
@@ -76,21 +73,18 @@ impl Command {
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let loop_config = decode_list(com, &args, 0)?;
                 let code = decode_list(com, &args, 1)?;
-                let list_items = int.parse_list(&loop_config, true)?;
-                if let Some(Token::Word(var_name)) = list_items.get(0) {
-                    if let Some(Token::Number(count)) = list_items.get(1) {
-                        for index in 0..(*count as usize) {
-                            let local_params =
-                                vec![(var_name.clone(), Token::Number(index as f32))];
-                            int.interpret_in_new_scope(&code, local_params)?;
-                        }
-                        Ok(Token::Void)
-                    } else {
-                        Err(Box::from("dotimes expected number for input 1 in input 0"))
-                    }
-                } else {
-                    Err(Box::from("dotimes expected word for input 0 in input 0"))
+                let config_items = int.parse_list(&loop_config, true)?;
+                let Some(Token::Word(var_name)) = config_items.get(0) else {
+                    return Err(Box::from("dotimes expected word for input 0 in input 0"));
+                };
+                let Some(Token::Number(count)) = config_items.get(1) else {
+                    return Err(Box::from("dotimes expected number for input 1 in input 0"));
+                };
+                for index in 0..(*count as usize) {
+                    let local_params = vec![(var_name.clone(), Token::Number(index as f32))];
+                    int.interpret_in_new_scope(&code, local_params)?;
                 }
+                Ok(Token::Void)
             },
         )
     }
@@ -102,21 +96,19 @@ impl Command {
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let loop_config = decode_list(com, &args, 0)?;
                 let code = decode_list(com, &args, 1)?;
-                let list_items = int.parse_list(&loop_config, false)?;
-                if let Some(Token::Word(var_name)) = list_items.get(0) {
-                    if let Some(Token::List(list)) = list_items.get(1) {
-                        let list_items = int.parse_list(&list, true)?;
-                        for item in list_items {
-                            let local_params = vec![(var_name.clone(), item)];
-                            int.interpret_in_new_scope(&code, local_params)?;
-                        }
-                        Ok(Token::Void)
-                    } else {
-                        Err(Box::from("dolist expected list for input 1 in input 0"))
-                    }
-                } else {
-                    Err(Box::from("dolist expected word for input 0 in input 0"))
+                let config_items = int.parse_list(&loop_config, false)?;
+                let Some(Token::Word(var_name)) = config_items.get(0) else {
+                    return Err(Box::from("dolist expected word for input 0 in input 0"));
+                };
+                let Some(Token::List(list)) = config_items.get(1) else {
+                    return Err(Box::from("dolist expected list for input 1 in input 0"));
+                };
+                let list_items = int.parse_list(&list, true)?;
+                for item in list_items {
+                    let local_params = vec![(var_name.clone(), item)];
+                    int.interpret_in_new_scope(&code, local_params)?;
                 }
+                Ok(Token::Void)
             },
         )
     }
@@ -153,7 +145,7 @@ impl Command {
             String::from("recurse"),
             Params::None,
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
-                int.lexer.return_to_start_of_top_frame();
+                int.lexer.return_to_start_of_block();
                 Ok(Token::Void)
             },
         )

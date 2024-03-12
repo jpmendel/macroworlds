@@ -73,7 +73,7 @@ impl Interpreter {
         if code.is_empty() {
             return Ok(Token::Void);
         }
-        self.lexer.push_frame(code, in_paren);
+        self.lexer.push_block(code, in_paren);
         loop {
             while let Ok(input_event) = self.event.receive_input() {
                 self.handle_input(input_event)?;
@@ -88,7 +88,7 @@ impl Interpreter {
                     if handle_error {
                         println!("error: {}", err);
                         self.event.send_ui(UiEvent::ConsolePrint(err.to_string()));
-                        self.clean_up();
+                        self.terminate_program();
                     } else {
                         self.exit_scope();
                     }
@@ -114,7 +114,7 @@ impl Interpreter {
                             println!("error: {}", err);
                             self.event.send_ui(UiEvent::ConsolePrint(err.to_string()));
                         }
-                        self.clean_up();
+                        self.terminate_program();
                     } else {
                         self.exit_scope();
                     }
@@ -128,29 +128,28 @@ impl Interpreter {
     fn execute_command(&mut self, token: Token) -> Result<Token, Box<dyn Error>> {
         match token {
             Token::Command(command, args) => {
-                let mut results = vec![];
+                let mut computed_args = vec![];
                 for arg in args {
-                    let result = self.execute_command(arg)?;
-                    results.push(result);
+                    let computed_arg = self.execute_command(arg)?;
+                    computed_args.push(computed_arg);
                 }
                 if DEBUG {
-                    println!("{} {:?}", command.name, results);
+                    println!("{} {:?}", command.name, computed_args);
                 }
                 #[cfg(not(feature = "performance"))]
                 {
-                    (command.action)(self, &command.name, results)
+                    (command.action)(self, &command.name, computed_args)
                 }
                 #[cfg(feature = "performance")]
                 {
                     let start = Instant::now();
-                    let result = (command.action)(self, &command.name, results.clone())?;
+                    let result = (command.action)(self, &command.name, computed_args.clone())?;
                     let time = start.elapsed();
                     let mut tag = command.name.clone();
-                    for arg in results {
+                    for arg in computed_args {
                         tag += &format!(" {}", arg.to_string());
                     }
-                    self.performance
-                        .record_command_execution(&command.name, time, tag);
+                    self.performance.record(&command.name, time, tag);
                     Ok(result)
                 }
             }
@@ -308,15 +307,15 @@ impl Interpreter {
     }
 
     fn exit_scope(&mut self) {
-        let exited_main = self.lexer.pop_frame();
+        let exited_main = self.lexer.pop_block();
         if exited_main {
             println!("Done!");
-            self.clean_up();
+            self.terminate_program();
         }
     }
 
-    fn clean_up(&mut self) {
-        self.lexer.clear_frames();
+    fn terminate_program(&mut self) {
+        self.lexer.clear_blocks();
         self.state.data.reset_scope();
         self.event.send_ui(UiEvent::Done);
     }

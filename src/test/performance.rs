@@ -11,7 +11,7 @@ mod tests {
 
         for _ in 0..num_executions {
             code += &format!(
-                "sum {} {}\n",
+                "{} + {}\n",
                 rand::thread_rng().gen_range(-1000..=1000),
                 rand::thread_rng().gen_range(-1000..=1000)
             );
@@ -23,12 +23,12 @@ mod tests {
                 rand::thread_rng().gen_range(-1000..=1000)
             );
             code += &format!(
-                "difference {} {}\n",
+                "{} - {}\n",
                 rand::thread_rng().gen_range(-1000..=1000),
                 rand::thread_rng().gen_range(-1000..=1000)
             );
             code += &format!(
-                "product {} {}\n",
+                "{} * {}\n",
                 rand::thread_rng().gen_range(-500..=500),
                 rand::thread_rng().gen_range(-500..=500)
             );
@@ -40,17 +40,17 @@ mod tests {
                 rand::thread_rng().gen_range(-300..=300)
             );
             code += &format!(
-                "quotient {} {}\n",
+                "{} / {}\n",
                 rand::thread_rng().gen_range(-1000..=1000) + 1,
                 rand::thread_rng().gen_range(-500..=500) + 1
             );
             code += &format!(
-                "power {} {}\n",
+                "{} ^ {}\n",
                 rand::thread_rng().gen_range(-1000..=1000),
                 rand::thread_rng().gen_range(-10..=10)
             );
             code += &format!(
-                "remainder {} {}\n",
+                "{} % {}\n",
                 rand::thread_rng().gen_range(-1000..=1000) + 1,
                 rand::thread_rng().gen_range(-500..=500) + 1
             );
@@ -121,7 +121,7 @@ mod tests {
                 booleans.choose(&mut rand::thread_rng()).unwrap(),
                 booleans.choose(&mut rand::thread_rng()).unwrap()
             );
-            code += &format!("carefully [missing] []\n");
+            code += &format!("carefully [missing] [show errormessage]\n");
         }
 
         let mut interpreter = Interpreter::new();
@@ -138,6 +138,7 @@ mod tests {
             String::from("equal?"),
             String::from("greater?"),
             String::from("less?"),
+            String::from("errormessage"),
         ]));
     }
 
@@ -185,6 +186,41 @@ mod tests {
         interpreter
             .performance
             .print_summary(HashSet::from([String::from("make"), String::from("let")]));
+    }
+
+    #[test]
+    fn list_processing() {
+        let num_executions: usize = 20;
+        let mut code = String::new();
+
+        code += "make \"ls [one two three four]\n";
+        for _ in 0..num_executions {
+            code += &format!("list \"five \"six \"seven\n");
+            code += &format!("fput \"zero :ls\n");
+            code += &format!("lput \"five :ls\n");
+            code += &format!("first :ls\n");
+            code += &format!("last :ls\n");
+            code += &format!("butfirst :ls\n");
+            code += &format!("butlast :ls\n");
+            code += &format!("member? \"two :ls\n");
+            code += &format!("empty? :ls\n");
+        }
+
+        let mut interpreter = Interpreter::new();
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
+        interpreter.performance.print_summary(HashSet::from([
+            String::from("list"),
+            String::from("fput"),
+            String::from("lput"),
+            String::from("first"),
+            String::from("last"),
+            String::from("butfirst"),
+            String::from("butlast"),
+            String::from("member?"),
+            String::from("empty?"),
+        ]));
     }
 
     #[test]

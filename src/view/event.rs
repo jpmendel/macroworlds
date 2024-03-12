@@ -25,7 +25,7 @@ impl UiEventHandler for CanvasView {
             }
             UiEvent::NewTurtle(name) => {
                 if let None = self.objects.get(&name) {
-                    let turtle = TurtleView::with(pos2(0.0, 0.0));
+                    let turtle = TurtleView::new(pos2(0.0, 0.0));
                     self.objects.insert(name, ObjectView::Turtle(turtle));
                 } else {
                     self.print_to_console(format!("object named {} already exists", name));
@@ -33,7 +33,7 @@ impl UiEventHandler for CanvasView {
             }
             UiEvent::NewText(name) => {
                 if let None = self.objects.get(&name) {
-                    let text = TextView::with(pos2(0.0, 0.0));
+                    let text = TextView::new(pos2(0.0, 0.0));
                     self.objects.insert(name, ObjectView::Text(text));
                 } else {
                     self.print_to_console(format!("object named {} already exists", name));

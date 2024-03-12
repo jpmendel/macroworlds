@@ -59,10 +59,12 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &String, args: Vec<Token>| {
                 let code = decode_list(com, &args, 0)?;
-                let local_params = vec![];
-                let looping_code = code + "\n__loop";
-                int.interpret_in_new_scope(&looping_code, local_params)?;
-                Ok(Token::Void)
+                loop {
+                    let result = int.interpret_in_new_scope(&code, vec![]);
+                    if let Err(err) = result {
+                        return Err(err);
+                    }
+                }
             },
         )
     }
@@ -142,6 +144,17 @@ impl Command {
             |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
                 let error = int.state.data.get_last_error_message();
                 Ok(Token::Word(error))
+            },
+        )
+    }
+
+    pub fn recurse() -> Self {
+        Command::reserved(
+            String::from("recurse"),
+            Params::None,
+            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+                int.lexer.return_to_start_of_top_frame();
+                Ok(Token::Void)
             },
         )
     }

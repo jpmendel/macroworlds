@@ -166,15 +166,45 @@ mod tests {
     }
 
     #[test]
-    fn turtle_movement() {
+    fn variables() {
         let num_executions: usize = 20;
         let mut code = String::new();
 
+        for index in 0..num_executions {
+            code += &format!("make \"num {}\n", index);
+            code += &format!("make \"word \"text{}\n", index);
+            code += &format!("make \"list [{} {} {}]\n", index, index + 1, index + 2);
+            code += &format!("let [temp1 {} temp2 \"text{}]", index, index,);
+            code += &format!("let [temp3 [{} {} {}]]", index, index + 1, index + 2);
+        }
+
+        let mut interpreter = Interpreter::new();
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
+        interpreter
+            .performance
+            .print_summary(HashSet::from([String::from("make"), String::from("let")]));
+    }
+
+    #[test]
+    fn turtle_movement_pen_down() {
+        let num_executions: usize = 20;
+        let mut code = String::new();
+
+        code += "pd\n";
         for _ in 0..num_executions {
             code += &format!("forward {}\n", rand::thread_rng().gen_range(0..=50));
             code += &format!("right {}\n", rand::thread_rng().gen_range(0..360));
             code += &format!("back {}\n", rand::thread_rng().gen_range(0..=50));
             code += &format!("left {}\n", rand::thread_rng().gen_range(0..360));
+            code += &format!("setx {}\n", rand::thread_rng().gen_range(-300..=300));
+            code += &format!("sety {}\n", rand::thread_rng().gen_range(-200..=200));
+            code += &format!(
+                "setpos [{} {}]\n",
+                rand::thread_rng().gen_range(-300..=300),
+                rand::thread_rng().gen_range(-200..=200)
+            );
         }
 
         let mut interpreter = Interpreter::new();
@@ -186,6 +216,44 @@ mod tests {
             String::from("back"),
             String::from("left"),
             String::from("right"),
+            String::from("setx"),
+            String::from("sety"),
+            String::from("setpos"),
+        ]));
+    }
+
+    #[test]
+    fn turtle_movement_pen_up() {
+        let num_executions: usize = 20;
+        let mut code = String::new();
+
+        code += "pu\n";
+        for _ in 0..num_executions {
+            code += &format!("forward {}\n", rand::thread_rng().gen_range(0..=50));
+            code += &format!("right {}\n", rand::thread_rng().gen_range(0..360));
+            code += &format!("back {}\n", rand::thread_rng().gen_range(0..=50));
+            code += &format!("left {}\n", rand::thread_rng().gen_range(0..360));
+            code += &format!("setx {}\n", rand::thread_rng().gen_range(-300..=300));
+            code += &format!("sety {}\n", rand::thread_rng().gen_range(-200..=200));
+            code += &format!(
+                "setpos [{} {}]\n",
+                rand::thread_rng().gen_range(-300..=300),
+                rand::thread_rng().gen_range(-200..=200)
+            );
+        }
+
+        let mut interpreter = Interpreter::new();
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
+        interpreter.performance.print_summary(HashSet::from([
+            String::from("forward"),
+            String::from("back"),
+            String::from("left"),
+            String::from("right"),
+            String::from("setx"),
+            String::from("sety"),
+            String::from("setpos"),
         ]));
     }
 
@@ -196,15 +264,8 @@ mod tests {
         let shapes = vec!["triangle", "circle", "square"];
 
         for _ in 0..num_executions {
-            code += &format!("setx {}\n", rand::thread_rng().gen_range(-300..=300));
             code += &format!("xcor\n");
-            code += &format!("sety {}\n", rand::thread_rng().gen_range(-200..=200));
             code += &format!("ycor\n");
-            code += &format!(
-                "setpos [{} {}]\n",
-                rand::thread_rng().gen_range(-300..=300),
-                rand::thread_rng().gen_range(-200..=200)
-            );
             code += &format!("pos\n");
             code += &format!("seth {}\n", rand::thread_rng().gen_range(0..360));
             code += &format!("heading\n");
@@ -224,11 +285,8 @@ mod tests {
         assert!(result.is_ok());
 
         interpreter.performance.print_summary(HashSet::from([
-            String::from("setx"),
             String::from("xcor"),
-            String::from("sety"),
             String::from("ycor"),
-            String::from("setpos"),
             String::from("pos"),
             String::from("seth"),
             String::from("heading"),
@@ -238,6 +296,30 @@ mod tests {
             String::from("pensize"),
             String::from("setsh"),
             String::from("shape"),
+        ]));
+    }
+
+    #[test]
+    fn object_custom_attributes() {
+        let num_executions: usize = 20;
+        let mut code = String::new();
+
+        for index in 0..num_executions {
+            code += &format!("turtlesown \"attr{}\n", index);
+        }
+        for _ in 0..num_executions {
+            code += &format!("setattr0 {}\n", rand::thread_rng().gen_range(-10..10));
+            code += &format!("attr0\n");
+        }
+
+        let mut interpreter = Interpreter::new();
+        let result = interpreter.interpret(&code);
+        assert!(result.is_ok());
+
+        interpreter.performance.print_summary(HashSet::from([
+            String::from("turtlesown"),
+            String::from("setattr0"),
+            String::from("attr0"),
         ]));
     }
 

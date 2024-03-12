@@ -49,9 +49,9 @@ impl CanvasView {
     }
 
     pub fn to_canvas_color(&self, hue: f32) -> Color32 {
-        if hue == 0.0 {
+        if hue == 1.0 {
             Color32::from_gray(0)
-        } else if hue == 255.0 {
+        } else if hue == 0.0 || hue == 255.0 {
             Color32::from_gray(255)
         } else {
             Color32::from(Hsva::new((hue % 256.0) / 255.0, 1.0, 1.0, 1.0))

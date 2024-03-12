@@ -1,4 +1,5 @@
 use rfd::FileDialog;
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -64,7 +65,12 @@ impl Editor {
         if let Some(file_path) = file_path {
             if let Ok(mut file) = File::create(file_path.clone()) {
                 let code = self.code.clone();
-                let file_name = file_path.clone().to_string_lossy().to_string();
+                let file_name = file_path
+                    .clone()
+                    .file_name()
+                    .unwrap_or(&OsStr::new("unknown"))
+                    .to_string_lossy()
+                    .to_string();
                 match file.write_all(code.as_bytes()) {
                     Ok(..) => {
                         self.current_file = Some(FileDescription {

@@ -38,6 +38,11 @@ impl Lexer {
         self.stack.clear();
     }
 
+    pub fn return_to_start_of_top_frame(&mut self) {
+        let top_frame = self.stack.back_mut().unwrap();
+        top_frame.position = 0;
+    }
+
     fn get_top_frame(&mut self) -> &mut LexerFrame {
         self.stack.back_mut().unwrap()
     }

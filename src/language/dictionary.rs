@@ -87,6 +87,7 @@ impl CommandDictionary {
         dictionary.add(Command::quotient());
         dictionary.add(Command::random());
         dictionary.add(Command::readchar());
+        dictionary.add(Command::recurse());
         dictionary.add(Command::remainder());
         dictionary.add(Command::remove());
         dictionary.add(Command::repeat());

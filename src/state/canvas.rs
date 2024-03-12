@@ -24,7 +24,7 @@ impl Canvas {
                 State::DEFAULT_CANVAS_WIDTH.clone(),
                 State::DEFAULT_CANVAS_HEIGHT.clone(),
             ),
-            pixels: vec![255; pixel_count],
+            pixels: vec![0; pixel_count],
             bg_color: 255,
             objects: [(name.clone(), CanvasObject::Turtle(turtle))]
                 .into_iter()
@@ -139,7 +139,11 @@ impl Canvas {
         let x = (point.x + self.size.w / 2.0) as i32;
         let y = (point.y + self.size.h / 2.0) as i32;
         let index = (y * (self.size.w as i32) + x) as usize;
-        self.pixels.get(index).unwrap_or(&self.bg_color).clone() as f32
+        let color = self.pixels.get(index).unwrap_or(&self.bg_color);
+        if *color == 0 {
+            return self.bg_color as f32;
+        }
+        color.clone() as f32
     }
 
     pub fn add_line(&mut self, line: Line) {
@@ -202,6 +206,6 @@ impl Canvas {
     }
 
     pub fn clear(&mut self) {
-        self.pixels = vec![self.bg_color; (self.size.w * self.size.h) as usize];
+        self.pixels = vec![0; (self.size.w * self.size.h) as usize];
     }
 }

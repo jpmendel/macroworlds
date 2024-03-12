@@ -63,7 +63,7 @@ impl Turtle {
             name,
             pos: Point::zero(),
             heading: 0.0,
-            color: 0.0,
+            color: 1.0, // Black
             pen_size: 1.0,
             shape: TurtleShape::Triangle,
             is_visible: true,
@@ -110,7 +110,7 @@ impl Text {
         Text {
             name,
             pos: Point::zero(),
-            color: 0.0,
+            color: 1.0, // Black
             is_visible: true,
             text: String::from("New Text"),
             font_size: 12.0,

@@ -6,7 +6,7 @@ carefully [newturtle "p2] []
 carefully [newtext "title] []
 carefully [newtext "info] []
 
-setbg 0
+setbg 1
 
 make "gamestate "start
 
@@ -32,7 +32,7 @@ end
 
 to ready
 p1,
-setc 1
+setc 2
 setpensize 3
 setpos [-100 0]
 seth 0
@@ -81,14 +81,14 @@ if key? [
 
 p1,
 fd 5
-if or boundary not colorunder = 0 [
+if or boundary not colorunder = 1 [
  win "p2
  make "gamestate "win
 ]
 
 p2,
 fd 5
-if or boundary not colorunder = 0 [
+if or boundary not colorunder = 1 [
  win "p1
  make "gamestate "win
 ]

@@ -60,17 +60,17 @@ impl DataStore {
             // If the variable already exists in local scope, allow setting there.
             // Otherwise, all variable sets are in global scope.
             if let Some(..) = scope.variables.get(name) {
-                scope.variables.insert(name.into(), value);
+                scope.variables.insert(Box::from(name), value);
                 return;
             }
         }
         let global_scope = self.scopes.back_mut().unwrap();
-        global_scope.variables.insert(name.into(), value);
+        global_scope.variables.insert(Box::from(name), value);
     }
 
     pub fn set_local(&mut self, name: &str, value: Token) {
         let local_scope = self.scopes.front_mut().unwrap();
-        local_scope.variables.insert(name.into(), value);
+        local_scope.variables.insert(Box::from(name), value);
     }
 
     pub fn remove_variable(&mut self, name: &str) {

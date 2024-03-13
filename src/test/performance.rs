@@ -61,12 +61,12 @@ mod tests {
         assert!(result.is_ok());
 
         interpreter.performance.print_summary(HashSet::from([
-            String::from("sum"),
-            String::from("difference"),
-            String::from("product"),
-            String::from("quotient"),
-            String::from("power"),
-            String::from("remainder"),
+            "sum",
+            "difference",
+            "product",
+            "quotient",
+            "power",
+            "remainder",
         ]));
     }
 
@@ -129,16 +129,16 @@ mod tests {
         assert!(result.is_ok());
 
         interpreter.performance.print_summary(HashSet::from([
-            String::from("if"),
-            String::from("ifelse"),
-            String::from("carefully"),
-            String::from("or"),
-            String::from("and"),
-            String::from("not"),
-            String::from("equal?"),
-            String::from("greater?"),
-            String::from("less?"),
-            String::from("errormessage"),
+            "if",
+            "ifelse",
+            "carefully",
+            "or",
+            "and",
+            "not",
+            "equal?",
+            "greater?",
+            "less?",
+            "errormessage",
         ]));
     }
 
@@ -159,11 +159,9 @@ mod tests {
         let result = interpreter.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter.performance.print_summary(HashSet::from([
-            String::from("repeat"),
-            String::from("dotimes"),
-            String::from("dolist"),
-        ]));
+        interpreter
+            .performance
+            .print_summary(HashSet::from(["repeat", "dotimes", "dolist"]));
     }
 
     #[test]
@@ -185,7 +183,7 @@ mod tests {
 
         interpreter
             .performance
-            .print_summary(HashSet::from([String::from("make"), String::from("let")]));
+            .print_summary(HashSet::from(["make", "let"]));
     }
 
     #[test]
@@ -211,15 +209,7 @@ mod tests {
         assert!(result.is_ok());
 
         interpreter.performance.print_summary(HashSet::from([
-            String::from("list"),
-            String::from("fput"),
-            String::from("lput"),
-            String::from("first"),
-            String::from("last"),
-            String::from("butfirst"),
-            String::from("butlast"),
-            String::from("member?"),
-            String::from("empty?"),
+            "list", "fput", "lput", "first", "last", "butfirst", "butlast", "member?", "empty?",
         ]));
     }
 
@@ -248,13 +238,7 @@ mod tests {
         assert!(result.is_ok());
 
         interpreter.performance.print_summary(HashSet::from([
-            String::from("forward"),
-            String::from("back"),
-            String::from("left"),
-            String::from("right"),
-            String::from("setx"),
-            String::from("sety"),
-            String::from("setpos"),
+            "forward", "back", "left", "right", "setx", "sety", "setpos",
         ]));
     }
 
@@ -283,13 +267,7 @@ mod tests {
         assert!(result.is_ok());
 
         interpreter.performance.print_summary(HashSet::from([
-            String::from("forward"),
-            String::from("back"),
-            String::from("left"),
-            String::from("right"),
-            String::from("setx"),
-            String::from("sety"),
-            String::from("setpos"),
+            "forward", "back", "left", "right", "setx", "sety", "setpos",
         ]));
     }
 
@@ -321,17 +299,17 @@ mod tests {
         assert!(result.is_ok());
 
         interpreter.performance.print_summary(HashSet::from([
-            String::from("xcor"),
-            String::from("ycor"),
-            String::from("pos"),
-            String::from("seth"),
-            String::from("heading"),
-            String::from("setc"),
-            String::from("color"),
-            String::from("setpensize"),
-            String::from("pensize"),
-            String::from("setsh"),
-            String::from("shape"),
+            "xcor",
+            "ycor",
+            "pos",
+            "seth",
+            "heading",
+            "setc",
+            "color",
+            "setpensize",
+            "pensize",
+            "setsh",
+            "shape",
         ]));
     }
 
@@ -352,11 +330,9 @@ mod tests {
         let result = interpreter.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter.performance.print_summary(HashSet::from([
-            String::from("turtlesown"),
-            String::from("setattr0"),
-            String::from("attr0"),
-        ]));
+        interpreter
+            .performance
+            .print_summary(HashSet::from(["turtlesown", "setattr0", "attr0"]));
     }
 
     #[test]
@@ -376,11 +352,9 @@ mod tests {
         let result = interpreter.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter.performance.print_summary(HashSet::from([
-            String::from("newturtle"),
-            String::from("newtext"),
-            String::from("remove"),
-        ]));
+        interpreter
+            .performance
+            .print_summary(HashSet::from(["newturtle", "newtext", "remove"]));
     }
 
     #[test]
@@ -405,10 +379,10 @@ mod tests {
         assert!(result.is_ok());
 
         interpreter.performance.print_summary(HashSet::from([
-            String::from("setbg"),
-            String::from("bg"),
-            String::from("colorunder"),
-            String::from("clean"),
+            "setbg",
+            "bg",
+            "colorunder",
+            "clean",
         ]));
     }
 }

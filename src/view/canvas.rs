@@ -8,9 +8,9 @@ use std::f32::consts::PI;
 pub struct CanvasView {
     pub pos: Pos2,
     pub size: Vec2,
-    pub objects: HashMap<String, ObjectView>,
+    pub objects: HashMap<Box<str>, ObjectView>,
     pub bg_color: Color32,
-    pub current_turtle_paths: HashMap<String, PathShape>,
+    pub current_turtle_paths: HashMap<Box<str>, PathShape>,
     pub drawn_paths: Vec<PathShape>,
     pub console_text: String,
     pub announce_text: String,
@@ -23,7 +23,7 @@ impl CanvasView {
         CanvasView {
             pos: pos2(0.0, 0.0),
             size,
-            objects: [(String::from("t1"), ObjectView::Turtle(turtle))]
+            objects: [(Box::from("t1"), ObjectView::Turtle(turtle))]
                 .into_iter()
                 .collect(),
             bg_color: Color32::from_gray(255),

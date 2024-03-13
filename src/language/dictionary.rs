@@ -2,8 +2,8 @@ use crate::language::command::Command;
 use std::collections::HashMap;
 
 pub struct CommandDictionary {
-    functions: HashMap<String, Command>,
-    infix_operators: HashMap<String, Command>,
+    functions: HashMap<Box<str>, Command>,
+    infix_operators: HashMap<Box<str>, Command>,
 }
 
 impl CommandDictionary {
@@ -123,27 +123,27 @@ impl CommandDictionary {
         dictionary.add(Command::ycor());
 
         // Alias
-        dictionary.add_alias(String::from("bf"), Command::butfirst());
-        dictionary.add_alias(String::from("bk"), Command::back());
-        dictionary.add_alias(String::from("bl"), Command::butlast());
-        dictionary.add_alias(String::from("ct"), Command::cleartext());
-        dictionary.add_alias(String::from("fd"), Command::forward());
-        dictionary.add_alias(String::from("lt"), Command::left());
-        dictionary.add_alias(String::from("op"), Command::output());
-        dictionary.add_alias(String::from("pr"), Command::print());
-        dictionary.add_alias(String::from("rt"), Command::right());
-        dictionary.add_alias(String::from("tto"), Command::talkto());
+        dictionary.add_alias("bf", Command::butfirst());
+        dictionary.add_alias("bk", Command::back());
+        dictionary.add_alias("bl", Command::butlast());
+        dictionary.add_alias("ct", Command::cleartext());
+        dictionary.add_alias("fd", Command::forward());
+        dictionary.add_alias("lt", Command::left());
+        dictionary.add_alias("op", Command::output());
+        dictionary.add_alias("pr", Command::print());
+        dictionary.add_alias("rt", Command::right());
+        dictionary.add_alias("tto", Command::talkto());
 
         // Infix Operators
-        dictionary.add_infix(String::from("+"), Command::sum());
-        dictionary.add_infix(String::from("-"), Command::difference());
-        dictionary.add_infix(String::from("*"), Command::product());
-        dictionary.add_infix(String::from("/"), Command::quotient());
-        dictionary.add_infix(String::from("^"), Command::power());
-        dictionary.add_infix(String::from("%"), Command::remainder());
-        dictionary.add_infix(String::from("="), Command::equal());
-        dictionary.add_infix(String::from(">"), Command::greater());
-        dictionary.add_infix(String::from("<"), Command::less());
+        dictionary.add_infix("+", Command::sum());
+        dictionary.add_infix("-", Command::difference());
+        dictionary.add_infix("*", Command::product());
+        dictionary.add_infix("/", Command::quotient());
+        dictionary.add_infix("^", Command::power());
+        dictionary.add_infix("%", Command::remainder());
+        dictionary.add_infix("=", Command::equal());
+        dictionary.add_infix(">", Command::greater());
+        dictionary.add_infix("<", Command::less());
 
         // Hidden Commands
         dictionary.add(Command::paren());
@@ -151,7 +151,7 @@ impl CommandDictionary {
         dictionary
     }
 
-    pub fn lookup(&self, command_name: &String) -> Option<Command> {
+    pub fn lookup(&self, command_name: &str) -> Option<Command> {
         if let Some(command) = self.functions.get(command_name) {
             return Some(command.clone());
         }
@@ -162,18 +162,18 @@ impl CommandDictionary {
         self.functions.insert(command.name.clone(), command);
     }
 
-    pub fn add_alias(&mut self, alias: String, command: Command) {
-        self.functions.insert(alias, command);
+    pub fn add_alias(&mut self, alias: &str, command: Command) {
+        self.functions.insert(Box::from(alias), command);
     }
 
-    pub fn lookup_infix(&self, command_name: &String) -> Option<Command> {
+    pub fn lookup_infix(&self, command_name: &str) -> Option<Command> {
         if let Some(command) = self.infix_operators.get(command_name) {
             return Some(command.clone());
         }
         None
     }
 
-    pub fn add_infix(&mut self, name: String, command: Command) {
-        self.infix_operators.insert(name, command);
+    pub fn add_infix(&mut self, name: &str, command: Command) {
+        self.infix_operators.insert(Box::from(name), command);
     }
 }

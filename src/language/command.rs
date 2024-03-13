@@ -4,25 +4,25 @@ use std::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct Command {
-    pub name: String,
+    pub name: Box<str>,
     pub is_reserved: bool,
     pub params: Params,
     pub action: CommandAction,
 }
 
 impl Command {
-    pub fn reserved(name: String, params: Params, action: CommandAction) -> Self {
+    pub fn reserved(name: &str, params: Params, action: CommandAction) -> Self {
         Command {
-            name,
+            name: Box::from(name),
             is_reserved: true,
             params,
             action,
         }
     }
 
-    pub fn user_defined(name: String, params: Params, action: CommandAction) -> Self {
+    pub fn user_defined(name: &str, params: Params, action: CommandAction) -> Self {
         Command {
-            name,
+            name: Box::from(name),
             is_reserved: false,
             params,
             action,
@@ -38,11 +38,11 @@ pub enum Params {
 }
 
 pub type CommandAction =
-    fn(data: &mut Interpreter, command: &String, args: Vec<Token>) -> Result<Token, Box<dyn Error>>;
+    fn(data: &mut Interpreter, command: &str, args: Vec<Token>) -> Result<Token, Box<dyn Error>>;
 
 #[derive(Debug, Clone)]
 pub struct Procedure {
-    pub name: String,
+    pub name: Box<str>,
     pub params: Vec<String>,
     pub code: String,
 }

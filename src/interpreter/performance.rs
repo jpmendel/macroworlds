@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
 pub struct PerformanceTracker {
-    pub execution_times: HashMap<String, Vec<PerformanceResult>>,
+    pub execution_times: HashMap<Box<str>, Vec<PerformanceResult>>,
 }
 
 impl PerformanceTracker {
@@ -13,19 +13,19 @@ impl PerformanceTracker {
     }
 
     #[allow(dead_code)]
-    pub fn record(&mut self, command: &String, time: Duration, tag: String) {
+    pub fn record(&mut self, command: &str, time: Duration, tag: String) {
         let perf = PerformanceResult::new(time, tag);
         if let Some(array) = self.execution_times.get_mut(command) {
             array.push(perf);
         } else {
-            self.execution_times.insert(command.clone(), vec![perf]);
+            self.execution_times.insert(Box::from(command), vec![perf]);
         }
     }
 
     #[allow(dead_code)]
-    pub fn print_summary(&self, include: HashSet<String>) {
+    pub fn print_summary(&self, include: HashSet<&str>) {
         for (command, results) in &self.execution_times {
-            if include.get(command).is_none() {
+            if include.get(command.as_ref()).is_none() {
                 continue;
             }
             let mut sum: u128 = 0;
@@ -39,9 +39,9 @@ impl PerformanceTracker {
     }
 
     #[allow(dead_code)]
-    pub fn print_full_report(&self, include: HashSet<String>) {
+    pub fn print_full_report(&self, include: HashSet<&str>) {
         for (command, results) in &self.execution_times {
-            if include.get(command).is_none() {
+            if include.get(command.as_ref()).is_none() {
                 continue;
             }
             println!("command: {} ({})", command, results.len());

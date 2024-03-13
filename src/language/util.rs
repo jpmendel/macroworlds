@@ -1,7 +1,7 @@
 use crate::language::token::Token;
 use std::error::Error;
 
-pub fn decode_number(com: &String, args: &Vec<Token>, index: usize) -> Result<f32, Box<dyn Error>> {
+pub fn decode_number(com: &str, args: &Vec<Token>, index: usize) -> Result<f32, Box<dyn Error>> {
     if let Some(Token::Number(num)) = args.get(index) {
         Ok(num.clone())
     } else {
@@ -12,11 +12,7 @@ pub fn decode_number(com: &String, args: &Vec<Token>, index: usize) -> Result<f3
     }
 }
 
-pub fn decode_word(
-    com: &String,
-    args: &Vec<Token>,
-    index: usize,
-) -> Result<String, Box<dyn Error>> {
+pub fn decode_word(com: &str, args: &Vec<Token>, index: usize) -> Result<String, Box<dyn Error>> {
     if let Some(Token::Word(word)) = args.get(index) {
         Ok(word.clone())
     } else {
@@ -27,11 +23,7 @@ pub fn decode_word(
     }
 }
 
-pub fn decode_boolean(
-    com: &String,
-    args: &Vec<Token>,
-    index: usize,
-) -> Result<bool, Box<dyn Error>> {
+pub fn decode_boolean(com: &str, args: &Vec<Token>, index: usize) -> Result<bool, Box<dyn Error>> {
     if let Some(Token::Boolean(boolean)) = args.get(index) {
         Ok(boolean.clone())
     } else {
@@ -42,11 +34,7 @@ pub fn decode_boolean(
     }
 }
 
-pub fn decode_list(
-    com: &String,
-    args: &Vec<Token>,
-    index: usize,
-) -> Result<String, Box<dyn Error>> {
+pub fn decode_list(com: &str, args: &Vec<Token>, index: usize) -> Result<String, Box<dyn Error>> {
     if let Some(Token::List(list)) = args.get(index) {
         Ok(list.clone())
     } else {
@@ -58,7 +46,7 @@ pub fn decode_list(
 }
 
 pub fn decode_proc(
-    com: &String,
+    com: &str,
     args: &Vec<Token>,
     index: usize,
 ) -> Result<(String, Vec<String>, String), Box<dyn Error>> {
@@ -72,11 +60,7 @@ pub fn decode_proc(
     }
 }
 
-pub fn decode_token(
-    com: &String,
-    args: &Vec<Token>,
-    index: usize,
-) -> Result<Token, Box<dyn Error>> {
+pub fn decode_token(com: &str, args: &Vec<Token>, index: usize) -> Result<Token, Box<dyn Error>> {
     if let Some(token) = args.get(index) {
         Ok(token.clone())
     } else {

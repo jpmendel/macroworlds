@@ -9,9 +9,9 @@ use crate::language::util::{
 impl Command {
     pub fn sum() -> Self {
         Command::reserved(
-            String::from("sum"),
+            "sum",
             Params::Variadic(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let mut result = decode_number(com, &args, 0)?;
                 for index in 1..args.len() {
                     let num = decode_number(com, &args, index)?;
@@ -24,9 +24,9 @@ impl Command {
 
     pub fn difference() -> Self {
         Command::reserved(
-            String::from("difference"),
+            "difference",
             Params::Fixed(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let num1 = decode_number(com, &args, 0)?;
                 let num2 = decode_number(com, &args, 1)?;
                 let result = num1 - num2;
@@ -37,9 +37,9 @@ impl Command {
 
     pub fn product() -> Self {
         Command::reserved(
-            String::from("product"),
+            "product",
             Params::Variadic(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let mut result = decode_number(com, &args, 0)?;
                 for index in 1..args.len() {
                     let num = decode_number(com, &args, index)?;
@@ -52,9 +52,9 @@ impl Command {
 
     pub fn quotient() -> Self {
         Command::reserved(
-            String::from("quotient"),
+            "quotient",
             Params::Fixed(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let num1 = decode_number(com, &args, 0)?;
                 let num2 = decode_number(com, &args, 1)?;
                 if num2 == 0.0 {
@@ -68,9 +68,9 @@ impl Command {
 
     pub fn remainder() -> Self {
         Command::reserved(
-            String::from("remainder"),
+            "remainder",
             Params::Fixed(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let num1 = decode_number(com, &args, 0)?;
                 let num2 = decode_number(com, &args, 1)?;
                 let result = num1 % num2;
@@ -81,9 +81,9 @@ impl Command {
 
     pub fn power() -> Self {
         Command::reserved(
-            String::from("power"),
+            "power",
             Params::Fixed(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let num1 = decode_number(com, &args, 0)?;
                 let num2 = decode_number(com, &args, 1)?;
                 let result = num1.powf(num2);
@@ -94,9 +94,9 @@ impl Command {
 
     pub fn sqrt() -> Self {
         Command::reserved(
-            String::from("sqrt"),
+            "sqrt",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)?;
                 if number < 0.0 {
                     return Err(Box::from("cannot sqrt negative number"));
@@ -109,9 +109,9 @@ impl Command {
 
     pub fn minus() -> Self {
         Command::reserved(
-            String::from("minus"),
+            "minus",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)?;
                 let result = -number;
                 Ok(Token::Number(result))
@@ -121,9 +121,9 @@ impl Command {
 
     pub fn abs() -> Self {
         Command::reserved(
-            String::from("abs"),
+            "abs",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)?;
                 let result = number.abs();
                 Ok(Token::Number(result))
@@ -133,9 +133,9 @@ impl Command {
 
     pub fn int() -> Self {
         Command::reserved(
-            String::from("int"),
+            "int",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)?;
                 Ok(Token::Number(number.floor()))
             },
@@ -144,9 +144,9 @@ impl Command {
 
     pub fn sin() -> Self {
         Command::reserved(
-            String::from("sin"),
+            "sin",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)?;
                 Ok(Token::Number(number.sin().to_degrees()))
             },
@@ -155,9 +155,9 @@ impl Command {
 
     pub fn cos() -> Self {
         Command::reserved(
-            String::from("cos"),
+            "cos",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)?;
                 Ok(Token::Number(number.cos().to_degrees()))
             },
@@ -166,9 +166,9 @@ impl Command {
 
     pub fn tan() -> Self {
         Command::reserved(
-            String::from("tan"),
+            "tan",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)?;
                 Ok(Token::Number(number.tan().to_degrees()))
             },
@@ -177,9 +177,9 @@ impl Command {
 
     pub fn arctan() -> Self {
         Command::reserved(
-            String::from("arctan"),
+            "arctan",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)?;
                 Ok(Token::Number(number.atan().to_degrees()))
             },
@@ -188,9 +188,9 @@ impl Command {
 
     pub fn round() -> Self {
         Command::reserved(
-            String::from("round"),
+            "round",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)?;
                 Ok(Token::Number(number.round()))
             },
@@ -199,9 +199,9 @@ impl Command {
 
     pub fn equal() -> Self {
         Command::reserved(
-            String::from("equal?"),
+            "equal?",
             Params::Fixed(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let arg1 = decode_token(com, &args, 0)?;
                 let arg2 = decode_token(com, &args, 1)?;
                 let result = are_tokens_equal(&arg1, &arg2);
@@ -212,9 +212,9 @@ impl Command {
 
     pub fn greater() -> Self {
         Command::reserved(
-            String::from("greater?"),
+            "greater?",
             Params::Fixed(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let arg1 = decode_number(com, &args, 0)?;
                 let arg2 = decode_number(com, &args, 1)?;
                 let result = arg1 > arg2;
@@ -225,9 +225,9 @@ impl Command {
 
     pub fn less() -> Self {
         Command::reserved(
-            String::from("less?"),
+            "less?",
             Params::Fixed(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let arg1 = decode_number(com, &args, 0)?;
                 let arg2 = decode_number(com, &args, 1)?;
                 let result = arg1 < arg2;
@@ -238,9 +238,9 @@ impl Command {
 
     pub fn or() -> Self {
         Command::reserved(
-            String::from("or"),
+            "or",
             Params::Variadic(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let mut result = decode_boolean(com, &args, 0)?;
                 for index in 1..args.len() {
                     let bool = decode_boolean(com, &args, index)?;
@@ -253,9 +253,9 @@ impl Command {
 
     pub fn and() -> Self {
         Command::reserved(
-            String::from("and"),
+            "and",
             Params::Variadic(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let mut result = decode_boolean(com, &args, 0)?;
                 for index in 1..args.len() {
                     let bool = decode_boolean(com, &args, index)?;
@@ -268,9 +268,9 @@ impl Command {
 
     pub fn not() -> Self {
         Command::reserved(
-            String::from("not"),
+            "not",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let boolean = decode_boolean(com, &args, 0)?;
                 let result = !boolean;
                 Ok(Token::Boolean(result))
@@ -280,9 +280,9 @@ impl Command {
 
     pub fn isnumber() -> Self {
         Command::reserved(
-            String::from("number?"),
+            "number?",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 let result = match token {
                     Token::Number(..) => true,
@@ -295,9 +295,9 @@ impl Command {
 
     pub fn isword() -> Self {
         Command::reserved(
-            String::from("word?"),
+            "word?",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 let result = match token {
                     Token::Word(..) => true,
@@ -310,9 +310,9 @@ impl Command {
 
     pub fn islist() -> Self {
         Command::reserved(
-            String::from("list?"),
+            "list?",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 let result = match token {
                     Token::List(..) => true,
@@ -325,9 +325,9 @@ impl Command {
 
     pub fn word() -> Self {
         Command::reserved(
-            String::from("word"),
+            "word",
             Params::Variadic(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let mut result = decode_word(com, &args, 0)?;
                 for index in 1..args.len() {
                     let word = decode_word(com, &args, index)?;
@@ -340,9 +340,9 @@ impl Command {
 
     pub fn ascii() -> Self {
         Command::reserved(
-            String::from("ascii"),
+            "ascii",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let word = decode_word(com, &args, 0)?;
                 match word.as_str() {
                     "space" => return Ok(Token::Number(32.0)),
@@ -364,9 +364,9 @@ impl Command {
 
     pub fn char() -> Self {
         Command::reserved(
-            String::from("char"),
+            "char",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)? as u8;
                 if !number.is_ascii() {
                     return Err(Box::from("input must be a valid ascii code"));
@@ -379,9 +379,9 @@ impl Command {
 
     pub fn list() -> Self {
         Command::reserved(
-            String::from("list"),
+            "list",
             Params::Variadic(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let mut result = decode_word(com, &args, 0)?;
                 for index in 1..args.len() {
                     let word = decode_word(com, &args, index)?;
@@ -394,9 +394,9 @@ impl Command {
 
     pub fn count() -> Self {
         Command::reserved(
-            String::from("count"),
+            "count",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 match token {
                     Token::List(list) => {
@@ -412,9 +412,9 @@ impl Command {
 
     pub fn item() -> Self {
         Command::reserved(
-            String::from("item"),
+            "item",
             Params::Fixed(2),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let index = decode_number(com, &args, 0)? as usize;
                 let token = decode_token(com, &args, 1)?;
                 match token {
@@ -441,9 +441,9 @@ impl Command {
 
     pub fn first() -> Self {
         Command::reserved(
-            String::from("first"),
+            "first",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let list = decode_list(com, &args, 0)?;
                 let items = int.parse_list(&list, true)?;
                 if let Some(first) = items.first() {
@@ -457,9 +457,9 @@ impl Command {
 
     pub fn last() -> Self {
         Command::reserved(
-            String::from("last"),
+            "last",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let list = decode_list(com, &args, 0)?;
                 let items = int.parse_list(&list, true)?;
                 if let Some(last) = items.last() {
@@ -473,9 +473,9 @@ impl Command {
 
     pub fn butfirst() -> Self {
         Command::reserved(
-            String::from("butfirst"),
+            "butfirst",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let list = decode_list(com, &args, 0)?;
                 let items = int.parse_list(&list, false)?;
                 if items.is_empty() {
@@ -490,9 +490,9 @@ impl Command {
 
     pub fn butlast() -> Self {
         Command::reserved(
-            String::from("butlast"),
+            "butlast",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let list = decode_list(com, &args, 0)?;
                 let items = int.parse_list(&list, false)?;
                 if items.is_empty() {
@@ -507,9 +507,9 @@ impl Command {
 
     pub fn fput() -> Self {
         Command::reserved(
-            String::from("fput"),
+            "fput",
             Params::Fixed(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let item = decode_word(com, &args, 0)?;
                 let list = decode_list(com, &args, 1)?;
                 let result = format!("{} {}", item, list);
@@ -520,9 +520,9 @@ impl Command {
 
     pub fn lput() -> Self {
         Command::reserved(
-            String::from("lput"),
+            "lput",
             Params::Fixed(2),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let item = decode_word(com, &args, 0)?;
                 let list = decode_list(com, &args, 1)?;
                 let result = format!("{} {}", list, item);
@@ -533,9 +533,9 @@ impl Command {
 
     pub fn member() -> Self {
         Command::reserved(
-            String::from("member?"),
+            "member?",
             Params::Fixed(2),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let item = decode_token(com, &args, 0)?;
                 let list = decode_list(com, &args, 1)?;
                 let list_items = int.parse_list(&list, true)?;
@@ -547,9 +547,9 @@ impl Command {
 
     pub fn empty() -> Self {
         Command::reserved(
-            String::from("empty?"),
+            "empty?",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 let result = match token {
                     Token::Word(word) => word.is_empty(),

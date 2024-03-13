@@ -49,7 +49,7 @@ impl Lexer {
 
     pub fn define(
         &mut self,
-        name: String,
+        name: &str,
         params: Params,
         action: CommandAction,
     ) -> Result<(), Box<dyn Error>> {
@@ -172,7 +172,7 @@ impl Lexer {
         }
     }
 
-    fn read_fixed_arguments(&mut self, command_name: &String, count: usize) -> Vec<Token> {
+    fn read_fixed_arguments(&mut self, command_name: &str, count: usize) -> Vec<Token> {
         let mut args = vec![];
         for _ in 0..count {
             if command_name == "to" {

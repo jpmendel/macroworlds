@@ -8,7 +8,7 @@ pub enum Object {
 }
 
 impl Object {
-    pub fn name(&self) -> &String {
+    pub fn name(&self) -> &str {
         match self {
             Self::Turtle(turtle) => &turtle.name,
             Self::Text(text) => &text.name,
@@ -46,7 +46,7 @@ impl Object {
 
 #[derive(Debug, Clone)]
 pub struct Turtle {
-    pub name: String,
+    pub name: Box<str>,
     pub pos: Point,
     pub heading: f32,
     pub color: f32,
@@ -54,11 +54,11 @@ pub struct Turtle {
     pub shape: TurtleShape,
     pub is_visible: bool,
     pub is_drawing: bool,
-    pub backpack: HashMap<String, Token>,
+    pub backpack: HashMap<Box<str>, Token>,
 }
 
 impl Turtle {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: Box<str>) -> Self {
         Turtle {
             name,
             pos: Point::zero(),
@@ -97,7 +97,7 @@ impl TurtleShape {
 
 #[derive(Debug, Clone)]
 pub struct Text {
-    pub name: String,
+    pub name: Box<str>,
     pub pos: Point,
     pub color: f32,
     pub is_visible: bool,
@@ -106,7 +106,7 @@ pub struct Text {
 }
 
 impl Text {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: Box<str>) -> Self {
         Text {
             name,
             pos: Point::zero(),

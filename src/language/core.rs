@@ -9,9 +9,9 @@ use rand::Rng;
 impl Command {
     pub fn make() -> Self {
         Command::reserved(
-            String::from("make"),
+            "make",
             Params::Fixed(2),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
                 let token = decode_token(com, &args, 1)?;
                 let value = match token {
@@ -22,7 +22,7 @@ impl Command {
                     }
                     token => token,
                 };
-                int.state.data.set_variable(name, value);
+                int.state.data.set_variable(&name, value);
                 Ok(Token::Void)
             },
         )
@@ -30,11 +30,15 @@ impl Command {
 
     pub fn to() -> Self {
         Command::reserved(
-            String::from("to"),
+            "to",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let (name, params, code) = decode_proc(com, &args, 0)?;
-                int.define_procedure(Procedure { name, params, code })?;
+                int.define_procedure(Procedure {
+                    name: name.into(),
+                    params,
+                    code,
+                })?;
                 Ok(Token::Void)
             },
         )
@@ -42,11 +46,11 @@ impl Command {
 
     pub fn local() -> Self {
         Command::reserved(
-            String::from("local"),
+            "local",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
-                int.state.data.set_local(name, Token::Void);
+                int.state.data.set_local(&name, Token::Void);
                 Ok(Token::Void)
             },
         )
@@ -54,15 +58,15 @@ impl Command {
 
     pub fn letvar() -> Self {
         Command::reserved(
-            String::from("let"),
+            "let",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let list = decode_list(com, &args, 0)?;
                 let list_items = int.parse_list(&list, true)?;
                 for index in (0..list_items.len()).step_by(2) {
                     if let Some(Token::Word(name)) = list_items.get(index) {
                         if let Some(value) = list_items.get(index + 1) {
-                            int.state.data.set_local(name.clone(), value.clone());
+                            int.state.data.set_local(&name, value.clone());
                         }
                     }
                 }
@@ -73,9 +77,9 @@ impl Command {
 
     pub fn output() -> Self {
         Command::reserved(
-            String::from("output"),
+            "output",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let return_value = decode_token(com, &args, 0)?;
                 Ok(return_value.clone())
             },
@@ -84,22 +88,22 @@ impl Command {
 
     pub fn who() -> Self {
         Command::reserved(
-            String::from("who"),
+            "who",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
-                Ok(Token::Word(turtle.name.clone()))
+                Ok(Token::Word(turtle.name.to_string()))
             },
         )
     }
 
     pub fn talkto() -> Self {
         Command::reserved(
-            String::from("talkto"),
+            "talkto",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
-                let success = int.state.canvas.set_current_object(name.clone());
+                let success = int.state.canvas.set_current_object(&name);
                 if !success {
                     return Err(Box::from(format!("no turtle named {}", name)));
                 }
@@ -110,9 +114,9 @@ impl Command {
 
     pub fn ask() -> Self {
         Command::reserved(
-            String::from("ask"),
+            "ask",
             Params::Fixed(2),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
                 let token = decode_token(com, &args, 1)?;
                 match token {
@@ -122,11 +126,12 @@ impl Command {
                         Ok(token)
                     }
                     Token::List(list) => {
-                        let current_obj_name = int.state.canvas.current_object()?.name().clone();
-                        let success = int.state.canvas.set_current_object(name.clone());
+                        let current_obj_name =
+                            int.state.canvas.current_object()?.name().to_string();
+                        let success = int.state.canvas.set_current_object(&name);
                         if success {
                             let _ = int.interpret(&list);
-                            int.state.canvas.set_current_object(current_obj_name);
+                            int.state.canvas.set_current_object(&current_obj_name);
                             Ok(Token::Void)
                         } else {
                             Err(Box::from(format!("no turtle named {}", name)))
@@ -140,11 +145,11 @@ impl Command {
 
     pub fn turtlesown() -> Self {
         Command::reserved(
-            String::from("turtlesown"),
+            "turtlesown",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
-                int.define_object_property(name)?;
+                int.define_object_property(&name)?;
                 Ok(Token::Void)
             },
         )
@@ -152,9 +157,9 @@ impl Command {
 
     pub fn timer() -> Self {
         Command::reserved(
-            String::from("timer"),
+            "timer",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let time = match int.state.get_time() {
                     Ok(time) => time,
                     Err(..) => return Err(Box::from("timer unable to get time")),
@@ -166,9 +171,9 @@ impl Command {
 
     pub fn resett() -> Self {
         Command::reserved(
-            String::from("resett"),
+            "resett",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 int.state.reset_timer();
                 Ok(Token::Void)
             },
@@ -177,9 +182,9 @@ impl Command {
 
     pub fn key() -> Self {
         Command::reserved(
-            String::from("key?"),
+            "key?",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let has_key = int.state.input.has_key();
                 Ok(Token::Boolean(has_key))
             },
@@ -188,13 +193,13 @@ impl Command {
 
     pub fn readchar() -> Self {
         Command::reserved(
-            String::from("readchar"),
+            "readchar",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 if let Some(key) = int.state.input.get_one_key() {
                     Ok(Token::Word(key))
                 } else {
-                    Ok(Token::Word(String::from("")))
+                    Ok(Token::Word(String::new()))
                 }
             },
         )
@@ -202,9 +207,9 @@ impl Command {
 
     pub fn random() -> Self {
         Command::reserved(
-            String::from("random"),
+            "random",
             Params::Fixed(1),
-            |_int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let max = decode_number(com, &args, 0)? as u32;
                 let random = rand::thread_rng().gen_range(0..max);
                 Ok(Token::Number(random as f32))
@@ -214,9 +219,9 @@ impl Command {
 
     pub fn pick() -> Self {
         Command::reserved(
-            String::from("pick"),
+            "pick",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 match token {
                     Token::Word(word) => {
@@ -238,9 +243,9 @@ impl Command {
 
     pub fn pi() -> Self {
         Command::reserved(
-            String::from("pi"),
+            "pi",
             Params::None,
-            |_int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |_int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let pi = std::f32::consts::PI;
                 Ok(Token::Number(pi))
             },

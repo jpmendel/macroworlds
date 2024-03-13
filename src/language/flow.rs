@@ -7,9 +7,9 @@ use crate::language::util::{decode_list, decode_number};
 impl Command {
     pub fn ifthen() -> Self {
         Command::reserved(
-            String::from("if"),
+            "if",
             Params::Fixed(2),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let condition = decode_boolean(com, &args, 0)?;
                 let true_code = decode_list(com, &args, 1)?;
                 if condition {
@@ -22,9 +22,9 @@ impl Command {
 
     pub fn ifelse() -> Self {
         Command::reserved(
-            String::from("ifelse"),
+            "ifelse",
             Params::Fixed(3),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let condition = decode_boolean(com, &args, 0)?;
                 let true_code = decode_list(com, &args, 1)?;
                 let false_code = decode_list(com, &args, 2)?;
@@ -40,9 +40,9 @@ impl Command {
 
     pub fn repeat() -> Self {
         Command::reserved(
-            String::from("repeat"),
+            "repeat",
             Params::Fixed(2),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let count = decode_number(com, &args, 0)? as usize;
                 let code = decode_list(com, &args, 1)?;
                 for _ in 0..count {
@@ -55,9 +55,9 @@ impl Command {
 
     pub fn forever() -> Self {
         Command::reserved(
-            String::from("forever"),
+            "forever",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let code = decode_list(com, &args, 0)?;
                 loop {
                     int.interpret(&code)?;
@@ -68,9 +68,9 @@ impl Command {
 
     pub fn dotimes() -> Self {
         Command::reserved(
-            String::from("dotimes"),
+            "dotimes",
             Params::Fixed(2),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let loop_config = decode_list(com, &args, 0)?;
                 let code = decode_list(com, &args, 1)?;
                 let config_items = int.parse_list(&loop_config, true)?;
@@ -91,9 +91,9 @@ impl Command {
 
     pub fn dolist() -> Self {
         Command::reserved(
-            String::from("dolist"),
+            "dolist",
             Params::Fixed(2),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let loop_config = decode_list(com, &args, 0)?;
                 let code = decode_list(com, &args, 1)?;
                 let config_items = int.parse_list(&loop_config, false)?;
@@ -115,9 +115,9 @@ impl Command {
 
     pub fn carefully() -> Self {
         Command::reserved(
-            String::from("carefully"),
+            "carefully",
             Params::Fixed(2),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let check_code = decode_list(com, &args, 0)?;
                 let error_code = decode_list(com, &args, 1)?;
                 if let Err(err) = int.interpret(&check_code) {
@@ -131,9 +131,9 @@ impl Command {
 
     pub fn errormessage() -> Self {
         Command::reserved(
-            String::from("errormessage"),
+            "errormessage",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let error = int.state.data.get_last_error_message();
                 Ok(Token::Word(error))
             },
@@ -142,9 +142,9 @@ impl Command {
 
     pub fn recurse() -> Self {
         Command::reserved(
-            String::from("recurse"),
+            "recurse",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 int.lexer.return_to_start_of_block();
                 Ok(Token::Void)
             },
@@ -153,9 +153,9 @@ impl Command {
 
     pub fn paren() -> Self {
         Command::reserved(
-            String::from("__paren"),
+            "__paren",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let code = decode_list(com, &args, 0)?;
                 let code_with_return = format!("op {}", code);
                 int.interpret_in_parenthesis(&code_with_return)

@@ -54,7 +54,7 @@ impl Interpreter {
         }
         self.state.data.push_scope();
         for (param, arg) in &local_params {
-            self.state.data.set_variable(param.clone(), arg.clone());
+            self.state.data.set_variable(param, arg.clone());
         }
         let return_value = self.interpret(code);
         for (param, _) in &local_params {
@@ -145,7 +145,7 @@ impl Interpreter {
                     let start = Instant::now();
                     let result = (command.action)(self, &command.name, computed_args.clone())?;
                     let time = start.elapsed();
-                    let mut tag = command.name.clone();
+                    let mut tag = command.name.to_string();
                     for arg in computed_args {
                         tag += &format!(" {}", arg.to_string());
                     }
@@ -166,9 +166,9 @@ impl Interpreter {
 
     pub fn define_procedure(&mut self, procedure: Procedure) -> Result<(), Box<dyn Error>> {
         self.lexer.define(
-            procedure.name.clone(),
+            &procedure.name,
             Params::Fixed(procedure.params.len()),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let proc = int.state.data.get_procedure(com).unwrap();
                 if proc.params.len() != args.len() {
                     return Err(Box::from(format!(
@@ -189,12 +189,12 @@ impl Interpreter {
         Ok(())
     }
 
-    pub fn define_object_property(&mut self, name: String) -> Result<(), Box<dyn Error>> {
+    pub fn define_object_property(&mut self, name: &str) -> Result<(), Box<dyn Error>> {
         // Getter
         self.lexer.define(
-            name.clone(),
+            name,
             Params::None,
-            |int: &mut Interpreter, com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 if let Some(value) = turtle.backpack.get(com) {
                     Ok(value.clone())
@@ -206,12 +206,12 @@ impl Interpreter {
 
         // Setter
         self.lexer.define(
-            format!("set{}", name.clone()),
+            &format!("set{}", name),
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 let turtle = int.state.canvas.current_turtle()?;
-                let item_name: String = com.chars().skip(3).collect();
+                let item_name = com.chars().skip(3).collect::<String>().into_boxed_str();
                 turtle.backpack.insert(item_name, token);
                 Ok(Token::Void)
             },

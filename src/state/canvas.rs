@@ -9,14 +9,14 @@ pub struct Canvas {
     size: Size,
     pixels: Vec<u8>,
     bg_color: u8,
-    objects: HashMap<String, Object>,
-    current_object_name: String,
-    turtle_backpack: HashSet<String>,
+    objects: HashMap<Box<str>, Object>,
+    current_object_name: Box<str>,
+    turtle_backpack: HashSet<Box<str>>,
 }
 
 impl Canvas {
     pub fn new() -> Self {
-        let name = String::from("t1");
+        let name: Box<str> = Box::from("t1");
         let turtle = Turtle::new(name.clone());
         let pixel_count = (State::DEFAULT_CANVAS_WIDTH * State::DEFAULT_CANVAS_HEIGHT) as usize;
         Canvas {
@@ -35,8 +35,8 @@ impl Canvas {
     }
 
     pub fn current_object(&mut self) -> Result<&mut Object, Box<dyn Error>> {
-        if let Some(obj) = self.objects.get_mut(&self.current_object_name) {
-            Ok(obj)
+        if let Some(object) = self.objects.get_mut(&self.current_object_name) {
+            Ok(object)
         } else {
             Err(Box::from(format!(
                 "object {} does not exist",
@@ -69,16 +69,16 @@ impl Canvas {
         }
     }
 
-    pub fn set_current_object(&mut self, name: String) -> bool {
-        if self.objects.get(&name).is_some() {
-            self.current_object_name = name;
+    pub fn set_current_object(&mut self, name: &str) -> bool {
+        if self.objects.get(name).is_some() {
+            self.current_object_name = Box::from(name);
             true
         } else {
             false
         }
     }
 
-    pub fn get_turtle(&mut self, name: &String) -> Result<&mut Turtle, Box<dyn Error>> {
+    pub fn get_turtle(&mut self, name: &str) -> Result<&mut Turtle, Box<dyn Error>> {
         if let Some(Object::Turtle(turtle)) = self.objects.get_mut(name) {
             Ok(turtle)
         } else {
@@ -86,45 +86,45 @@ impl Canvas {
         }
     }
 
-    pub fn create_turtle(&mut self, name: String) -> Result<(), Box<dyn Error>> {
-        if self.objects.get(&name).is_some() {
+    pub fn create_turtle(&mut self, name: &str) -> Result<(), Box<dyn Error>> {
+        if self.objects.get(name).is_some() {
             return Err(Box::from(format!("object {} already exists", name)));
         }
-        let turtle = Turtle::new(name.clone());
-        self.objects.insert(name.clone(), Object::Turtle(turtle));
+        let turtle = Turtle::new(Box::from(name));
+        self.objects.insert(Box::from(name), Object::Turtle(turtle));
         if self.objects.len() == 1 {
-            self.current_object_name = name;
+            self.current_object_name = Box::from(name);
         }
         Ok(())
     }
 
-    pub fn create_text(&mut self, name: String) -> Result<(), Box<dyn Error>> {
-        if self.objects.get(&name).is_some() {
+    pub fn create_text(&mut self, name: &str) -> Result<(), Box<dyn Error>> {
+        if self.objects.get(name).is_some() {
             return Err(Box::from(format!("object {} already exists", name)));
         }
-        let text = Text::new(name.clone());
-        self.objects.insert(name.clone(), Object::Text(text));
+        let text = Text::new(Box::from(name));
+        self.objects.insert(Box::from(name), Object::Text(text));
         if self.objects.len() == 1 {
-            self.current_object_name = name;
+            self.current_object_name = Box::from(name);
         }
         Ok(())
     }
 
-    pub fn remove_object(&mut self, name: &String) {
+    pub fn remove_object(&mut self, name: &str) {
         self.objects.remove(name);
         if let Some((name, _)) = self.objects.iter().next() {
             self.current_object_name = name.clone();
         } else {
-            self.current_object_name = String::new();
+            self.current_object_name = Box::from("");
         }
     }
 
-    pub fn init_backpack_property(&mut self, name: String) {
-        self.turtle_backpack.insert(name.clone());
+    pub fn init_backpack_property(&mut self, name: &str) {
+        self.turtle_backpack.insert(Box::from(name));
         for (_, obj) in &mut self.objects {
             if let Object::Turtle(turtle) = obj {
                 let default_value = Token::Word(String::new());
-                turtle.backpack.insert(name.clone(), default_value);
+                turtle.backpack.insert(Box::from(name), default_value);
             }
         }
     }

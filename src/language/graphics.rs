@@ -13,9 +13,9 @@ use std::time::Duration;
 impl Command {
     pub fn forward() -> Self {
         Command::reserved(
-            String::from("forward"),
+            "forward",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let dist = decode_number(com, &args, 0)?;
                 let turtle = int.state.canvas.current_turtle()?;
                 let original_pos = turtle.pos.clone();
@@ -41,9 +41,9 @@ impl Command {
 
     pub fn back() -> Self {
         Command::reserved(
-            String::from("back"),
+            "back",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let dist = decode_number(com, &args, 0)?;
                 let turtle = int.state.canvas.current_turtle()?;
                 let original_pos = turtle.pos.clone();
@@ -69,9 +69,9 @@ impl Command {
 
     pub fn left() -> Self {
         Command::reserved(
-            String::from("left"),
+            "left",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let angle = decode_number(com, &args, 0)?;
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.heading -= angle;
@@ -86,9 +86,9 @@ impl Command {
 
     pub fn right() -> Self {
         Command::reserved(
-            String::from("right"),
+            "right",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let angle = decode_number(com, &args, 0)?;
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.heading += angle;
@@ -103,9 +103,9 @@ impl Command {
 
     pub fn xcor() -> Self {
         Command::reserved(
-            String::from("xcor"),
+            "xcor",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let pos = int.state.canvas.current_object()?.pos();
                 Ok(Token::Number(pos.x))
             },
@@ -114,9 +114,9 @@ impl Command {
 
     pub fn ycor() -> Self {
         Command::reserved(
-            String::from("ycor"),
+            "ycor",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let pos = int.state.canvas.current_object()?.pos();
                 Ok(Token::Number(pos.y))
             },
@@ -125,9 +125,9 @@ impl Command {
 
     pub fn pos() -> Self {
         Command::reserved(
-            String::from("pos"),
+            "pos",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let pos = int.state.canvas.current_object()?.pos();
                 Ok(Token::List(format!("{} {}", pos.x, pos.y)))
             },
@@ -136,9 +136,9 @@ impl Command {
 
     pub fn heading() -> Self {
         Command::reserved(
-            String::from("heading"),
+            "heading",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 Ok(Token::Number(turtle.heading))
             },
@@ -147,9 +147,9 @@ impl Command {
 
     pub fn color() -> Self {
         Command::reserved(
-            String::from("color"),
+            "color",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let object = int.state.canvas.current_object()?;
                 Ok(Token::Number(object.color().clone()))
             },
@@ -158,9 +158,9 @@ impl Command {
 
     pub fn pensize() -> Self {
         Command::reserved(
-            String::from("pensize"),
+            "pensize",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 Ok(Token::Number(turtle.pen_size.clone()))
             },
@@ -169,9 +169,9 @@ impl Command {
 
     pub fn shape() -> Self {
         Command::reserved(
-            String::from("shape"),
+            "shape",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 Ok(Token::Word(turtle.shape.to_string()))
             },
@@ -180,16 +180,16 @@ impl Command {
 
     pub fn setx() -> Self {
         Command::reserved(
-            String::from("setx"),
+            "setx",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let x = decode_number(com, &args, 0)?;
                 let object = int.state.canvas.current_object()?;
                 let original_pos = object.pos().clone();
                 let new_pos = Point::new(x, original_pos.y);
                 object.set_pos(new_pos.clone());
                 int.event.send_ui(UiEvent::ObjectPos(
-                    object.name().clone(),
+                    Box::from(object.name()),
                     object.pos().clone(),
                 ));
                 if let Object::Turtle(turtle) = object {
@@ -209,16 +209,16 @@ impl Command {
 
     pub fn sety() -> Self {
         Command::reserved(
-            String::from("sety"),
+            "sety",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let y = decode_number(com, &args, 0)?;
                 let object = int.state.canvas.current_object()?;
                 let original_pos = object.pos().clone();
                 let new_pos = Point::new(original_pos.x, y);
                 object.set_pos(new_pos.clone());
                 int.event.send_ui(UiEvent::ObjectPos(
-                    object.name().clone(),
+                    Box::from(object.name()),
                     object.pos().clone(),
                 ));
                 if let Object::Turtle(turtle) = object {
@@ -238,9 +238,9 @@ impl Command {
 
     pub fn setpos() -> Self {
         Command::reserved(
-            String::from("setpos"),
+            "setpos",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let list = decode_list(com, &args, 0)?;
                 let list_items = int.parse_list(&list, true)?;
                 if list_items.len() != 2 {
@@ -257,7 +257,7 @@ impl Command {
                 let new_pos = Point::new(*x, *y);
                 object.set_pos(new_pos.clone());
                 int.event.send_ui(UiEvent::ObjectPos(
-                    object.name().clone(),
+                    Box::from(object.name()),
                     object.pos().clone(),
                 ));
                 if let Object::Turtle(turtle) = object {
@@ -277,9 +277,9 @@ impl Command {
 
     pub fn seth() -> Self {
         Command::reserved(
-            String::from("seth"),
+            "seth",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let heading = decode_number(com, &args, 0)?;
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.heading = heading;
@@ -294,14 +294,14 @@ impl Command {
 
     pub fn setc() -> Self {
         Command::reserved(
-            String::from("setc"),
+            "setc",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let color = decode_number(com, &args, 0)?;
                 let object = int.state.canvas.current_object()?;
                 object.set_color(color);
                 int.event.send_ui(UiEvent::ObjectColor(
-                    object.name().clone(),
+                    Box::from(object.name()),
                     object.color().clone(),
                 ));
                 Ok(Token::Void)
@@ -311,9 +311,9 @@ impl Command {
 
     pub fn setpensize() -> Self {
         Command::reserved(
-            String::from("setpensize"),
+            "setpensize",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let size = decode_number(com, &args, 0)?;
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.pen_size = size;
@@ -324,9 +324,9 @@ impl Command {
 
     pub fn setsh() -> Self {
         Command::reserved(
-            String::from("setsh"),
+            "setsh",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let shape_string = decode_word(com, &args, 0)?;
                 let shape = match shape_string.to_lowercase().as_str() {
                     "triangle" => TurtleShape::Triangle,
@@ -347,9 +347,9 @@ impl Command {
 
     pub fn pd() -> Self {
         Command::reserved(
-            String::from("pd"),
+            "pd",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.is_drawing = true;
                 Ok(Token::Void)
@@ -359,9 +359,9 @@ impl Command {
 
     pub fn pu() -> Self {
         Command::reserved(
-            String::from("pu"),
+            "pu",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.is_drawing = false;
                 Ok(Token::Void)
@@ -371,9 +371,9 @@ impl Command {
 
     pub fn st() -> Self {
         Command::reserved(
-            String::from("st"),
+            "st",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.is_visible = true;
                 int.event
@@ -385,9 +385,9 @@ impl Command {
 
     pub fn ht() -> Self {
         Command::reserved(
-            String::from("ht"),
+            "ht",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.is_visible = false;
                 int.event
@@ -399,9 +399,9 @@ impl Command {
 
     pub fn distance() -> Self {
         Command::reserved(
-            String::from("distance"),
+            "distance",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let other = decode_word(com, &args, 0)?;
                 let current_pos = int.state.canvas.current_turtle()?.pos.clone();
                 let other_pos = int.state.canvas.get_turtle(&other)?.pos.clone();
@@ -415,9 +415,9 @@ impl Command {
 
     pub fn towards() -> Self {
         Command::reserved(
-            String::from("towards"),
+            "towards",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let other = decode_word(com, &args, 0)?;
                 let current_pos = int.state.canvas.current_turtle()?.pos.clone();
                 let other_pos = int.state.canvas.get_turtle(&other)?.pos.clone();
@@ -437,9 +437,9 @@ impl Command {
 
     pub fn colorunder() -> Self {
         Command::reserved(
-            String::from("colorunder"),
+            "colorunder",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 let point = turtle.pos.clone();
                 let color = int.state.canvas.color_at_point(&point);
@@ -450,9 +450,9 @@ impl Command {
 
     pub fn fontsize() -> Self {
         Command::reserved(
-            String::from("fontsize"),
+            "fontsize",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let text = int.state.canvas.current_text()?;
                 Ok(Token::Number(text.font_size))
             },
@@ -461,9 +461,9 @@ impl Command {
 
     pub fn setfontsize() -> Self {
         Command::reserved(
-            String::from("setfontsize"),
+            "setfontsize",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let font_size = decode_number(com, &args, 0)?;
                 let text = int.state.canvas.current_text()?;
                 text.font_size = font_size;
@@ -476,9 +476,9 @@ impl Command {
 
     pub fn showtext() -> Self {
         Command::reserved(
-            String::from("showtext"),
+            "showtext",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let text = int.state.canvas.current_text()?;
                 text.is_visible = true;
                 int.event
@@ -490,9 +490,9 @@ impl Command {
 
     pub fn hidetext() -> Self {
         Command::reserved(
-            String::from("hidetext"),
+            "hidetext",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let text = int.state.canvas.current_text()?;
                 text.is_visible = false;
                 int.event
@@ -504,9 +504,9 @@ impl Command {
 
     pub fn print() -> Self {
         Command::reserved(
-            String::from("print"),
+            "print",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 let string = match token {
                     Token::Word(word) => word.clone(),
@@ -528,9 +528,9 @@ impl Command {
 
     pub fn cleartext() -> Self {
         Command::reserved(
-            String::from("cleartext"),
+            "cleartext",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let text = int.state.canvas.current_text()?;
                 text.text = String::new();
                 int.event.send_ui(UiEvent::TextClear(text.name.clone()));
@@ -541,9 +541,9 @@ impl Command {
 
     pub fn newprojectsize() -> Self {
         Command::reserved(
-            String::from("newprojectsize"),
+            "newprojectsize",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let list = decode_list(com, &args, 0)?;
                 let size: Vec<&str> = list.split(' ').collect();
                 if size.len() != 2 {
@@ -560,9 +560,9 @@ impl Command {
 
     pub fn bg() -> Self {
         Command::reserved(
-            String::from("bg"),
+            "bg",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let bg_color = int.state.canvas.get_bg_color();
                 Ok(Token::Number(bg_color as f32))
             },
@@ -571,9 +571,9 @@ impl Command {
 
     pub fn setbg() -> Self {
         Command::reserved(
-            String::from("setbg"),
+            "setbg",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let color = decode_number(com, &args, 0)?;
                 int.state.canvas.set_bg_color(color as u8);
                 int.event.send_ui(UiEvent::BgColor(color));
@@ -584,9 +584,9 @@ impl Command {
 
     pub fn home() -> Self {
         Command::reserved(
-            String::from("home"),
+            "home",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let turtle = int.state.canvas.current_turtle()?;
                 let original_pos = turtle.pos.clone();
                 let new_pos = Point::zero();
@@ -613,9 +613,9 @@ impl Command {
 
     pub fn clean() -> Self {
         Command::reserved(
-            String::from("clean"),
+            "clean",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 int.state.canvas.clear();
                 int.event.send_ui(UiEvent::Clean);
                 Ok(Token::Void)
@@ -625,9 +625,9 @@ impl Command {
 
     pub fn cg() -> Self {
         Command::reserved(
-            String::from("cg"),
+            "cg",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 int.state.canvas.clear();
                 let turtle = int.state.canvas.current_turtle()?;
                 turtle.pos = Point::zero();
@@ -646,12 +646,12 @@ impl Command {
 
     pub fn newturtle() -> Self {
         Command::reserved(
-            String::from("newturtle"),
+            "newturtle",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
-                int.state.canvas.create_turtle(name.clone())?;
-                int.event.send_ui(UiEvent::NewTurtle(name));
+                int.state.canvas.create_turtle(&name)?;
+                int.event.send_ui(UiEvent::NewTurtle(name.into()));
                 Ok(Token::Void)
             },
         )
@@ -659,12 +659,12 @@ impl Command {
 
     pub fn newtext() -> Self {
         Command::reserved(
-            String::from("newtext"),
+            "newtext",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
-                int.state.canvas.create_text(name.clone())?;
-                int.event.send_ui(UiEvent::NewText(name));
+                int.state.canvas.create_text(&name)?;
+                int.event.send_ui(UiEvent::NewText(name.into()));
                 Ok(Token::Void)
             },
         )
@@ -672,12 +672,12 @@ impl Command {
 
     pub fn remove() -> Self {
         Command::reserved(
-            String::from("remove"),
+            "remove",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
                 int.state.canvas.remove_object(&name);
-                int.event.send_ui(UiEvent::RemoveObject(name));
+                int.event.send_ui(UiEvent::RemoveObject(name.into()));
                 Ok(Token::Void)
             },
         )
@@ -685,9 +685,9 @@ impl Command {
 
     pub fn wait() -> Self {
         Command::reserved(
-            String::from("wait"),
+            "wait",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let duration = decode_number(com, &args, 0)? as u64;
                 int.event.send_ui(UiEvent::Wait(duration.clone()));
                 thread::sleep(Duration::from_millis(duration));
@@ -698,9 +698,9 @@ impl Command {
 
     pub fn show() -> Self {
         Command::reserved(
-            String::from("show"),
+            "show",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 let text = token.to_string();
                 int.event.send_ui(UiEvent::ConsolePrint(text));
@@ -711,9 +711,9 @@ impl Command {
 
     pub fn announce() -> Self {
         Command::reserved(
-            String::from("announce"),
+            "announce",
             Params::Fixed(1),
-            |int: &mut Interpreter, com: &String, args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 let text: String;
                 match token {
@@ -731,9 +731,9 @@ impl Command {
 
     pub fn cc() -> Self {
         Command::reserved(
-            String::from("cc"),
+            "cc",
             Params::None,
-            |int: &mut Interpreter, _com: &String, _args: Vec<Token>| {
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 int.event.send_ui(UiEvent::ClearConsole);
                 Ok(Token::Void)
             },

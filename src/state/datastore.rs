@@ -5,7 +5,7 @@ use std::collections::{HashMap, VecDeque};
 #[derive(Debug)]
 pub struct DataStore {
     scopes: VecDeque<Scope>,
-    procedures: HashMap<String, Procedure>,
+    procedures: HashMap<Box<str>, Procedure>,
     last_error_message: String,
 }
 
@@ -44,7 +44,7 @@ impl DataStore {
         self.scopes.len() >= 100
     }
 
-    pub fn get_variable(&self, name: &String) -> Option<&Token> {
+    pub fn get_variable(&self, name: &str) -> Option<&Token> {
         // Go through each scope from most local to most global
         // and search for the variable name in question.
         for scope in &self.scopes {
@@ -55,22 +55,22 @@ impl DataStore {
         None
     }
 
-    pub fn set_variable(&mut self, name: String, value: Token) {
+    pub fn set_variable(&mut self, name: &str, value: Token) {
         for scope in &mut self.scopes {
             // If the variable already exists in local scope, allow setting there.
             // Otherwise, all variable sets are in global scope.
-            if let Some(..) = scope.variables.get(&name) {
-                scope.variables.insert(name, value);
+            if let Some(..) = scope.variables.get(name) {
+                scope.variables.insert(name.into(), value);
                 return;
             }
         }
         let global_scope = self.scopes.back_mut().unwrap();
-        global_scope.variables.insert(name, value);
+        global_scope.variables.insert(name.into(), value);
     }
 
-    pub fn set_local(&mut self, name: String, value: Token) {
+    pub fn set_local(&mut self, name: &str, value: Token) {
         let local_scope = self.scopes.front_mut().unwrap();
-        local_scope.variables.insert(name, value);
+        local_scope.variables.insert(name.into(), value);
     }
 
     pub fn remove_variable(&mut self, name: &str) {
@@ -97,7 +97,7 @@ impl DataStore {
 
 #[derive(Debug)]
 struct Scope {
-    variables: HashMap<String, Token>,
+    variables: HashMap<Box<str>, Token>,
 }
 
 impl Scope {

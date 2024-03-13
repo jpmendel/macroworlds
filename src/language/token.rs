@@ -16,7 +16,7 @@ pub enum Token {
 impl Token {
     pub fn to_string(&self) -> String {
         match self {
-            Self::Command(command, _) => command.name.clone(),
+            Self::Command(command, _) => command.name.to_string(),
             Self::Word(string) => string.clone(),
             Self::Number(number) => number.to_string(),
             Self::Boolean(boolean) => boolean.to_string(),

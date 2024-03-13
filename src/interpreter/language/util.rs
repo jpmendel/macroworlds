@@ -1,4 +1,4 @@
-use crate::language::token::Token;
+use crate::interpreter::language::token::Token;
 use std::error::Error;
 
 pub fn decode_number(com: &str, args: &Vec<Token>, index: usize) -> Result<f32, Box<dyn Error>> {

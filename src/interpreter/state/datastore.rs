@@ -1,5 +1,5 @@
-use crate::language::command::Procedure;
-use crate::language::token::Token;
+use crate::interpreter::language::procedure::Procedure;
+use crate::interpreter::language::token::Token;
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug)]

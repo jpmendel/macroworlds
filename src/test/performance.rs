@@ -6,6 +6,8 @@ mod tests {
 
     #[test]
     fn math_operators() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
 
@@ -29,15 +31,15 @@ mod tests {
             );
             code += &format!(
                 "{} * {}\n",
-                rand::thread_rng().gen_range(-500..=500),
-                rand::thread_rng().gen_range(-500..=500)
+                rand::thread_rng().gen_range(-200..=200),
+                rand::thread_rng().gen_range(-200..=200)
             );
             code += &format!(
                 "(product {} {} {} {})\n",
-                rand::thread_rng().gen_range(-300..=300),
-                rand::thread_rng().gen_range(-300..=300),
-                rand::thread_rng().gen_range(-300..=300),
-                rand::thread_rng().gen_range(-300..=300)
+                rand::thread_rng().gen_range(-200..=200),
+                rand::thread_rng().gen_range(-200..=200),
+                rand::thread_rng().gen_range(-200..=200),
+                rand::thread_rng().gen_range(-200..=200)
             );
             code += &format!(
                 "{} / {}\n",
@@ -56,11 +58,11 @@ mod tests {
             );
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter.performance.print_summary(HashSet::from([
+        int.performance.print_summary(HashSet::from([
             "sum",
             "difference",
             "product",
@@ -68,10 +70,19 @@ mod tests {
             "power",
             "remainder",
         ]));
+
+        assert!(int.performance.average("sum").as_nanos() < 2000);
+        assert!(int.performance.average("difference").as_nanos() < 2000);
+        assert!(int.performance.average("product").as_nanos() < 3000);
+        assert!(int.performance.average("quotient").as_nanos() < 3000);
+        assert!(int.performance.average("power").as_nanos() < 2000);
+        assert!(int.performance.average("remainder").as_nanos() < 2000);
     }
 
     #[test]
     fn conditionals() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
         let booleans = vec!["true", "false"];
@@ -124,11 +135,11 @@ mod tests {
             code += &format!("carefully [missing] [show errormessage]\n");
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter.performance.print_summary(HashSet::from([
+        int.performance.print_summary(HashSet::from([
             "if",
             "ifelse",
             "carefully",
@@ -144,6 +155,8 @@ mod tests {
 
     #[test]
     fn loops() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
         let num_loops = 10;
@@ -155,17 +168,18 @@ mod tests {
             code += &format!("dolist [i {}] [fd :i rt 30]\n", loop_values);
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter
-            .performance
+        int.performance
             .print_summary(HashSet::from(["repeat", "dotimes", "dolist"]));
     }
 
     #[test]
     fn variables() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
 
@@ -177,17 +191,18 @@ mod tests {
             code += &format!("let [temp3 [{} {} {}]]", index, index + 1, index + 2);
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter
-            .performance
+        int.performance
             .print_summary(HashSet::from(["make", "let"]));
     }
 
     #[test]
     fn list_processing() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
 
@@ -204,17 +219,19 @@ mod tests {
             code += &format!("empty? :ls\n");
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter.performance.print_summary(HashSet::from([
+        int.performance.print_summary(HashSet::from([
             "list", "fput", "lput", "first", "last", "butfirst", "butlast", "member?", "empty?",
         ]));
     }
 
     #[test]
     fn turtle_movement_pen_down() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
 
@@ -233,17 +250,19 @@ mod tests {
             );
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter.performance.print_summary(HashSet::from([
+        int.performance.print_summary(HashSet::from([
             "forward", "back", "left", "right", "setx", "sety", "setpos",
         ]));
     }
 
     #[test]
     fn turtle_movement_pen_up() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
 
@@ -262,17 +281,19 @@ mod tests {
             );
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter.performance.print_summary(HashSet::from([
+        int.performance.print_summary(HashSet::from([
             "forward", "back", "left", "right", "setx", "sety", "setpos",
         ]));
     }
 
     #[test]
     fn get_set_attributes() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
         let shapes = vec!["triangle", "circle", "square"];
@@ -294,11 +315,11 @@ mod tests {
             code += &format!("shape\n");
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter.performance.print_summary(HashSet::from([
+        int.performance.print_summary(HashSet::from([
             "xcor",
             "ycor",
             "pos",
@@ -315,6 +336,8 @@ mod tests {
 
     #[test]
     fn object_custom_attributes() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
 
@@ -326,17 +349,18 @@ mod tests {
             code += &format!("attr0\n");
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter
-            .performance
+        int.performance
             .print_summary(HashSet::from(["turtlesown", "setattr0", "attr0"]));
     }
 
     #[test]
     fn object_creation_deletion() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
 
@@ -348,17 +372,18 @@ mod tests {
             code += &format!("remove \"text{}\n", id);
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter
-            .performance
+        int.performance
             .print_summary(HashSet::from(["newturtle", "newtext", "remove"]));
     }
 
     #[test]
     fn background_colors() {
+        assert!(cfg!(feature = "performance"));
+
         let num_executions: usize = 20;
         let mut code = String::new();
 
@@ -374,15 +399,11 @@ mod tests {
             code += &format!("clean\n");
         }
 
-        let mut interpreter = Interpreter::new();
-        let result = interpreter.interpret(&code);
+        let mut int = Interpreter::new();
+        let result = int.interpret(&code);
         assert!(result.is_ok());
 
-        interpreter.performance.print_summary(HashSet::from([
-            "setbg",
-            "bg",
-            "colorunder",
-            "clean",
-        ]));
+        int.performance
+            .print_summary(HashSet::from(["setbg", "bg", "colorunder", "clean"]));
     }
 }

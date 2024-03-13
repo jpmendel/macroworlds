@@ -1,6 +1,6 @@
 use crate::interpreter::event::InputEvent;
 use crate::interpreter::interpreter::Interpreter;
-use crate::state::state::State;
+use crate::interpreter::state::state::State;
 use crate::view::canvas::CanvasView;
 use crate::view::editor::Editor;
 use crate::view::object::ObjectView;

@@ -1,19 +1,19 @@
-use crate::language::command::{Command, CommandAction, Params};
-use crate::language::dictionary::CommandDictionary;
-use crate::language::token::Token;
+use crate::interpreter::language::command::command::{Command, CommandAction, Params};
+use crate::interpreter::language::language::Language;
+use crate::interpreter::language::token::Token;
 use std::collections::VecDeque;
 use std::error::Error;
 
 pub struct Lexer {
-    dictionary: CommandDictionary,
-    stack: VecDeque<CodeBlock>,
+    language: Language,
+    code_blocks: VecDeque<CodeBlock>,
 }
 
 impl Lexer {
     pub fn new() -> Self {
         Lexer {
-            dictionary: CommandDictionary::default(),
-            stack: VecDeque::new(),
+            language: Language::default(),
+            code_blocks: VecDeque::new(),
         }
     }
 
@@ -23,28 +23,28 @@ impl Lexer {
             position: 0,
             in_paren,
         };
-        self.stack.push_back(block);
+        self.code_blocks.push_back(block);
     }
 
     pub fn pop_block(&mut self) -> bool {
-        let exiting_main = self.stack.len() == 1;
-        if self.stack.len() > 0 {
-            self.stack.pop_back();
+        let exiting_main = self.code_blocks.len() == 1;
+        if self.code_blocks.len() > 0 {
+            self.code_blocks.pop_back();
         }
         exiting_main
     }
 
     pub fn clear_blocks(&mut self) {
-        self.stack.clear();
+        self.code_blocks.clear();
     }
 
     pub fn return_to_start_of_block(&mut self) {
-        let block = self.stack.back_mut().unwrap();
+        let block = self.code_blocks.back_mut().unwrap();
         block.position = 0;
     }
 
     fn current_block(&mut self) -> &mut CodeBlock {
-        self.stack.back_mut().unwrap()
+        self.code_blocks.back_mut().unwrap()
     }
 
     pub fn define(
@@ -53,13 +53,13 @@ impl Lexer {
         params: Params,
         action: CommandAction,
     ) -> Result<(), Box<dyn Error>> {
-        if let Some(command) = self.dictionary.lookup(&name) {
+        if let Some(command) = self.language.lookup(&name) {
             if command.is_reserved {
                 return Err(Box::from(format!("{} is reserved", name)));
             }
         }
         let new_command = Command::user_defined(name, params, action);
-        self.dictionary.add(new_command);
+        self.language.add(new_command);
         Ok(())
     }
 
@@ -76,7 +76,7 @@ impl Lexer {
         }
         let identifier = self.read_identifier()?;
         let token: Token;
-        if let Some(command) = self.dictionary.lookup(&identifier) {
+        if let Some(command) = self.language.lookup(&identifier) {
             // Command
             let args = self.read_arguments(&command);
             token = Token::Command(command, args);
@@ -250,7 +250,7 @@ impl Lexer {
             operator.push(block.current_char().clone());
             block.next();
         }
-        if let Some(command) = self.dictionary.lookup_infix(&operator) {
+        if let Some(command) = self.language.lookup_infix(&operator) {
             Some(command)
         } else {
             self.current_block().position = saved_position;

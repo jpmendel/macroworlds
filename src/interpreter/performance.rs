@@ -23,6 +23,18 @@ impl PerformanceTracker {
     }
 
     #[allow(dead_code)]
+    pub fn average(&self, command: &str) -> Duration {
+        let Some(results) = self.execution_times.get(command) else {
+            panic!("no times recorded for: {}", command);
+        };
+        let mut sum: u128 = 0;
+        for result in results {
+            sum += result.time.as_nanos();
+        }
+        Duration::from_nanos((sum / results.len() as u128) as u64)
+    }
+
+    #[allow(dead_code)]
     pub fn print_summary(&self, include: HashSet<&str>) {
         for (command, results) in &self.execution_times {
             if include.get(command.as_ref()).is_none() {

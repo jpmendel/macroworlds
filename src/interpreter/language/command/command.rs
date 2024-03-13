@@ -1,5 +1,5 @@
 use crate::interpreter::interpreter::Interpreter;
-use crate::language::token::Token;
+use crate::interpreter::language::token::Token;
 use std::error::Error;
 
 #[derive(Debug, Clone)]
@@ -28,6 +28,10 @@ impl Command {
             action,
         }
     }
+
+    pub fn is(&self, name: &str) -> bool {
+        *self.name == *name
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -39,10 +43,3 @@ pub enum Params {
 
 pub type CommandAction =
     fn(data: &mut Interpreter, command: &str, args: Vec<Token>) -> Result<Token, Box<dyn Error>>;
-
-#[derive(Debug, Clone)]
-pub struct Procedure {
-    pub name: Box<str>,
-    pub params: Vec<String>,
-    pub code: String,
-}

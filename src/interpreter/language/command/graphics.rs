@@ -1,11 +1,11 @@
 use crate::interpreter::event::UiEvent;
 use crate::interpreter::interpreter::Interpreter;
-use crate::language::command::{Command, Params};
-use crate::language::token::Token;
-use crate::language::util::{
+use crate::interpreter::language::command::command::{Command, Params};
+use crate::interpreter::language::token::Token;
+use crate::interpreter::language::util::{
     decode_list, decode_number, decode_token, decode_word, join_to_list_string,
 };
-use crate::state::object::{Line, Object, Point, TurtleShape};
+use crate::interpreter::state::object::{Line, Object, Point, TurtleShape};
 use std::f32::consts::PI;
 use std::thread;
 use std::time::Duration;

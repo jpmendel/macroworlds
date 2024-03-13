@@ -1,12 +1,13 @@
 use crate::interpreter::event::{EventHandler, InputEvent, UiEvent};
 use crate::interpreter::event::{UiContext, UiEventHandler};
+use crate::interpreter::language::command::command::Params;
+use crate::interpreter::language::procedure::Procedure;
+use crate::interpreter::language::token::Token;
+use crate::interpreter::language::util::decode_token;
 use crate::interpreter::lexer::Lexer;
 use crate::interpreter::performance::PerformanceTracker;
-use crate::interpreter::util::{is_eof, is_interrupt, is_return_command};
-use crate::language::command::{Params, Procedure};
-use crate::language::token::Token;
-use crate::language::util::decode_token;
-use crate::state::state::State;
+use crate::interpreter::state::state::State;
+use crate::interpreter::util::{is_eof, is_interrupt};
 use crate::DEBUG;
 use std::error::Error;
 use std::sync::{mpsc, Arc, Mutex};
@@ -95,10 +96,11 @@ impl Interpreter {
                     return Err(err);
                 }
             };
-            let mut is_return = false;
-            if let Token::Command(command, _) = &token {
-                is_return = is_return_command(command);
-            }
+            let is_return = if let Token::Command(command, _) = &token {
+                command.is("output")
+            } else {
+                false
+            };
             match self.execute_command(token) {
                 Ok(token) => {
                     if is_return {

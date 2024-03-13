@@ -1,4 +1,4 @@
-use crate::state::object::{Line, Point, TurtleShape};
+use crate::interpreter::state::object::{Line, Point, TurtleShape};
 use std::sync::{mpsc, Arc, Mutex};
 
 #[derive(Debug, Clone)]

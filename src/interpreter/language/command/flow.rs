@@ -1,8 +1,8 @@
 use crate::interpreter::interpreter::Interpreter;
-use crate::language::command::{Command, Params};
-use crate::language::token::Token;
-use crate::language::util::decode_boolean;
-use crate::language::util::{decode_list, decode_number};
+use crate::interpreter::language::command::command::{Command, Params};
+use crate::interpreter::language::token::Token;
+use crate::interpreter::language::util::decode_boolean;
+use crate::interpreter::language::util::{decode_list, decode_number};
 
 impl Command {
     pub fn ifthen() -> Self {

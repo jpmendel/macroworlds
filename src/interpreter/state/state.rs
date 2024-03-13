@@ -1,6 +1,6 @@
-use crate::state::canvas::Canvas;
-use crate::state::datastore::DataStore;
-use crate::state::input::InputManager;
+use crate::interpreter::state::canvas::Canvas;
+use crate::interpreter::state::datastore::DataStore;
+use crate::interpreter::state::input::InputManager;
 use std::error::Error;
 use std::time::SystemTime;
 

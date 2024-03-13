@@ -1,6 +1,6 @@
-use crate::language::token::Token;
-use crate::state::object::{Line, Object, Point, Size, Text, Turtle};
-use crate::state::state::State;
+use crate::interpreter::language::token::Token;
+use crate::interpreter::state::object::{Line, Object, Point, Size, Text, Turtle};
+use crate::interpreter::state::state::State;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 

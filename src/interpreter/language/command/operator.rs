@@ -1,7 +1,7 @@
 use crate::interpreter::interpreter::Interpreter;
-use crate::language::command::{Command, Params};
-use crate::language::token::Token;
-use crate::language::util::{
+use crate::interpreter::language::command::command::{Command, Params};
+use crate::interpreter::language::token::Token;
+use crate::interpreter::language::util::{
     are_tokens_equal, decode_boolean, decode_list, decode_number, decode_token, decode_word,
     join_to_list_string,
 };

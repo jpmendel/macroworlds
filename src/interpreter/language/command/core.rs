@@ -1,7 +1,8 @@
 use crate::interpreter::interpreter::Interpreter;
-use crate::language::command::{Command, Params, Procedure};
-use crate::language::token::Token;
-use crate::language::util::{
+use crate::interpreter::language::command::command::{Command, Params};
+use crate::interpreter::language::procedure::Procedure;
+use crate::interpreter::language::token::Token;
+use crate::interpreter::language::util::{
     decode_list, decode_number, decode_proc, decode_token, decode_word, join_to_list_string,
 };
 use rand::Rng;

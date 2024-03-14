@@ -510,9 +510,9 @@ impl Command {
             "fput",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let item = decode_word(com, &args, 0)?;
+                let item = decode_token(com, &args, 0)?;
                 let list = decode_list(com, &args, 1)?;
-                let result = format!("{} {}", item, list);
+                let result = format!("{} {}", item.to_string(), list);
                 Ok(Token::List(result))
             },
         )
@@ -523,9 +523,9 @@ impl Command {
             "lput",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let item = decode_word(com, &args, 0)?;
+                let item = decode_token(com, &args, 0)?;
                 let list = decode_list(com, &args, 1)?;
-                let result = format!("{} {}", list, item);
+                let result = format!("{} {}", list, item.to_string());
                 Ok(Token::List(result))
             },
         )

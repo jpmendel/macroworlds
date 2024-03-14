@@ -36,7 +36,9 @@ impl PartialEq for Token {
             (Self::Boolean(bool1), Self::Boolean(bool2)) => bool1 == bool2,
             (Self::List(list1), Self::List(list2)) => list1 == list2,
             (Self::Variable(var1), Self::Variable(var2)) => var1 == var2,
-            (Self::Procedure(proc1, _, _), Self::Procedure(proc2, _, _)) => proc1 == proc2,
+            (Self::Procedure(proc1, params1, _), Self::Procedure(proc2, params2, _)) => {
+                proc1 == proc2 && params1 == params2
+            }
             (Self::Undefined(undef1), Self::Undefined(undef2)) => undef1 == undef2,
             _ => false,
         }

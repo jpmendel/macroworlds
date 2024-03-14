@@ -306,6 +306,8 @@ mod tests {
             code += &format!("heading\n");
             code += &format!("setc {}\n", rand::thread_rng().gen_range(0..=255));
             code += &format!("color\n");
+            code += &format!("setsize {}\n", rand::thread_rng().gen_range(4..=80));
+            code += &format!("size\n");
             code += &format!("setpensize {}\n", rand::thread_rng().gen_range(1..=10));
             code += &format!("pensize\n");
             code += &format!(
@@ -327,6 +329,8 @@ mod tests {
             "heading",
             "setc",
             "color",
+            "setsize",
+            "size",
             "setpensize",
             "pensize",
             "setsh",

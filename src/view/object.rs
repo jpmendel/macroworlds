@@ -33,6 +33,7 @@ pub struct TurtleView {
     pub pos: Pos2,
     pub heading: f32,
     pub color: Color32,
+    pub size: f32,
     pub shape: TurtleShape,
     pub is_visible: bool,
 }
@@ -43,6 +44,7 @@ impl TurtleView {
             pos,
             heading: 270.0,
             color: Color32::from_gray(0),
+            size: 8.0,
             shape: TurtleShape::Triangle,
             is_visible: true,
         }

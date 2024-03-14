@@ -34,7 +34,18 @@ impl Canvas {
         }
     }
 
-    pub fn current_object(&mut self) -> Result<&mut Object, Box<dyn Error>> {
+    pub fn current_object(&self) -> Result<&Object, Box<dyn Error>> {
+        if let Some(object) = self.objects.get(&self.current_object_name) {
+            Ok(object)
+        } else {
+            Err(Box::from(format!(
+                "object {} does not exist",
+                self.current_object_name
+            )))
+        }
+    }
+
+    pub fn current_object_mut(&mut self) -> Result<&mut Object, Box<dyn Error>> {
         if let Some(object) = self.objects.get_mut(&self.current_object_name) {
             Ok(object)
         } else {
@@ -45,7 +56,19 @@ impl Canvas {
         }
     }
 
-    pub fn current_turtle(&mut self) -> Result<&mut Turtle, Box<dyn Error>> {
+    pub fn current_turtle(&self) -> Result<&Turtle, Box<dyn Error>> {
+        let current_obj = self.objects.get(&self.current_object_name);
+        if let Some(Object::Turtle(turtle)) = current_obj {
+            Ok(turtle)
+        } else {
+            Err(Box::from(format!(
+                "object {} is not a turtle",
+                self.current_object_name
+            )))
+        }
+    }
+
+    pub fn current_turtle_mut(&mut self) -> Result<&mut Turtle, Box<dyn Error>> {
         let current_obj = self.objects.get_mut(&self.current_object_name);
         if let Some(Object::Turtle(turtle)) = current_obj {
             Ok(turtle)
@@ -57,7 +80,19 @@ impl Canvas {
         }
     }
 
-    pub fn current_text(&mut self) -> Result<&mut Text, Box<dyn Error>> {
+    pub fn current_text(&self) -> Result<&Text, Box<dyn Error>> {
+        let current_obj = self.objects.get(&self.current_object_name);
+        if let Some(Object::Text(text)) = current_obj {
+            Ok(text)
+        } else {
+            Err(Box::from(format!(
+                "object {} is not a text",
+                self.current_object_name
+            )))
+        }
+    }
+
+    pub fn current_text_mut(&mut self) -> Result<&mut Text, Box<dyn Error>> {
         let current_obj = self.objects.get_mut(&self.current_object_name);
         if let Some(Object::Text(text)) = current_obj {
             Ok(text)
@@ -78,8 +113,8 @@ impl Canvas {
         }
     }
 
-    pub fn get_turtle(&mut self, name: &str) -> Result<&mut Turtle, Box<dyn Error>> {
-        if let Some(Object::Turtle(turtle)) = self.objects.get_mut(name) {
+    pub fn get_turtle(&self, name: &str) -> Result<&Turtle, Box<dyn Error>> {
+        if let Some(Object::Turtle(turtle)) = self.objects.get(name) {
             Ok(turtle)
         } else {
             Err(Box::from(format!("turtle {} does not exist", name)))

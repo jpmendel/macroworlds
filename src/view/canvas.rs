@@ -3,7 +3,6 @@ use crate::view::object::{ObjectView, TurtleView};
 use eframe::egui::*;
 use eframe::epaint::{CircleShape, Hsva, PathShape, RectShape};
 use std::collections::HashMap;
-use std::f32::consts::PI;
 
 pub struct CanvasView {
     pub pos: Pos2,
@@ -68,28 +67,29 @@ impl CanvasView {
 
     pub fn shape_for_turtle(&self, turtle: &TurtleView) -> Shape {
         let pos = self.to_canvas_coordinates(turtle.pos);
+        let size = turtle.size;
         match turtle.shape {
             TurtleShape::Triangle => Shape::Path(PathShape::convex_polygon(
                 vec![
                     pos2(
-                        pos.x - 8.0 * (turtle.heading * PI / 180.0).cos(),
-                        pos.y + 8.0 * (turtle.heading * PI / 180.0).sin(),
+                        pos.x - size * turtle.heading.to_radians().cos(),
+                        pos.y + size * turtle.heading.to_radians().sin(),
                     ),
                     pos2(
-                        pos.x - 8.0 * (((turtle.heading + 120.0) % 360.0) * PI / 180.0).cos(),
-                        pos.y + 8.0 * (((turtle.heading + 120.0) % 360.0) * PI / 180.0).sin(),
+                        pos.x - size * ((turtle.heading + 120.0) % 360.0).to_radians().cos(),
+                        pos.y + size * ((turtle.heading + 120.0) % 360.0).to_radians().sin(),
                     ),
                     pos2(
-                        pos.x - 8.0 * (((turtle.heading + 240.0) % 360.0) * PI / 180.0).cos(),
-                        pos.y + 8.0 * (((turtle.heading + 240.0) % 360.0) * PI / 180.0).sin(),
+                        pos.x - size * ((turtle.heading + 240.0) % 360.0).to_radians().cos(),
+                        pos.y + size * ((turtle.heading + 240.0) % 360.0).to_radians().sin(),
                     ),
                 ],
                 turtle.color,
                 Stroke::new(1.0, turtle.color),
             )),
-            TurtleShape::Circle => Shape::Circle(CircleShape::filled(pos, 8.0, turtle.color)),
+            TurtleShape::Circle => Shape::Circle(CircleShape::filled(pos, size, turtle.color)),
             TurtleShape::Square => Shape::Rect(RectShape::filled(
-                Rect::from_center_size(pos, vec2(16.0, 16.0)),
+                Rect::from_center_size(pos, vec2(size * 2.0, size * 2.0)),
                 Rounding::default(),
                 turtle.color,
             )),

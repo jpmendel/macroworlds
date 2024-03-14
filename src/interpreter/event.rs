@@ -14,6 +14,7 @@ pub enum UiEvent {
     ObjectColor(Box<str>, f32),
     ObjectVisible(Box<str>, bool),
     TurtleHeading(Box<str>, f32),
+    TurtleSize(Box<str>, f32),
     TurtleShape(Box<str>, TurtleShape),
     TextPrint(Box<str>, String),
     TextClear(Box<str>),

@@ -73,6 +73,13 @@ impl UiEventHandler for CanvasView {
                     self.print_to_console(format!("turtle named {} does not exist", name));
                 }
             }
+            UiEvent::TurtleSize(name, size) => {
+                if let Some(ObjectView::Turtle(turtle)) = self.objects.get_mut(&name) {
+                    turtle.size = size;
+                } else {
+                    self.print_to_console(format!("turtle named {} does not exist", name));
+                }
+            }
             UiEvent::TurtleShape(name, shape) => {
                 if let Some(ObjectView::Turtle(turtle)) = self.objects.get_mut(&name) {
                     turtle.shape = shape;

@@ -101,12 +101,14 @@ impl Language {
         language.add(Command::setpensize());
         language.add(Command::setpos());
         language.add(Command::setsh());
+        language.add(Command::setsize());
         language.add(Command::setx());
         language.add(Command::sety());
         language.add(Command::shape());
         language.add(Command::show());
         language.add(Command::showtext());
         language.add(Command::sin());
+        language.add(Command::size());
         language.add(Command::sqrt());
         language.add(Command::st());
         language.add(Command::sum());
@@ -114,6 +116,7 @@ impl Language {
         language.add(Command::tan());
         language.add(Command::timer());
         language.add(Command::to());
+        language.add(Command::touching());
         language.add(Command::towards());
         language.add(Command::turtlesown());
         language.add(Command::wait());

@@ -50,6 +50,7 @@ pub struct Turtle {
     pub pos: Point,
     pub heading: f32,
     pub color: f32,
+    pub size: f32,
     pub pen_size: f32,
     pub shape: TurtleShape,
     pub is_visible: bool,
@@ -64,6 +65,7 @@ impl Turtle {
             pos: Point::zero(),
             heading: 0.0,
             color: 1.0, // Black
+            size: 8.0,
             pen_size: 1.0,
             shape: TurtleShape::Triangle,
             is_visible: true,

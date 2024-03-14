@@ -212,8 +212,8 @@ impl Interpreter {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
-                let turtle = int.state.canvas.current_turtle()?;
                 let item_name = com.chars().skip(3).collect::<String>().into_boxed_str();
+                let turtle = int.state.canvas.current_turtle_mut()?;
                 turtle.backpack.insert(item_name, token);
                 Ok(Token::Void)
             },

@@ -123,4 +123,201 @@ mod tests {
 
         check_expected_tokens(tokens, expect);
     }
+
+    #[test]
+    fn read_code_with_procedures() {
+        let code = "
+        to function1
+        fd 50
+        rt 90
+        end
+
+        to function2 :param
+        make \"val :param + 10
+        output :val
+        end
+        ";
+        let mut lexer = Lexer::new();
+        lexer.push_block(code, false);
+
+        let mut tokens: Vec<Token> = vec![];
+        while let Ok(token) = lexer.read_token() {
+            tokens.push(token);
+        }
+
+        let expect = vec![
+            (
+                "to",
+                vec![Token::Procedure(
+                    String::from("function1"),
+                    vec![],
+                    String::from("code"),
+                )],
+            ),
+            (
+                "to",
+                vec![Token::Procedure(
+                    String::from("function2"),
+                    vec![String::from("param")],
+                    String::from("code"),
+                )],
+            ),
+        ];
+
+        check_expected_tokens(tokens, expect);
+    }
+
+    #[test]
+    fn read_code_with_list_processing() {
+        let code = "
+        make \"lst [one two three]
+        make \"var 10
+        list :lst [four five]
+        dotimes [i 5] [show :i]
+        dolist [i [one two :var]] [show :i]
+        ";
+        let mut lexer = Lexer::new();
+        lexer.push_block(code, false);
+
+        let mut tokens: Vec<Token> = vec![];
+        while let Ok(token) = lexer.read_token() {
+            tokens.push(token);
+        }
+
+        let expect = vec![
+            (
+                "make",
+                vec![
+                    Token::Word(String::from("lst")),
+                    Token::List(String::from("one two three")),
+                ],
+            ),
+            (
+                "make",
+                vec![Token::Word(String::from("var")), Token::Number(10.0)],
+            ),
+            (
+                "list",
+                vec![
+                    Token::Variable(String::from("lst")),
+                    Token::List(String::from("four five")),
+                ],
+            ),
+            (
+                "dotimes",
+                vec![
+                    Token::List(String::from("i 5")),
+                    Token::List(String::from("show :i")),
+                ],
+            ),
+            (
+                "dolist",
+                vec![
+                    Token::List(String::from("i [one two :var]")),
+                    Token::List(String::from("show :i")),
+                ],
+            ),
+        ];
+
+        check_expected_tokens(tokens, expect);
+    }
+
+    #[test]
+    fn read_code_with_conditionals() {
+        let code = "
+        make \"var1 \"hello
+        make \"var2 10
+        if equal? :var1 \"hello [show \"yes]
+        if and equal? :var1 \"hello greater? :var2 5 [show \"yes]
+        ifelse not less? :var2 5 [show \"yes] [show \"no]
+        carefully [show :noexist] [show \"no]
+        ";
+        let mut lexer = Lexer::new();
+        lexer.push_block(code, false);
+
+        let mut tokens: Vec<Token> = vec![];
+        while let Ok(token) = lexer.read_token() {
+            tokens.push(token);
+        }
+
+        let expect = vec![
+            (
+                "make",
+                vec![
+                    Token::Word(String::from("var1")),
+                    Token::Word(String::from("hello")),
+                ],
+            ),
+            (
+                "make",
+                vec![Token::Word(String::from("var2")), Token::Number(10.0)],
+            ),
+            (
+                "if",
+                vec![
+                    Token::Command(
+                        Command::equal(),
+                        vec![
+                            Token::Variable(String::from("var1")),
+                            Token::Word(String::from("hello")),
+                        ],
+                    ),
+                    Token::List(String::from("show \"yes")),
+                ],
+            ),
+            (
+                "if",
+                vec![
+                    Token::Command(
+                        Command::and(),
+                        vec![
+                            Token::Command(
+                                Command::equal(),
+                                vec![
+                                    Token::Variable(String::from("var1")),
+                                    Token::Word(String::from("hello")),
+                                ],
+                            ),
+                            Token::Command(
+                                Command::greater(),
+                                vec![Token::Variable(String::from("var1")), Token::Number(5.0)],
+                            ),
+                        ],
+                    ),
+                    Token::List(String::from("show \"yes")),
+                ],
+            ),
+            (
+                "ifelse",
+                vec![
+                    Token::Command(
+                        Command::not(),
+                        vec![Token::Command(
+                            Command::less(),
+                            vec![Token::Variable(String::from("var2")), Token::Number(5.0)],
+                        )],
+                    ),
+                    Token::List(String::from("show \"yes")),
+                ],
+            ),
+            (
+                "carefully",
+                vec![
+                    Token::List(String::from("show :noexist")),
+                    Token::List(String::from("show \"no")),
+                ],
+            ),
+        ];
+
+        check_expected_tokens(tokens, expect);
+    }
+
+    #[test]
+    fn read_code_with_infix_operators() {}
+
+    #[test]
+    fn read_code_with_parenthesis() {}
+
+    #[test]
+    fn read_code_with_aliases() {}
 }

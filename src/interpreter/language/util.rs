@@ -1,3 +1,4 @@
+use crate::interpreter::language::procedure::Procedure;
 use crate::interpreter::language::token::Token;
 use std::error::Error;
 
@@ -49,9 +50,13 @@ pub fn decode_proc(
     com: &str,
     args: &Vec<Token>,
     index: usize,
-) -> Result<(String, Vec<String>, String), Box<dyn Error>> {
+) -> Result<Procedure, Box<dyn Error>> {
     if let Some(Token::Procedure(name, params, code)) = args.get(index) {
-        Ok((name.clone(), params.clone(), code.clone()))
+        Ok(Procedure {
+            name: Box::from(name.as_str()),
+            params: params.clone(),
+            code: code.clone(),
+        })
     } else {
         Err(Box::from(format!(
             "{} expected code block for input {}",
@@ -81,7 +86,13 @@ pub fn join_to_list_string(tokens: Vec<Token>) -> String {
     let mut list = String::new();
     for token in tokens {
         match token {
-            Token::Word(word) => list += &word,
+            Token::Word(word) => {
+                if word.contains(' ') {
+                    list += &format!("|{}|", word);
+                } else {
+                    list += &word
+                }
+            }
             Token::Number(number) => list += &number.to_string(),
             Token::List(other) => list += &format!("[{}]", other),
             Token::Boolean(bool) => list += &bool.to_string(),

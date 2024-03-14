@@ -1,8 +1,7 @@
+use crate::gui::canvas::{CanvasView, PathConfig};
+use crate::gui::object::{ObjectView, TextView, TurtleView};
 use crate::interpreter::event::{UiContext, UiEvent, UiEventHandler};
-use crate::view::canvas::CanvasView;
-use crate::view::object::{ObjectView, TextView, TurtleView};
 use eframe::egui::*;
-use eframe::epaint::PathShape;
 use std::sync::{Arc, Mutex};
 
 impl UiEventHandler for CanvasView {
@@ -117,11 +116,11 @@ impl UiEventHandler for CanvasView {
                 self.bg_color = color;
             }
             UiEvent::AddLine(name, line) => {
-                let start = self.to_canvas_coordinates(pos2(line.start.x, line.start.y));
-                let end = self.to_canvas_coordinates(pos2(line.end.x, line.end.y));
+                let start = pos2(line.start.x, line.start.y);
+                let end = pos2(line.end.x, line.end.y);
                 let color = self.to_canvas_color(line.color);
                 if let Some(path) = self.current_turtle_paths.get_mut(&name) {
-                    if path.stroke.color == color {
+                    if path.color == color {
                         if let Some(point) = path.points.last() {
                             if *point == start {
                                 path.points.push(end);
@@ -132,7 +131,11 @@ impl UiEventHandler for CanvasView {
                         self.drawn_paths.push(path);
                     }
                 }
-                let path = PathShape::line(vec![start, end], Stroke::new(line.stroke_width, color));
+                let path = PathConfig {
+                    points: vec![start, end],
+                    color,
+                    stroke: line.stroke_width,
+                };
                 self.current_turtle_paths.insert(name, path);
             }
             UiEvent::Clean => {

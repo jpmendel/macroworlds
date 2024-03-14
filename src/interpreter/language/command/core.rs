@@ -1,6 +1,5 @@
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::language::command::command::{Command, Params};
-use crate::interpreter::language::procedure::Procedure;
 use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::{
     decode_list, decode_number, decode_proc, decode_token, decode_word, join_to_list_string,
@@ -34,12 +33,8 @@ impl Command {
             "to",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let (name, params, code) = decode_proc(com, &args, 0)?;
-                int.define_procedure(Procedure {
-                    name: name.into(),
-                    params,
-                    code,
-                })?;
+                let proc = decode_proc(com, &args, 0)?;
+                int.define_procedure(proc)?;
                 Ok(Token::Void)
             },
         )

@@ -144,9 +144,10 @@ impl Lexer {
     fn read_identifier(&mut self) -> Result<String, Box<dyn Error>> {
         self.consume_whitespace();
         let block = self.current_block();
-        let mut command_name = String::new();
+        let mut identifier = String::new();
         let mut bracket_count = 0;
-        while (!block.current_char().is_whitespace() || bracket_count != 0)
+        let mut allow_whitespace = false;
+        while (!block.current_char().is_whitespace() || bracket_count != 0 || allow_whitespace)
             && block.current_char() != '\0'
         {
             let chr = block.current_char().clone();
@@ -155,13 +156,21 @@ impl Lexer {
             } else if chr == ']' {
                 bracket_count -= 1;
             }
-            command_name.push(chr);
+            if chr == '|' && bracket_count == 0 {
+                allow_whitespace = !allow_whitespace;
+                block.next();
+                continue;
+            }
+            identifier.push(chr);
             block.next();
         }
         if bracket_count != 0 {
             return Err(Box::from("found unmatched brackets"));
         }
-        Ok(command_name)
+        if allow_whitespace {
+            return Err(Box::from("found unmatched pipes"));
+        }
+        Ok(identifier)
     }
 
     fn read_arguments(&mut self, command: &Command) -> Vec<Token> {

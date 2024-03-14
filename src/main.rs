@@ -1,11 +1,9 @@
+mod gui;
 mod interpreter;
 mod test;
-mod view;
 
 use eframe::egui::vec2;
-use view::app::App;
-
-static DEBUG: bool = false;
+use gui::app::App;
 
 fn main() {
     let native_options = eframe::NativeOptions {

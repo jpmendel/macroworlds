@@ -8,12 +8,13 @@ use crate::interpreter::lexer::Lexer;
 use crate::interpreter::performance::PerformanceTracker;
 use crate::interpreter::state::state::State;
 use crate::interpreter::util::{is_eof, is_interrupt};
-use crate::DEBUG;
 use std::error::Error;
 use std::sync::{mpsc, Arc, Mutex};
 
 #[cfg(feature = "performance")]
 use std::time::Instant;
+
+static DEBUG: bool = false;
 
 pub struct Interpreter {
     pub lexer: Lexer,
@@ -231,19 +232,27 @@ impl Interpreter {
     ) -> Result<Vec<Token>, Box<dyn Error>> {
         let mut items = vec![];
         let mut current_item = String::new();
-        let mut reading_list = false;
+        let mut bracket_count = 0;
+        let mut allow_whitespace = false;
 
         for chr in list.chars() {
             if chr == '[' {
-                reading_list = true;
+                bracket_count += 1;
             } else if chr == ']' {
-                reading_list = false;
-                let token = Token::List(current_item.clone());
-                items.push(token);
-                current_item = String::new();
-            } else if reading_list {
-                current_item.push(chr);
-            } else if !chr.is_whitespace() {
+                bracket_count -= 1;
+                if bracket_count == 0 {
+                    let token = Token::List(current_item.clone());
+                    items.push(token);
+                    current_item = String::new();
+                }
+            } else if chr == '|' {
+                if allow_whitespace {
+                    let token = self.parse_list_token(current_item, parse_numbers)?;
+                    items.push(token);
+                    current_item = String::new();
+                }
+                allow_whitespace = !allow_whitespace;
+            } else if bracket_count != 0 || allow_whitespace || !chr.is_whitespace() {
                 current_item.push(chr);
             } else if !current_item.is_empty() {
                 let token = self.parse_list_token(current_item, parse_numbers)?;

@@ -187,8 +187,14 @@ mod tests {
             code += &format!("make \"num {}\n", index);
             code += &format!("make \"word \"text{}\n", index);
             code += &format!("make \"list [{} {} {}]\n", index, index + 1, index + 2);
-            code += &format!("let [temp1 {} temp2 \"text{}]", index, index,);
-            code += &format!("let [temp3 [{} {} {}]]", index, index + 1, index + 2);
+            code += &format!("make \"|spaced word| \"|words in space{}|\n", index);
+            code += &format!(
+                "make \"|spaced list| [|word space{}| |other space{}|]\n",
+                index,
+                index + 1
+            );
+            code += &format!("let [temp1 {} temp2 \"text{}]\n", index, index,);
+            code += &format!("let [temp3 [{} {} {}]]\n", index, index + 1, index + 2);
         }
 
         let mut int = Interpreter::new();

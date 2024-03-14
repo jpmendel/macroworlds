@@ -1,9 +1,9 @@
+use crate::gui::canvas::CanvasView;
+use crate::gui::editor::Editor;
+use crate::gui::object::ObjectView;
 use crate::interpreter::event::InputEvent;
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::state::state::State;
-use crate::view::canvas::CanvasView;
-use crate::view::editor::Editor;
-use crate::view::object::ObjectView;
 use eframe::egui::*;
 use std::collections::HashSet;
 use std::sync::mpsc;
@@ -135,11 +135,11 @@ impl eframe::App for App {
 
                 // Lines
                 let content_painter = ui.painter_at(rect);
-                for path in &canvas.drawn_paths {
-                    content_painter.add(path.clone());
+                for config in &canvas.drawn_paths {
+                    content_painter.add(canvas.path_for_config(config));
                 }
-                for (_, path) in &canvas.current_turtle_paths {
-                    content_painter.add(path.clone());
+                for (_, config) in &canvas.current_turtle_paths {
+                    content_painter.add(canvas.path_for_config(config));
                 }
 
                 // Turtles and Text

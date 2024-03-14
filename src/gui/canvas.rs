@@ -1,5 +1,5 @@
+use crate::gui::object::{ObjectView, TurtleView};
 use crate::interpreter::state::object::TurtleShape;
-use crate::view::object::{ObjectView, TurtleView};
 use eframe::egui::*;
 use eframe::epaint::{CircleShape, Hsva, PathShape, RectShape};
 use std::collections::HashMap;
@@ -9,8 +9,8 @@ pub struct CanvasView {
     pub size: Vec2,
     pub objects: HashMap<Box<str>, ObjectView>,
     pub bg_color: Color32,
-    pub current_turtle_paths: HashMap<Box<str>, PathShape>,
-    pub drawn_paths: Vec<PathShape>,
+    pub current_turtle_paths: HashMap<Box<str>, PathConfig>,
+    pub drawn_paths: Vec<PathConfig>,
     pub console_text: String,
     pub announce_text: String,
     pub is_window_open: bool,
@@ -95,4 +95,21 @@ impl CanvasView {
             )),
         }
     }
+
+    pub fn path_for_config(&self, config: &PathConfig) -> PathShape {
+        PathShape::line(
+            config
+                .points
+                .iter()
+                .map(|point: &Pos2| self.to_canvas_coordinates(*point))
+                .collect(),
+            Stroke::new(config.stroke, config.color),
+        )
+    }
+}
+
+pub struct PathConfig {
+    pub points: Vec<Pos2>,
+    pub color: Color32,
+    pub stroke: f32,
 }

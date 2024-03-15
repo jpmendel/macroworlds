@@ -85,6 +85,7 @@ pub enum TurtleShape {
     Triangle,
     Circle,
     Square,
+    Image(Box<str>, String),
 }
 
 impl TurtleShape {
@@ -93,6 +94,7 @@ impl TurtleShape {
             Self::Triangle => String::from("triangle"),
             Self::Circle => String::from("circle"),
             Self::Square => String::from("square"),
+            Self::Image(name, _) => format!("image:{}", name),
         }
     }
 }

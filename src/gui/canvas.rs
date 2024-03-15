@@ -8,6 +8,7 @@ pub struct CanvasView {
     pub pos: Pos2,
     pub size: Vec2,
     pub objects: HashMap<Box<str>, ObjectView>,
+    pub image_textures: HashMap<Box<str>, TextureHandle>,
     pub bg_color: Color32,
     pub current_turtle_paths: HashMap<Box<str>, PathConfig>,
     pub drawn_paths: Vec<PathConfig>,
@@ -25,6 +26,7 @@ impl CanvasView {
             objects: [(Box::from("t1"), ObjectView::Turtle(turtle))]
                 .into_iter()
                 .collect(),
+            image_textures: HashMap::new(),
             bg_color: Color32::from_gray(255),
             current_turtle_paths: HashMap::new(),
             drawn_paths: vec![],
@@ -65,10 +67,10 @@ impl CanvasView {
         }
     }
 
-    pub fn shape_for_turtle(&self, turtle: &TurtleView) -> Shape {
+    pub fn shape_for_turtle(&self, turtle: &TurtleView) -> Option<Shape> {
         let pos = self.to_canvas_coordinates(turtle.pos);
         let size = turtle.size;
-        match turtle.shape {
+        let shape = match &turtle.shape {
             TurtleShape::Triangle => Shape::Path(PathShape::convex_polygon(
                 vec![
                     pos2(
@@ -93,7 +95,20 @@ impl CanvasView {
                 Rounding::default(),
                 turtle.color,
             )),
-        }
+            TurtleShape::Image(name, _) => {
+                let Some(texture) = self.image_textures.get(name) else {
+                    println!("error: Failed to load image named {}", name);
+                    return None;
+                };
+                Shape::image(
+                    texture.id(),
+                    Rect::from_center_size(pos, vec2(size * 2.0, size * 2.0)),
+                    Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)),
+                    Color32::WHITE,
+                )
+            }
+        };
+        Some(shape)
     }
 
     pub fn path_for_config(&self, config: &PathConfig) -> PathShape {

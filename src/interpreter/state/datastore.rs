@@ -1,11 +1,13 @@
 use crate::interpreter::language::procedure::Procedure;
 use crate::interpreter::language::token::Token;
+use crate::interpreter::state::object::TurtleShape;
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug)]
 pub struct DataStore {
     scopes: VecDeque<Scope>,
     procedures: HashMap<Box<str>, Procedure>,
+    shapes: HashMap<Box<str>, TurtleShape>,
     last_error_message: String,
 }
 
@@ -17,6 +19,13 @@ impl DataStore {
         DataStore {
             scopes: VecDeque::from([global_scope]),
             procedures: HashMap::new(),
+            shapes: [
+                (Box::from("triangle"), TurtleShape::Triangle),
+                (Box::from("circle"), TurtleShape::Circle),
+                (Box::from("square"), TurtleShape::Square),
+            ]
+            .into_iter()
+            .collect(),
             last_error_message: String::new(),
         }
     }
@@ -84,6 +93,14 @@ impl DataStore {
 
     pub fn set_procedure(&mut self, procedure: Procedure) {
         self.procedures.insert(procedure.name.clone(), procedure);
+    }
+
+    pub fn get_shape(&self, name: &str) -> Option<&TurtleShape> {
+        self.shapes.get(name)
+    }
+
+    pub fn set_shape(&mut self, name: &str, shape: TurtleShape) {
+        self.shapes.insert(Box::from(name), shape);
     }
 
     pub fn get_last_error_message(&self) -> String {

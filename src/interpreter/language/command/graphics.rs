@@ -5,7 +5,7 @@ use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::{
     decode_list, decode_number, decode_token, decode_word, join_to_list_string,
 };
-use crate::interpreter::state::object::{Line, Object, Point, TurtleShape};
+use crate::interpreter::state::object::{Line, Object, Point};
 use std::thread;
 use std::time::Duration;
 
@@ -241,9 +241,9 @@ impl Command {
         )
     }
 
-    pub fn seth() -> Self {
+    pub fn setheading() -> Self {
         Command::reserved(
-            "seth",
+            "setheading",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let heading = decode_number(com, &args, 0)?;
@@ -269,9 +269,9 @@ impl Command {
         )
     }
 
-    pub fn setc() -> Self {
+    pub fn setcolor() -> Self {
         Command::reserved(
-            "setc",
+            "setcolor",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let color = decode_number(com, &args, 0)?;
@@ -349,20 +349,17 @@ impl Command {
         )
     }
 
-    pub fn setsh() -> Self {
+    pub fn setshape() -> Self {
         Command::reserved(
-            "setsh",
+            "setshape",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let shape_string = decode_word(com, &args, 0)?;
-                let shape = match shape_string.to_lowercase().as_str() {
-                    "triangle" => TurtleShape::Triangle,
-                    "circle" => TurtleShape::Circle,
-                    "square" => TurtleShape::Square,
-                    sh => return Err(Box::from(format!("no shape named {}", sh))),
+                let shape_name = decode_word(com, &args, 0)?;
+                let Some(shape) = int.state.data.get_shape(&shape_name) else {
+                    return Err(Box::from(format!("no shape named {}", shape_name)));
                 };
                 let turtle = int.state.canvas.current_turtle_mut()?;
-                turtle.shape = shape;
+                turtle.shape = shape.clone();
                 int.event.send_ui(UiEvent::TurtleShape(
                     turtle.name.clone(),
                     turtle.shape.clone(),
@@ -470,6 +467,9 @@ impl Command {
                 let t2_name = decode_word(com, &args, 1)?;
                 let turtle1 = int.state.canvas.get_turtle(&t1_name)?;
                 let turtle2 = int.state.canvas.get_turtle(&t2_name)?;
+                if !turtle1.is_visible || !turtle2.is_visible {
+                    return Ok(Token::Boolean(false));
+                }
                 let x = turtle2.pos.x - turtle1.pos.x;
                 let y = turtle2.pos.y - turtle1.pos.y;
                 let dist = (x.powi(2) + y.powi(2)).sqrt();
@@ -591,7 +591,7 @@ impl Command {
                 let list = decode_list(com, &args, 0)?;
                 let size: Vec<&str> = list.split(' ').collect();
                 if size.len() != 2 {
-                    return Err(Box::from("invalid size"));
+                    return Err(Box::from("invalid project size"));
                 }
                 let width = size[0].parse::<f32>()?;
                 let height = size[1].parse::<f32>()?;

@@ -308,9 +308,9 @@ mod tests {
             code += &format!("xcor\n");
             code += &format!("ycor\n");
             code += &format!("pos\n");
-            code += &format!("seth {}\n", rand::thread_rng().gen_range(0..360));
+            code += &format!("setheading {}\n", rand::thread_rng().gen_range(0..360));
             code += &format!("heading\n");
-            code += &format!("setc {}\n", rand::thread_rng().gen_range(0..=255));
+            code += &format!("setcolor {}\n", rand::thread_rng().gen_range(0..=255));
             code += &format!("color\n");
             code += &format!("setsize {}\n", rand::thread_rng().gen_range(4..=80));
             code += &format!("size\n");
@@ -331,9 +331,9 @@ mod tests {
             "xcor",
             "ycor",
             "pos",
-            "seth",
+            "setheading",
             "heading",
-            "setc",
+            "setcolor",
             "color",
             "setsize",
             "size",

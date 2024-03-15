@@ -19,7 +19,7 @@ mod tests {
 
     #[test]
     fn read_code_single_line() {
-        let code = "forward 50 right 90 back 50 left 90 setpos [20 -30] forward -50 seth 180";
+        let code = "forward 50 right 90 back 50 left 90 setpos [20 -30] forward -50 setheading 180";
         let mut lexer = Lexer::new();
         lexer.push_block(code, false);
 
@@ -35,7 +35,7 @@ mod tests {
             ("left", vec![Token::Number(90.0)]),
             ("setpos", vec![Token::List(String::from("20 -30"))]),
             ("forward", vec![Token::Number(-50.0)]),
-            ("seth", vec![Token::Number(180.0)]),
+            ("setheading", vec![Token::Number(180.0)]),
         ];
 
         check_expected_tokens(tokens, expect);
@@ -48,7 +48,7 @@ mod tests {
         back 30
         forward 50
         left 90
-        seth 0
+        setheading 0
         back -50
         right -90
         ";
@@ -65,7 +65,7 @@ mod tests {
             ("back", vec![Token::Number(30.0)]),
             ("forward", vec![Token::Number(50.0)]),
             ("left", vec![Token::Number(90.0)]),
-            ("seth", vec![Token::Number(0.0)]),
+            ("setheading", vec![Token::Number(0.0)]),
             ("back", vec![Token::Number(-50.0)]),
             ("right", vec![Token::Number(-90.0)]),
         ];

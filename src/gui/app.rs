@@ -147,8 +147,9 @@ impl eframe::App for App {
                     match obj {
                         ObjectView::Turtle(turtle) => {
                             if turtle.is_visible {
-                                let shape = canvas.shape_for_turtle(turtle);
-                                content_painter.add(shape);
+                                if let Some(shape) = canvas.shape_for_turtle(turtle) {
+                                    content_painter.add(shape);
+                                }
                             }
                         }
                         ObjectView::Text(text) => {

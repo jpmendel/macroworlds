@@ -1,7 +1,7 @@
 use crate::interpreter::language::token::Token;
 use crate::interpreter::state::object::{Line, Object, Point, Size, Text, Turtle};
 use crate::interpreter::state::state::State;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::error::Error;
 
 #[derive(Debug)]
@@ -11,7 +11,6 @@ pub struct Canvas {
     bg_color: u8,
     objects: HashMap<Box<str>, Object>,
     current_object_name: Box<str>,
-    turtle_backpack: HashSet<Box<str>>,
 }
 
 impl Canvas {
@@ -30,7 +29,6 @@ impl Canvas {
                 .into_iter()
                 .collect(),
             current_object_name: name,
-            turtle_backpack: HashSet::new(),
         }
     }
 
@@ -155,7 +153,6 @@ impl Canvas {
     }
 
     pub fn init_backpack_property(&mut self, name: &str) {
-        self.turtle_backpack.insert(Box::from(name));
         for (_, obj) in &mut self.objects {
             if let Object::Turtle(turtle) = obj {
                 let default_value = Token::Word(String::new());

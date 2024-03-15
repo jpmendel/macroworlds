@@ -138,6 +138,11 @@ impl UiEventHandler for CanvasView {
                 };
                 self.current_turtle_paths.insert(name, path);
             }
+            UiEvent::AddShape(name, path) => {
+                let ctx = ctx.lock().unwrap();
+                let handle = ctx.load_image(name.clone(), path);
+                self.image_textures.insert(name, handle);
+            }
             UiEvent::Clean => {
                 self.current_turtle_paths.clear();
                 self.drawn_paths.clear();
@@ -152,5 +157,19 @@ impl UiEventHandler for CanvasView {
 impl UiContext for Context {
     fn update_ui(&self) {
         self.request_repaint();
+    }
+
+    fn load_image(&self, name: Box<str>, path: String) -> TextureHandle {
+        let Ok(reader) = image::io::Reader::open(path.clone()) else {
+            panic!("Could not open path {}", path);
+        };
+        let Ok(image) = reader.decode() else {
+            panic!("Could not read image");
+        };
+        let size = [image.width() as usize, image.height() as usize];
+        let buffer = image.to_rgba8();
+        let pixels = buffer.as_flat_samples();
+        let color_image = ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
+        self.load_texture(name, color_image, TextureOptions::LINEAR)
     }
 }

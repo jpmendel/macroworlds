@@ -1,4 +1,5 @@
 use crate::interpreter::state::object::{Line, Point, TurtleShape};
+use eframe::egui::TextureHandle;
 use std::sync::{mpsc, Arc, Mutex};
 
 #[derive(Debug, Clone)]
@@ -22,6 +23,7 @@ pub enum UiEvent {
     CanvasSize(f32, f32),
     BgColor(f32),
     AddLine(Box<str>, Line),
+    AddShape(Box<str>, String),
     Clean,
     ClearConsole,
 }
@@ -34,6 +36,7 @@ pub enum InputEvent {
 
 pub trait UiContext: Send + Sync {
     fn update_ui(&self);
+    fn load_image(&self, name: Box<str>, path: String) -> TextureHandle;
 }
 
 pub trait UiEventHandler: Send + Sync {

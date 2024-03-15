@@ -64,6 +64,8 @@ impl Language {
         language.add(Command::less());
         language.add(Command::letvar());
         language.add(Command::list());
+        language.add(Command::loadshape());
+        language.add(Command::loadtext());
         language.add(Command::local());
         language.add(Command::lput());
         language.add(Command::make());
@@ -95,12 +97,12 @@ impl Language {
         language.add(Command::right());
         language.add(Command::round());
         language.add(Command::setbg());
-        language.add(Command::setc());
+        language.add(Command::setcolor());
         language.add(Command::setfontsize());
-        language.add(Command::seth());
+        language.add(Command::setheading());
         language.add(Command::setpensize());
         language.add(Command::setpos());
-        language.add(Command::setsh());
+        language.add(Command::setshape());
         language.add(Command::setsize());
         language.add(Command::setx());
         language.add(Command::sety());
@@ -135,6 +137,9 @@ impl Language {
         language.add_alias("op", Command::output());
         language.add_alias("pr", Command::print());
         language.add_alias("rt", Command::right());
+        language.add_alias("setc", Command::setcolor());
+        language.add_alias("seth", Command::setheading());
+        language.add_alias("setsh", Command::setshape());
         language.add_alias("tto", Command::talkto());
 
         // Infix Operators

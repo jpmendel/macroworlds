@@ -15,8 +15,6 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new() -> Self {
-        let name: Box<str> = Box::from("t1");
-        let turtle = Turtle::new(name.clone());
         let pixel_count = (State::DEFAULT_CANVAS_WIDTH * State::DEFAULT_CANVAS_HEIGHT) as usize;
         Canvas {
             size: Size::new(
@@ -25,10 +23,8 @@ impl Canvas {
             ),
             pixels: vec![0; pixel_count],
             bg_color: 255,
-            objects: [(name.clone(), Object::Turtle(turtle))]
-                .into_iter()
-                .collect(),
-            current_object_name: name,
+            objects: HashMap::new(),
+            current_object_name: Box::from(""),
         }
     }
 

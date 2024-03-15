@@ -69,11 +69,18 @@ impl Lexer {
         if block.current_char() == '\0' {
             return Err(Box::from("eof"));
         }
+        // Check for Comments
+        if block.current_char() == ';' {
+            self.consume_until_newline();
+            return Ok(Token::Void);
+        }
+        // Check for Groups in Parenthesis
         if block.current_char() == '(' {
             let token = self.read_parenthesis()?;
             let with_infix = self.handle_parse_infix(token);
             return Ok(with_infix);
         }
+        // Main Read
         let identifier = self.read_identifier()?;
         let token: Token;
         if let Some(command) = self.language.lookup(&identifier) {
@@ -127,9 +134,6 @@ impl Lexer {
         let block = self.current_block();
         while block.current_char().is_whitespace() && block.current_char() != '\0' {
             block.next();
-        }
-        if block.current_char() == ';' {
-            self.consume_until_newline();
         }
     }
 

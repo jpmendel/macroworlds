@@ -1,9 +1,11 @@
+use std::f32::consts::E;
+
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::language::command::command::{Command, Params};
 use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::{
-    are_tokens_equal, decode_boolean, decode_list, decode_number, decode_token, decode_word,
-    join_to_list_string,
+    are_tokens_equal, ascii_for_key, decode_boolean, decode_list, decode_number, decode_token,
+    decode_word, join_to_list_string, key_for_ascii,
 };
 
 impl Command {
@@ -142,6 +144,17 @@ impl Command {
         )
     }
 
+    pub fn round() -> Self {
+        Command::reserved(
+            "round",
+            Params::Fixed(1),
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let number = decode_number(com, &args, 0)?;
+                Ok(Token::Number(number.round()))
+            },
+        )
+    }
+
     pub fn sin() -> Self {
         Command::reserved(
             "sin",
@@ -186,13 +199,24 @@ impl Command {
         )
     }
 
-    pub fn round() -> Self {
+    pub fn exp() -> Self {
         Command::reserved(
-            "round",
+            "exp",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)?;
-                Ok(Token::Number(number.round()))
+                Ok(Token::Number(E.powf(number)))
+            },
+        )
+    }
+
+    pub fn ln() -> Self {
+        Command::reserved(
+            "ln",
+            Params::Fixed(1),
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let number = decode_number(com, &args, 0)?;
+                Ok(Token::Number(number.ln()))
             },
         )
     }
@@ -344,19 +368,7 @@ impl Command {
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let word = decode_word(com, &args, 0)?;
-                match word.as_str() {
-                    "space" => return Ok(Token::Number(32.0)),
-                    "enter" => return Ok(Token::Number(10.0)),
-                    "left" => return Ok(Token::Number(37.0)),
-                    "up" => return Ok(Token::Number(38.0)),
-                    "right" => return Ok(Token::Number(39.0)),
-                    "down" => return Ok(Token::Number(40.0)),
-                    _ => (),
-                };
-                if word.len() != 1 {
-                    return Err(Box::from("input must be a character"));
-                }
-                let result = word.chars().next().unwrap().to_ascii_lowercase() as u8;
+                let result = ascii_for_key(&word)?;
                 Ok(Token::Number(result as f32))
             },
         )
@@ -368,11 +380,8 @@ impl Command {
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let number = decode_number(com, &args, 0)? as u8;
-                if !number.is_ascii() {
-                    return Err(Box::from("input must be a valid ascii code"));
-                }
-                let result = number as char;
-                Ok(Token::Word(result.to_string()))
+                let result = key_for_ascii(number)?;
+                Ok(Token::Word(result))
             },
         )
     }

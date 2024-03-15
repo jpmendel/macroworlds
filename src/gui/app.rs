@@ -15,7 +15,7 @@ pub struct App {
     canvas: Arc<Mutex<CanvasView>>,
     editor: Editor,
     input_sender: mpsc::Sender<InputEvent>,
-    key_buffer: HashSet<String>,
+    current_keys: HashSet<String>,
     is_running: Arc<Mutex<bool>>,
 }
 
@@ -37,12 +37,12 @@ impl App {
             editor: Editor::new(),
             input_sender,
             is_running: Arc::from(Mutex::from(false)),
-            key_buffer: HashSet::new(),
+            current_keys: HashSet::new(),
         }
     }
 
     pub fn run_code(&mut self, ctx: &Context) {
-        self.key_buffer.clear();
+        self.current_keys.clear();
 
         // Set up a background thread to run interpreter independent of the UI.
         let interpreter_mutex = self.interpreter.clone();
@@ -108,18 +108,6 @@ impl eframe::App for App {
             .show(ctx, |ui: &mut Ui| {
                 let mut canvas = self.canvas.lock().unwrap();
 
-                ui.add_space(10.0);
-
-                // Title
-                ui.horizontal(|ui: &mut Ui| {
-                    ui.add_space(10.0);
-                    let title = RichText::new(String::from("MicroWorlds.rs"))
-                        .font(FontId::proportional(18.0))
-                        .color(Color32::from_gray(255));
-                    let title_label = Label::new(title);
-                    ui.add(title_label);
-                });
-
                 // Blank Canvas
                 let painter = ui.painter();
                 let canvas_pos = pos2(
@@ -131,7 +119,16 @@ impl eframe::App for App {
                     Rangef::new(canvas_pos.x, canvas_pos.x + canvas.size.x),
                     Rangef::new(canvas_pos.y, canvas_pos.y + canvas.size.y),
                 );
-                painter.rect_filled(rect, Rounding::same(0.0), canvas.bg_color);
+                if let Some(texture) = &canvas.bg_picture {
+                    painter.image(
+                        texture.id(),
+                        rect,
+                        Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)),
+                        Color32::WHITE,
+                    );
+                } else {
+                    painter.rect_filled(rect, Rounding::same(0.0), canvas.bg_color);
+                }
 
                 // Lines
                 let content_painter = ui.painter_at(rect);
@@ -165,6 +162,23 @@ impl eframe::App for App {
                         }
                     }
                 }
+
+                // Title
+                TopBottomPanel::top("top_left")
+                    .frame(Frame::default().fill(Color32::from_gray(20)))
+                    .resizable(false)
+                    .show_inside(ui, |ui: &mut Ui| {
+                        ui.add_space(10.0);
+                        ui.horizontal(|ui: &mut Ui| {
+                            ui.add_space(10.0);
+                            let title = RichText::new(String::from("MicroWorlds.rs"))
+                                .font(FontId::proportional(18.0))
+                                .color(Color32::from_gray(255));
+                            let title_label = Label::new(title);
+                            ui.add(title_label);
+                        });
+                        ui.add_space(10.0);
+                    });
 
                 // Output Console
                 TopBottomPanel::bottom("bottom_left")
@@ -240,8 +254,8 @@ impl eframe::App for App {
                             let new_button = Button::new(new_button_label);
                             let new_button_ref = ui.add_sized(vec2(60.0, 20.0), new_button);
                             if new_button_ref.clicked() {
-                                self.editor.new_file();
                                 self.reset_state();
+                                self.editor.new_file();
                             }
 
                             // Open File
@@ -355,13 +369,23 @@ impl eframe::App for App {
                     .iter()
                     .map(|key| key.name().to_string())
                     .collect();
-                let diff = self.key_buffer.difference(&keys);
-                for key in diff {
+
+                // Keys that were just pressed.
+                for key in keys.difference(&self.current_keys) {
                     let _ = self
                         .input_sender
-                        .send(InputEvent::Key(key.clone().to_lowercase()));
+                        .send(InputEvent::KeyDown(key.clone().to_lowercase()));
                 }
-                self.key_buffer = keys;
+
+                // Keys that were just released.
+                for key in self.current_keys.difference(&keys) {
+                    let _ = self
+                        .input_sender
+                        .send(InputEvent::KeyUp(key.clone().to_lowercase()));
+                }
+
+                // Set new keys to current keys.
+                self.current_keys = keys;
             });
         }
     }

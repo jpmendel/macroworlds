@@ -1,6 +1,5 @@
 ;;; TRON ;;;
 
-carefully [remove "t1] []
 carefully [newturtle "p1] []
 carefully [newturtle "p2] []
 carefully [newtext "title] []

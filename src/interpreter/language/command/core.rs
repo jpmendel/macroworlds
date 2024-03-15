@@ -3,6 +3,7 @@ use crate::interpreter::language::command::command::{Command, Params};
 use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::{
     decode_list, decode_number, decode_proc, decode_token, decode_word, join_to_list_string,
+    key_for_ascii,
 };
 use rand::Rng;
 
@@ -197,6 +198,27 @@ impl Command {
                 } else {
                     Ok(Token::Word(String::new()))
                 }
+            },
+        )
+    }
+
+    pub fn keydown() -> Self {
+        Command::reserved(
+            "keydown?",
+            Params::Fixed(1),
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let token = decode_token(com, &args, 0)?;
+                let is_down = match token {
+                    Token::Word(word) => int.state.input.is_key_down(&word),
+                    Token::Number(number) => {
+                        let key = key_for_ascii(number as u8)?;
+                        int.state.input.is_key_down(&key)
+                    }
+                    _ => {
+                        return Err(Box::from("keydown? expected key name or ascii as input"));
+                    }
+                };
+                Ok(Token::Boolean(is_down))
             },
         )
     }

@@ -2,6 +2,8 @@ use crate::gui::canvas::{CanvasView, PathConfig};
 use crate::gui::object::{ObjectView, TextView, TurtleView};
 use crate::interpreter::event::{UiContext, UiEvent, UiEventHandler};
 use eframe::egui::*;
+use std::any::Any;
+use std::error::Error;
 use std::sync::{Arc, Mutex};
 
 impl UiEventHandler for CanvasView {
@@ -69,42 +71,42 @@ impl UiEventHandler for CanvasView {
                 if let Some(ObjectView::Turtle(turtle)) = self.objects.get_mut(&name) {
                     turtle.heading = heading;
                 } else {
-                    self.print_to_console(format!("turtle named {} does not exist", name));
+                    self.print_to_console(format!("object named {} does not exist", name));
                 }
             }
             UiEvent::TurtleSize(name, size) => {
                 if let Some(ObjectView::Turtle(turtle)) = self.objects.get_mut(&name) {
                     turtle.size = size;
                 } else {
-                    self.print_to_console(format!("turtle named {} does not exist", name));
+                    self.print_to_console(format!("object named {} does not exist", name));
                 }
             }
             UiEvent::TurtleShape(name, shape) => {
                 if let Some(ObjectView::Turtle(turtle)) = self.objects.get_mut(&name) {
                     turtle.shape = shape;
                 } else {
-                    self.print_to_console(format!("turtle named {} does not exist", name));
+                    self.print_to_console(format!("object named {} does not exist", name));
                 }
             }
             UiEvent::TextPrint(name, text_string) => {
                 if let Some(ObjectView::Text(text)) = self.objects.get_mut(&name) {
                     text.text += &text_string;
                 } else {
-                    self.print_to_console(format!("text named {} does not exist", name));
+                    self.print_to_console(format!("object named {} does not exist", name));
                 }
             }
             UiEvent::TextClear(name) => {
                 if let Some(ObjectView::Text(text)) = self.objects.get_mut(&name) {
                     text.text = String::new();
                 } else {
-                    self.print_to_console(format!("text named {} does not exist", name));
+                    self.print_to_console(format!("object named {} does not exist", name));
                 }
             }
             UiEvent::TextSize(name, font_size) => {
                 if let Some(ObjectView::Text(text)) = self.objects.get_mut(&name) {
                     text.font_size = font_size;
                 } else {
-                    self.print_to_console(format!("text named {} does not exist", name));
+                    self.print_to_console(format!("object named {} does not exist", name));
                 }
             }
             UiEvent::CanvasSize(width, height) => {
@@ -140,12 +142,44 @@ impl UiEventHandler for CanvasView {
             }
             UiEvent::AddShape(name, path) => {
                 let ctx = ctx.lock().unwrap();
-                let handle = ctx.load_image(name.clone(), path);
-                self.image_textures.insert(name, handle);
+                let result = match ctx.load_image(name.clone(), path) {
+                    Ok(result) => result,
+                    Err(err) => {
+                        self.print_to_console(format!("failed to load image: {}", err));
+                        return;
+                    }
+                };
+                let Ok(handle) = result.downcast::<TextureHandle>() else {
+                    self.print_to_console(String::from("failed to load image"));
+                    return;
+                };
+                self.image_textures.insert(name, *handle);
+            }
+            UiEvent::SetPicture(path) => {
+                let path_ptr = path.clone().into_boxed_str();
+                if let Some(picture) = self.image_textures.get(&path_ptr) {
+                    self.bg_picture = Some(picture.clone());
+                    return;
+                }
+                let ctx = ctx.lock().unwrap();
+                let result = match ctx.load_image(path_ptr.clone(), path) {
+                    Ok(result) => result,
+                    Err(err) => {
+                        self.print_to_console(format!("failed to load image: {}", err));
+                        return;
+                    }
+                };
+                let Ok(handle) = result.downcast::<TextureHandle>() else {
+                    self.print_to_console(String::from("failed to load image"));
+                    return;
+                };
+                self.image_textures.insert(path_ptr, *handle.clone());
+                self.bg_picture = Some(*handle);
             }
             UiEvent::Clean => {
                 self.current_turtle_paths.clear();
                 self.drawn_paths.clear();
+                self.bg_picture = None;
             }
             UiEvent::ClearConsole => {
                 self.console_text = String::new();
@@ -159,17 +193,18 @@ impl UiContext for Context {
         self.request_repaint();
     }
 
-    fn load_image(&self, name: Box<str>, path: String) -> TextureHandle {
+    fn load_image(&self, name: Box<str>, path: String) -> Result<Box<dyn Any>, Box<dyn Error>> {
         let Ok(reader) = image::io::Reader::open(path.clone()) else {
-            panic!("Could not open path {}", path);
+            return Err(Box::from(format!("could not open path: {}", path)));
         };
         let Ok(image) = reader.decode() else {
-            panic!("Could not read image");
+            return Err(Box::from("invalid image format"));
         };
         let size = [image.width() as usize, image.height() as usize];
         let buffer = image.to_rgba8();
         let pixels = buffer.as_flat_samples();
         let color_image = ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
-        self.load_texture(name, color_image, TextureOptions::LINEAR)
+        let texture = self.load_texture(name, color_image, TextureOptions::LINEAR);
+        Ok(Box::from(texture))
     }
 }

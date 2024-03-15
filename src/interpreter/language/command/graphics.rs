@@ -264,7 +264,7 @@ impl Command {
             Params::None,
             |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 let object = int.state.canvas.current_object()?;
-                Ok(Token::Number(object.color().clone()))
+                Ok(Token::Number(object.color()))
             },
         )
     }
@@ -389,6 +389,17 @@ impl Command {
                 let turtle = int.state.canvas.current_turtle_mut()?;
                 turtle.is_drawing = false;
                 Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn visible() -> Self {
+        Command::reserved(
+            "visible?",
+            Params::None,
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                let object = int.state.canvas.current_object()?;
+                Ok(Token::Boolean(object.is_visible()))
             },
         )
     }
@@ -542,6 +553,18 @@ impl Command {
                 int.event
                     .send_ui(UiEvent::ObjectVisible(text.name.clone(), false));
                 Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn text() -> Self {
+        Command::reserved(
+            "text",
+            Params::None,
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                let text = int.state.canvas.current_text()?;
+                let text_string = text.text.clone();
+                Ok(Token::Word(text_string))
             },
         )
     }

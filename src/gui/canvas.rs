@@ -10,6 +10,7 @@ pub struct CanvasView {
     pub objects: HashMap<Box<str>, ObjectView>,
     pub image_textures: HashMap<Box<str>, TextureHandle>,
     pub bg_color: Color32,
+    pub bg_picture: Option<TextureHandle>,
     pub current_turtle_paths: HashMap<Box<str>, PathConfig>,
     pub drawn_paths: Vec<PathConfig>,
     pub console_text: String,
@@ -19,15 +20,13 @@ pub struct CanvasView {
 
 impl CanvasView {
     pub fn new(size: Vec2) -> Self {
-        let turtle = TurtleView::new(pos2(0.0, 0.0));
         CanvasView {
             pos: pos2(0.0, 0.0),
             size,
-            objects: [(Box::from("t1"), ObjectView::Turtle(turtle))]
-                .into_iter()
-                .collect(),
+            objects: HashMap::new(),
             image_textures: HashMap::new(),
             bg_color: Color32::from_gray(255),
+            bg_picture: None,
             current_turtle_paths: HashMap::new(),
             drawn_paths: vec![],
             console_text: String::new(),

@@ -304,8 +304,13 @@ impl Interpreter {
     fn handle_input(&mut self, event: InputEvent) -> Result<(), Box<dyn Error>> {
         match event {
             InputEvent::Interrupt => Err(Box::from("interrupt")),
-            InputEvent::Key(key) => {
+            InputEvent::KeyDown(key) => {
+                self.state.input.set_key_down(key.clone());
                 self.state.input.add_key_to_buffer(key);
+                Ok(())
+            }
+            InputEvent::KeyUp(key) => {
+                self.state.input.set_key_up(&key);
                 Ok(())
             }
         }

@@ -29,10 +29,10 @@ impl Object {
         }
     }
 
-    pub fn color(&self) -> &f32 {
+    pub fn color(&self) -> f32 {
         match self {
-            Self::Turtle(turtle) => &turtle.color,
-            Self::Text(text) => &text.color,
+            Self::Turtle(turtle) => turtle.color,
+            Self::Text(text) => text.color,
         }
     }
 
@@ -40,6 +40,13 @@ impl Object {
         match self {
             Self::Turtle(turtle) => turtle.color = color,
             Self::Text(text) => text.color = color,
+        }
+    }
+
+    pub fn is_visible(&self) -> bool {
+        match self {
+            Self::Turtle(turtle) => turtle.is_visible,
+            Self::Text(text) => text.is_visible,
         }
     }
 }

@@ -158,7 +158,7 @@ mod tests {
         assert!(cfg!(feature = "performance"));
 
         let num_executions: usize = 20;
-        let mut code = String::new();
+        let mut code = String::from("newturtle \"t1\n");
         let num_loops = 10;
         let loop_values = "[1 2 3 4 5 6 7 8 9 10]";
 
@@ -239,9 +239,8 @@ mod tests {
         assert!(cfg!(feature = "performance"));
 
         let num_executions: usize = 20;
-        let mut code = String::new();
+        let mut code = String::from("newturtle \"t1 pd\n");
 
-        code += "pd\n";
         for _ in 0..num_executions {
             code += &format!("forward {}\n", rand::thread_rng().gen_range(0..=50));
             code += &format!("right {}\n", rand::thread_rng().gen_range(0..360));
@@ -270,9 +269,8 @@ mod tests {
         assert!(cfg!(feature = "performance"));
 
         let num_executions: usize = 20;
-        let mut code = String::new();
+        let mut code = String::from("newturtle \"t1 pu\n");
 
-        code += "pu\n";
         for _ in 0..num_executions {
             code += &format!("forward {}\n", rand::thread_rng().gen_range(0..=50));
             code += &format!("right {}\n", rand::thread_rng().gen_range(0..360));
@@ -301,7 +299,7 @@ mod tests {
         assert!(cfg!(feature = "performance"));
 
         let num_executions: usize = 20;
-        let mut code = String::new();
+        let mut code = String::from("newturtle \"t1\n");
         let shapes = vec!["triangle", "circle", "square"];
 
         for _ in 0..num_executions {
@@ -349,7 +347,7 @@ mod tests {
         assert!(cfg!(feature = "performance"));
 
         let num_executions: usize = 20;
-        let mut code = String::new();
+        let mut code = String::from("newturtle \"t1\n");
 
         for index in 0..num_executions {
             code += &format!("turtlesown \"attr{}\n", index);
@@ -375,7 +373,7 @@ mod tests {
         let mut code = String::new();
 
         for index in 0..num_executions {
-            let id = index + 2;
+            let id = index + 1;
             code += &format!("newturtle \"t{}\n", id);
             code += &format!("newtext \"text{}\n", id);
             code += &format!("remove \"t{}\n", id);
@@ -395,7 +393,7 @@ mod tests {
         assert!(cfg!(feature = "performance"));
 
         let num_executions: usize = 20;
-        let mut code = String::new();
+        let mut code = String::from("newturtle \"t1\n");
 
         for _ in 0..num_executions {
             code += &format!("setbg {}\n", rand::thread_rng().gen_range(0..=255));

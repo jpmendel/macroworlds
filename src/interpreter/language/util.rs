@@ -102,3 +102,31 @@ pub fn join_to_list_string(tokens: Vec<Token>) -> String {
     }
     list.trim().to_string()
 }
+
+pub fn ascii_for_key(key: &str) -> Result<u8, Box<dyn Error>> {
+    let ascii = match key {
+        "space" => 32,
+        "enter" => 10,
+        "left" => 37,
+        "up" => 38,
+        "right" => 39,
+        "down" => 40,
+        chr if chr.len() == 1 => chr.chars().next().unwrap().to_ascii_lowercase() as u8,
+        _ => return Err(Box::from("key is not an ascii character")),
+    };
+    Ok(ascii)
+}
+
+pub fn key_for_ascii(ascii: u8) -> Result<String, Box<dyn Error>> {
+    let key = match ascii {
+        32 => String::from("space"),
+        10 => String::from("enter"),
+        37 => String::from("left"),
+        38 => String::from("up"),
+        39 => String::from("right"),
+        40 => String::from("down"),
+        num if num.is_ascii() => String::from(num as char),
+        _ => return Err(Box::from("number does not represent an ascii key")),
+    };
+    Ok(key)
+}

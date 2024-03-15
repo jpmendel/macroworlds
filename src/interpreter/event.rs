@@ -1,5 +1,6 @@
 use crate::interpreter::state::object::{Line, Point, TurtleShape};
-use eframe::egui::TextureHandle;
+use std::any::Any;
+use std::error::Error;
 use std::sync::{mpsc, Arc, Mutex};
 
 #[derive(Debug, Clone)]
@@ -24,6 +25,7 @@ pub enum UiEvent {
     BgColor(f32),
     AddLine(Box<str>, Line),
     AddShape(Box<str>, String),
+    SetPicture(String),
     Clean,
     ClearConsole,
 }
@@ -31,12 +33,13 @@ pub enum UiEvent {
 #[derive(Debug, Clone)]
 pub enum InputEvent {
     Interrupt,
-    Key(String),
+    KeyDown(String),
+    KeyUp(String),
 }
 
 pub trait UiContext: Send + Sync {
     fn update_ui(&self);
-    fn load_image(&self, name: Box<str>, path: String) -> TextureHandle;
+    fn load_image(&self, name: Box<str>, path: String) -> Result<Box<dyn Any>, Box<dyn Error>>;
 }
 
 pub trait UiEventHandler: Send + Sync {

@@ -1,4 +1,5 @@
 debug/
 target/
+assets/
 **/*.rs.bk
 .DS_Store

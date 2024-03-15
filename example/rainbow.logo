@@ -1,3 +1,6 @@
+;;; Rainbow ;;;
+
+carefully [newturtle "t1] []
 make "dist 0.2
 make "color 1
 

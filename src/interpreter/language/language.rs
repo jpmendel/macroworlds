@@ -41,6 +41,7 @@ impl Language {
         language.add(Command::empty());
         language.add(Command::equal());
         language.add(Command::errormessage());
+        language.add(Command::exp());
         language.add(Command::first());
         language.add(Command::fontsize());
         language.add(Command::forever());
@@ -59,11 +60,14 @@ impl Language {
         language.add(Command::isword());
         language.add(Command::item());
         language.add(Command::key());
+        language.add(Command::keydown());
         language.add(Command::last());
         language.add(Command::left());
         language.add(Command::less());
         language.add(Command::letvar());
         language.add(Command::list());
+        language.add(Command::ln());
+        language.add(Command::loadpict());
         language.add(Command::loadshape());
         language.add(Command::loadtext());
         language.add(Command::local());
@@ -116,11 +120,13 @@ impl Language {
         language.add(Command::sum());
         language.add(Command::talkto());
         language.add(Command::tan());
+        language.add(Command::text());
         language.add(Command::timer());
         language.add(Command::to());
         language.add(Command::touching());
         language.add(Command::towards());
         language.add(Command::turtlesown());
+        language.add(Command::visible());
         language.add(Command::wait());
         language.add(Command::who());
         language.add(Command::word());

@@ -131,7 +131,7 @@ impl Command {
                             int.state.canvas.set_current_object(&current_obj_name);
                             Ok(Token::Void)
                         } else {
-                            Err(Box::from(format!("no turtle named {}", name)))
+                            Err(Box::from(format!("no object named {}", name)))
                         }
                     }
                     _ => Err(Box::from("expected word or list as input")),

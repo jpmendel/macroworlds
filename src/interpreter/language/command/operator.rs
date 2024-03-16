@@ -221,6 +221,18 @@ impl Command {
         )
     }
 
+    pub fn log() -> Self {
+        Command::reserved(
+            "log",
+            Params::Fixed(2),
+            |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let base = decode_number(com, &args, 0)?;
+                let number = decode_number(com, &args, 1)?;
+                Ok(Token::Number(number.log(base)))
+            },
+        )
+    }
+
     pub fn equal() -> Self {
         Command::reserved(
             "equal?",
@@ -391,9 +403,9 @@ impl Command {
             "list",
             Params::Variadic(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let mut result = decode_word(com, &args, 0)?;
+                let mut result = decode_token(com, &args, 0)?.to_string();
                 for index in 1..args.len() {
-                    let word = decode_word(com, &args, index)?;
+                    let word = decode_token(com, &args, index)?.to_string();
                     result += &format!(" {}", word);
                 }
                 Ok(Token::List(result))

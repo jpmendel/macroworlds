@@ -66,17 +66,17 @@ impl UiEventHandler for CanvasView {
                     self.print_to_console(format!("object named {} does not exist", name));
                 }
             }
-            UiEvent::TurtleHeading(name, angle) => {
-                let heading = self.to_canvas_angle(angle);
+            UiEvent::ObjectSize(name, size) => {
                 if let Some(ObjectView::Turtle(turtle)) = self.objects.get_mut(&name) {
-                    turtle.heading = heading;
+                    turtle.size = vec2(size.w, size.h);
                 } else {
                     self.print_to_console(format!("object named {} does not exist", name));
                 }
             }
-            UiEvent::TurtleSize(name, size) => {
+            UiEvent::TurtleHeading(name, angle) => {
+                let heading = self.to_canvas_angle(angle);
                 if let Some(ObjectView::Turtle(turtle)) = self.objects.get_mut(&name) {
-                    turtle.size = size;
+                    turtle.heading = heading;
                 } else {
                     self.print_to_console(format!("object named {} does not exist", name));
                 }

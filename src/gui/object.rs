@@ -1,5 +1,5 @@
 use crate::interpreter::state::object::TurtleShape;
-use eframe::egui::{Color32, Pos2};
+use eframe::egui::{vec2, Color32, Pos2, Vec2};
 
 pub enum ObjectView {
     Turtle(TurtleView),
@@ -33,7 +33,7 @@ pub struct TurtleView {
     pub pos: Pos2,
     pub heading: f32,
     pub color: Color32,
-    pub size: f32,
+    pub size: Vec2,
     pub shape: TurtleShape,
     pub is_visible: bool,
 }
@@ -42,9 +42,9 @@ impl TurtleView {
     pub fn new(pos: Pos2) -> Self {
         TurtleView {
             pos,
-            heading: 270.0,
+            heading: 270.0, // Translates to facing north
             color: Color32::from_gray(0),
-            size: 8.0,
+            size: vec2(20.0, 20.0),
             shape: TurtleShape::Triangle,
             is_visible: true,
         }

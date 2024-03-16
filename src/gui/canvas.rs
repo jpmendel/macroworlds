@@ -70,27 +70,32 @@ impl CanvasView {
         let pos = self.to_canvas_coordinates(turtle.pos);
         let size = turtle.size;
         let shape = match &turtle.shape {
-            TurtleShape::Triangle => Shape::Path(PathShape::convex_polygon(
-                vec![
-                    pos2(
-                        pos.x - size * turtle.heading.to_radians().cos(),
-                        pos.y + size * turtle.heading.to_radians().sin(),
-                    ),
-                    pos2(
-                        pos.x - size * ((turtle.heading + 120.0) % 360.0).to_radians().cos(),
-                        pos.y + size * ((turtle.heading + 120.0) % 360.0).to_radians().sin(),
-                    ),
-                    pos2(
-                        pos.x - size * ((turtle.heading + 240.0) % 360.0).to_radians().cos(),
-                        pos.y + size * ((turtle.heading + 240.0) % 360.0).to_radians().sin(),
-                    ),
-                ],
-                turtle.color,
-                Stroke::new(1.0, turtle.color),
-            )),
-            TurtleShape::Circle => Shape::Circle(CircleShape::filled(pos, size, turtle.color)),
+            TurtleShape::Triangle => {
+                let r = size.x / 2.0;
+                Shape::Path(PathShape::convex_polygon(
+                    vec![
+                        pos2(
+                            pos.x - r * turtle.heading.to_radians().cos(),
+                            pos.y + r * turtle.heading.to_radians().sin(),
+                        ),
+                        pos2(
+                            pos.x - r * ((turtle.heading + 120.0) % 360.0).to_radians().cos(),
+                            pos.y + r * ((turtle.heading + 120.0) % 360.0).to_radians().sin(),
+                        ),
+                        pos2(
+                            pos.x - r * ((turtle.heading + 240.0) % 360.0).to_radians().cos(),
+                            pos.y + r * ((turtle.heading + 240.0) % 360.0).to_radians().sin(),
+                        ),
+                    ],
+                    turtle.color,
+                    Stroke::new(1.0, turtle.color),
+                ))
+            }
+            TurtleShape::Circle => {
+                Shape::Circle(CircleShape::filled(pos, size.x / 2.0, turtle.color))
+            }
             TurtleShape::Square => Shape::Rect(RectShape::filled(
-                Rect::from_center_size(pos, vec2(size * 2.0, size * 2.0)),
+                Rect::from_center_size(pos, size),
                 Rounding::default(),
                 turtle.color,
             )),
@@ -101,7 +106,7 @@ impl CanvasView {
                 };
                 Shape::image(
                     texture.id(),
-                    Rect::from_center_size(pos, vec2(size * 2.0, size * 2.0)),
+                    Rect::from_center_size(pos, size),
                     Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)),
                     Color32::WHITE,
                 )

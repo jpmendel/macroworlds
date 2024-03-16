@@ -157,6 +157,10 @@ impl Canvas {
         }
     }
 
+    pub fn get_size(&self) -> &Size {
+        &self.size
+    }
+
     pub fn set_size(&mut self, width: f32, height: f32) {
         self.size.w = width;
         self.size.h = height;

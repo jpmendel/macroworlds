@@ -28,13 +28,16 @@ impl Language {
         language.add(Command::cc());
         language.add(Command::cg());
         language.add(Command::char());
+        language.add(Command::chdir());
         language.add(Command::clean());
         language.add(Command::cleartext());
         language.add(Command::color());
         language.add(Command::colorunder());
         language.add(Command::cos());
         language.add(Command::count());
+        language.add(Command::currentdir());
         language.add(Command::difference());
+        language.add(Command::directories());
         language.add(Command::distance());
         language.add(Command::dolist());
         language.add(Command::dotimes());
@@ -42,6 +45,7 @@ impl Language {
         language.add(Command::equal());
         language.add(Command::errormessage());
         language.add(Command::exp());
+        language.add(Command::files());
         language.add(Command::first());
         language.add(Command::fontsize());
         language.add(Command::forever());
@@ -71,11 +75,11 @@ impl Language {
         language.add(Command::loadshape());
         language.add(Command::loadtext());
         language.add(Command::local());
+        language.add(Command::log());
         language.add(Command::lput());
         language.add(Command::make());
         language.add(Command::member());
         language.add(Command::minus());
-        language.add(Command::newprojectsize());
         language.add(Command::newtext());
         language.add(Command::newturtle());
         language.add(Command::not());
@@ -85,10 +89,12 @@ impl Language {
         language.add(Command::pensize());
         language.add(Command::pi());
         language.add(Command::pick());
+        language.add(Command::pictlist());
         language.add(Command::pos());
         language.add(Command::power());
         language.add(Command::print());
         language.add(Command::product());
+        language.add(Command::projectsize());
         language.add(Command::pu());
         language.add(Command::quotient());
         language.add(Command::random());
@@ -106,6 +112,7 @@ impl Language {
         language.add(Command::setheading());
         language.add(Command::setpensize());
         language.add(Command::setpos());
+        language.add(Command::setprojectsize());
         language.add(Command::setshape());
         language.add(Command::setsize());
         language.add(Command::setx());
@@ -121,6 +128,7 @@ impl Language {
         language.add(Command::talkto());
         language.add(Command::tan());
         language.add(Command::text());
+        language.add(Command::textlist());
         language.add(Command::timer());
         language.add(Command::to());
         language.add(Command::touching());
@@ -143,6 +151,8 @@ impl Language {
         language.add_alias("op", Command::output());
         language.add_alias("pr", Command::print());
         language.add_alias("rt", Command::right());
+        language.add_alias("se", Command::list());
+        language.add_alias("sentence", Command::list());
         language.add_alias("setc", Command::setcolor());
         language.add_alias("seth", Command::setheading());
         language.add_alias("setsh", Command::setshape());

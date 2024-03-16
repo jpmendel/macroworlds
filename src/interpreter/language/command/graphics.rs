@@ -5,7 +5,7 @@ use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::{
     decode_list, decode_number, decode_token, decode_word, join_to_list_string,
 };
-use crate::interpreter::state::object::{Line, Object, Point};
+use crate::interpreter::state::object::{Line, Object, Point, Size};
 use std::thread;
 use std::time::Duration;
 
@@ -291,8 +291,8 @@ impl Command {
             "size",
             Params::None,
             |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle()?;
-                Ok(Token::Number(turtle.size.clone()))
+                let size = &int.state.canvas.current_turtle()?.size;
+                Ok(Token::List(format!("{} {}", size.w, size.h)))
             },
         )
     }
@@ -302,10 +302,24 @@ impl Command {
             "setsize",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let size = decode_number(com, &args, 0)?;
+                let token = decode_token(com, &args, 0)?;
+                let size = match token {
+                    Token::Number(number) => Size::new(number, number),
+                    Token::List(list) => {
+                        let list_items = int.parse_list(&list, true)?;
+                        let Some(Token::Number(width)) = list_items.get(0) else {
+                            return Err(Box::from("setsize expected number for input 0"));
+                        };
+                        let Some(Token::Number(height)) = list_items.get(1) else {
+                            return Err(Box::from("setsize expected number for input 1"));
+                        };
+                        Size::new(*width, *height)
+                    }
+                    _ => return Err(Box::from("setsize expected number or list as input")),
+                };
                 let turtle = int.state.canvas.current_turtle_mut()?;
                 turtle.size = size;
-                int.event.send_ui(UiEvent::TurtleSize(
+                int.event.send_ui(UiEvent::ObjectSize(
                     turtle.name.clone(),
                     turtle.size.clone(),
                 ));
@@ -481,10 +495,10 @@ impl Command {
                 if !turtle1.is_visible || !turtle2.is_visible {
                     return Ok(Token::Boolean(false));
                 }
-                let x = turtle2.pos.x - turtle1.pos.x;
-                let y = turtle2.pos.y - turtle1.pos.y;
-                let dist = (x.powi(2) + y.powi(2)).sqrt();
-                let result = dist <= turtle1.size + turtle2.size;
+                let result = turtle1.pos.x < turtle2.pos.x + turtle2.size.w
+                    && turtle1.pos.x + turtle1.size.w > turtle2.pos.x
+                    && turtle1.pos.y > turtle2.pos.y + turtle2.size.h
+                    && turtle1.pos.y + turtle1.size.h < turtle2.pos.y;
                 Ok(Token::Boolean(result))
             },
         )
@@ -606,9 +620,20 @@ impl Command {
         )
     }
 
-    pub fn newprojectsize() -> Self {
+    pub fn projectsize() -> Self {
         Command::reserved(
-            "newprojectsize",
+            "projectsize",
+            Params::None,
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                let size = int.state.canvas.get_size();
+                Ok(Token::List(format!("{} {}", size.w, size.h)))
+            },
+        )
+    }
+
+    pub fn setprojectsize() -> Self {
+        Command::reserved(
+            "setprojectsize",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let list = decode_list(com, &args, 0)?;

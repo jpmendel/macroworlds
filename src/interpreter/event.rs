@@ -1,4 +1,4 @@
-use crate::interpreter::state::object::{Line, Point, TurtleShape};
+use crate::interpreter::state::object::{Line, Point, Size, TurtleShape};
 use std::any::Any;
 use std::error::Error;
 use std::sync::{mpsc, Arc, Mutex};
@@ -15,8 +15,8 @@ pub enum UiEvent {
     ObjectPos(Box<str>, Point),
     ObjectColor(Box<str>, f32),
     ObjectVisible(Box<str>, bool),
+    ObjectSize(Box<str>, Size),
     TurtleHeading(Box<str>, f32),
-    TurtleSize(Box<str>, f32),
     TurtleShape(Box<str>, TurtleShape),
     TextPrint(Box<str>, String),
     TextClear(Box<str>),

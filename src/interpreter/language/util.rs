@@ -1,6 +1,7 @@
 use crate::interpreter::language::procedure::Procedure;
 use crate::interpreter::language::token::Token;
 use std::error::Error;
+use std::fs::{self, DirEntry};
 
 pub fn decode_number(com: &str, args: &Vec<Token>, index: usize) -> Result<f32, Box<dyn Error>> {
     if let Some(Token::Number(num)) = args.get(index) {
@@ -129,4 +130,22 @@ pub fn key_for_ascii(ascii: u8) -> Result<String, Box<dyn Error>> {
         _ => return Err(Box::from("number does not represent an ascii key")),
     };
     Ok(key)
+}
+
+pub fn query_files(
+    base_path: &String,
+    query: fn(&DirEntry) -> bool,
+) -> Result<String, Box<dyn Error>> {
+    let mut files: Vec<String> = vec![];
+    let entries = fs::read_dir(base_path)?;
+    for entry in entries {
+        let Ok(entry) = entry else { continue };
+        if (query)(&entry) {
+            let Ok(file_name) = entry.file_name().into_string() else {
+                continue;
+            };
+            files.push(file_name);
+        }
+    }
+    Ok(files.join(" "))
 }

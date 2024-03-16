@@ -57,7 +57,7 @@ pub struct Turtle {
     pub pos: Point,
     pub heading: f32,
     pub color: f32,
-    pub size: f32,
+    pub size: Size,
     pub pen_size: f32,
     pub shape: TurtleShape,
     pub is_visible: bool,
@@ -72,7 +72,7 @@ impl Turtle {
             pos: Point::zero(),
             heading: 0.0,
             color: 1.0, // Black
-            size: 8.0,
+            size: Size::equal(20.0),
             pen_size: 1.0,
             shape: TurtleShape::Triangle,
             is_visible: true,
@@ -141,7 +141,7 @@ impl Point {
     }
 
     pub fn zero() -> Self {
-        Point { x: 0.0, y: 0.0 }
+        Self::new(0.0, 0.0)
     }
 }
 
@@ -154,6 +154,10 @@ pub struct Size {
 impl Size {
     pub fn new(w: f32, h: f32) -> Self {
         Size { w, h }
+    }
+
+    pub fn equal(side: f32) -> Self {
+        Self::new(side, side)
     }
 }
 

@@ -1,9 +1,11 @@
+use crate::interpreter::state::object::Point;
 use std::collections::{HashSet, VecDeque};
 
 #[derive(Debug)]
 pub struct InputManager {
     key_buffer: VecDeque<String>,
     keys_down: HashSet<String>,
+    click_buffer: VecDeque<Point>,
 }
 
 impl InputManager {
@@ -11,6 +13,7 @@ impl InputManager {
         InputManager {
             key_buffer: VecDeque::new(),
             keys_down: HashSet::new(),
+            click_buffer: VecDeque::new(),
         }
     }
 
@@ -36,5 +39,17 @@ impl InputManager {
 
     pub fn set_key_up(&mut self, key: &String) {
         self.keys_down.remove(key);
+    }
+
+    pub fn has_click(&mut self) -> bool {
+        self.click_buffer.len() > 0
+    }
+
+    pub fn get_one_click(&mut self) -> Option<Point> {
+        self.click_buffer.pop_front()
+    }
+
+    pub fn add_click_to_buffer(&mut self, click: Point) {
+        self.click_buffer.push_back(click);
     }
 }

@@ -31,6 +31,7 @@ impl Language {
         language.add(Command::chdir());
         language.add(Command::clean());
         language.add(Command::cleartext());
+        language.add(Command::clicked());
         language.add(Command::color());
         language.add(Command::colorunder());
         language.add(Command::cos());
@@ -99,6 +100,7 @@ impl Language {
         language.add(Command::quotient());
         language.add(Command::random());
         language.add(Command::readchar());
+        language.add(Command::readclick());
         language.add(Command::recurse());
         language.add(Command::remainder());
         language.add(Command::remove());

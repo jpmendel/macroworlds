@@ -35,10 +35,25 @@ impl CanvasView {
         }
     }
 
+    pub fn is_point_within(&self, pos: Pos2) -> bool {
+        pos.x >= self.pos.x
+            && pos.x <= self.pos.x + self.size.x
+            && pos.y >= self.pos.y
+            && pos.y <= self.pos.y + self.size.y
+    }
+
     pub fn to_canvas_coordinates(&self, pos: Pos2) -> Pos2 {
         // Translate from "(0, 0) center, north positive" system to the rect on the page.
         pos2(
             pos.x + (self.pos.x + self.size.x / 2.0),
+            -pos.y + (self.pos.y + self.size.y / 2.0),
+        )
+    }
+
+    pub fn from_canvas_coordinates(&self, pos: Pos2) -> Pos2 {
+        // Translate from "(0, 0) top-left, south positive" system to the system used by interpreter.
+        pos2(
+            pos.x - (self.pos.x + self.size.x / 2.0),
             -pos.y + (self.pos.y + self.size.y / 2.0),
         )
     }

@@ -16,7 +16,9 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let dist = decode_number(com, &args, 0)?;
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 let original_pos = turtle.pos.clone();
                 let h = turtle.true_heading();
                 let x = dist * h.cos();
@@ -44,7 +46,9 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let dist = decode_number(com, &args, 0)?;
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 let original_pos = turtle.pos.clone();
                 let h = turtle.true_heading();
                 let x = -dist * h.cos();
@@ -72,7 +76,9 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let angle = decode_number(com, &args, 0)?;
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.heading -= angle;
                 int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
@@ -89,7 +95,9 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let angle = decode_number(com, &args, 0)?;
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.heading += angle;
                 int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
@@ -234,8 +242,10 @@ impl Command {
         Command::reserved(
             "heading",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Turtle(turtle) = int.state.canvas.current_object()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 Ok(Token::Number(turtle.heading))
             },
         )
@@ -247,7 +257,9 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let heading = decode_number(com, &args, 0)?;
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.heading = heading;
                 int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
@@ -290,8 +302,11 @@ impl Command {
         Command::reserved(
             "size",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let size = &int.state.canvas.current_turtle()?.size;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Turtle(turtle) = int.state.canvas.current_object()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
+                let size = &turtle.size;
                 Ok(Token::List(format!("{} {}", size.w, size.h)))
             },
         )
@@ -317,7 +332,9 @@ impl Command {
                     }
                     _ => return Err(Box::from("setsize expected number or list as input")),
                 };
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.size = size;
                 int.event.send_ui(UiEvent::ObjectSize(
                     turtle.name.clone(),
@@ -332,8 +349,10 @@ impl Command {
         Command::reserved(
             "pensize",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Turtle(turtle) = int.state.canvas.current_object()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 Ok(Token::Number(turtle.pen_size.clone()))
             },
         )
@@ -345,7 +364,9 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let size = decode_number(com, &args, 0)?;
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.pen_size = size;
                 Ok(Token::Void)
             },
@@ -356,8 +377,10 @@ impl Command {
         Command::reserved(
             "shape",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Turtle(turtle) = int.state.canvas.current_object()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 Ok(Token::Word(turtle.shape.to_string()))
             },
         )
@@ -372,7 +395,9 @@ impl Command {
                 let Some(shape) = int.state.data.get_shape(&shape_name) else {
                     return Err(Box::from(format!("no shape named {}", shape_name)));
                 };
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.shape = shape.clone();
                 int.event.send_ui(UiEvent::TurtleShape(
                     turtle.name.clone(),
@@ -387,8 +412,10 @@ impl Command {
         Command::reserved(
             "pd",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle_mut()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.is_drawing = true;
                 Ok(Token::Void)
             },
@@ -399,8 +426,10 @@ impl Command {
         Command::reserved(
             "pu",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle_mut()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.is_drawing = false;
                 Ok(Token::Void)
             },
@@ -422,8 +451,10 @@ impl Command {
         Command::reserved(
             "st",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle_mut()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.is_visible = true;
                 int.event
                     .send_ui(UiEvent::ObjectVisible(turtle.name.clone(), true));
@@ -436,8 +467,10 @@ impl Command {
         Command::reserved(
             "ht",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle_mut()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.is_visible = false;
                 int.event
                     .send_ui(UiEvent::ObjectVisible(turtle.name.clone(), false));
@@ -452,8 +485,15 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let other_name = decode_word(com, &args, 0)?;
-                let current = int.state.canvas.current_turtle()?;
-                let other = int.state.canvas.get_turtle(&other_name)?;
+                let Object::Turtle(current) = int.state.canvas.current_object()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
+                let Object::Turtle(other) = int.state.canvas.get_object(&other_name)? else {
+                    return Err(Box::from(format!(
+                        "{} expected turtle name for input 0",
+                        com
+                    )));
+                };
                 let x = other.pos.x - current.pos.x;
                 let y = other.pos.y - current.pos.y;
                 let dist = (x.powi(2) + y.powi(2)).sqrt();
@@ -468,8 +508,16 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let other_name = decode_word(com, &args, 0)?;
-                let other_pos = int.state.canvas.get_turtle(&other_name)?.pos.clone();
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(other) = int.state.canvas.get_object(&other_name)? else {
+                    return Err(Box::from(format!(
+                        "{} expected turtle name for input 0",
+                        com
+                    )));
+                };
+                let other_pos = other.pos.clone();
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 let x = other_pos.x - turtle.pos.x;
                 let y = other_pos.y - turtle.pos.y;
                 let angle = y.atan2(x).to_degrees();
@@ -490,8 +538,18 @@ impl Command {
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let t1_name = decode_word(com, &args, 0)?;
                 let t2_name = decode_word(com, &args, 1)?;
-                let turtle1 = int.state.canvas.get_turtle(&t1_name)?;
-                let turtle2 = int.state.canvas.get_turtle(&t2_name)?;
+                let Object::Turtle(turtle1) = int.state.canvas.get_object(&t1_name)? else {
+                    return Err(Box::from(format!(
+                        "{} expected turtle name for input 0",
+                        com
+                    )));
+                };
+                let Object::Turtle(turtle2) = int.state.canvas.get_object(&t2_name)? else {
+                    return Err(Box::from(format!(
+                        "{} expected turtle name for input 1",
+                        com
+                    )));
+                };
                 if !turtle1.is_visible || !turtle2.is_visible {
                     return Ok(Token::Boolean(false));
                 }
@@ -508,8 +566,10 @@ impl Command {
         Command::reserved(
             "colorunder",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Turtle(turtle) = int.state.canvas.current_object()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 let point = turtle.pos.clone();
                 let color = int.state.canvas.color_at_point(&point);
                 Ok(Token::Number(color))
@@ -521,8 +581,10 @@ impl Command {
         Command::reserved(
             "fontsize",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let text = int.state.canvas.current_text()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Text(text) = int.state.canvas.current_object()? else {
+                    return Err(Box::from(format!("{} expected a text", com)));
+                };
                 Ok(Token::Number(text.font_size))
             },
         )
@@ -534,7 +596,9 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let font_size = decode_number(com, &args, 0)?;
-                let text = int.state.canvas.current_text_mut()?;
+                let Object::Text(text) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a text", com)));
+                };
                 text.font_size = font_size;
                 int.event
                     .send_ui(UiEvent::TextSize(text.name.clone(), text.font_size.clone()));
@@ -547,8 +611,10 @@ impl Command {
         Command::reserved(
             "showtext",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let text = int.state.canvas.current_text_mut()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Text(text) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a text", com)));
+                };
                 text.is_visible = true;
                 int.event
                     .send_ui(UiEvent::ObjectVisible(text.name.clone(), true));
@@ -561,8 +627,10 @@ impl Command {
         Command::reserved(
             "hidetext",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let text = int.state.canvas.current_text_mut()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Text(text) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a text", com)));
+                };
                 text.is_visible = false;
                 int.event
                     .send_ui(UiEvent::ObjectVisible(text.name.clone(), false));
@@ -575,8 +643,10 @@ impl Command {
         Command::reserved(
             "text",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let text = int.state.canvas.current_text()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Text(text) = int.state.canvas.current_object()? else {
+                    return Err(Box::from(format!("{} expected a text", com)));
+                };
                 let text_string = text.text.clone();
                 Ok(Token::Word(text_string))
             },
@@ -598,7 +668,9 @@ impl Command {
                     }
                     _ => return Err(Box::from("expected word, number or list")),
                 };
-                let text = int.state.canvas.current_text_mut()?;
+                let Object::Text(text) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a text", com)));
+                };
                 text.text = string.clone();
                 int.event
                     .send_ui(UiEvent::TextPrint(text.name.clone(), string));
@@ -611,8 +683,10 @@ impl Command {
         Command::reserved(
             "cleartext",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let text = int.state.canvas.current_text_mut()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Text(text) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a text", com)));
+                };
                 text.text = String::new();
                 int.event.send_ui(UiEvent::TextClear(text.name.clone()));
                 Ok(Token::Void)
@@ -678,8 +752,10 @@ impl Command {
         Command::reserved(
             "home",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle_mut()?;
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 let original_pos = turtle.pos.clone();
                 let new_pos = Point::zero();
                 turtle.pos = new_pos.clone();
@@ -719,9 +795,11 @@ impl Command {
         Command::reserved(
             "cg",
             Params::None,
-            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
                 int.state.canvas.clear();
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.pos = Point::zero();
                 turtle.heading = 0.0;
                 int.event

@@ -35,6 +35,7 @@ pub enum InputEvent {
     Interrupt,
     KeyDown(String),
     KeyUp(String),
+    Click(Point),
 }
 
 pub trait UiContext: Send + Sync {

@@ -50,54 +50,6 @@ impl Canvas {
         }
     }
 
-    pub fn current_turtle(&self) -> Result<&Turtle, Box<dyn Error>> {
-        let current_obj = self.objects.get(&self.current_object_name);
-        if let Some(Object::Turtle(turtle)) = current_obj {
-            Ok(turtle)
-        } else {
-            Err(Box::from(format!(
-                "object {} is not a turtle",
-                self.current_object_name
-            )))
-        }
-    }
-
-    pub fn current_turtle_mut(&mut self) -> Result<&mut Turtle, Box<dyn Error>> {
-        let current_obj = self.objects.get_mut(&self.current_object_name);
-        if let Some(Object::Turtle(turtle)) = current_obj {
-            Ok(turtle)
-        } else {
-            Err(Box::from(format!(
-                "object {} is not a turtle",
-                self.current_object_name
-            )))
-        }
-    }
-
-    pub fn current_text(&self) -> Result<&Text, Box<dyn Error>> {
-        let current_obj = self.objects.get(&self.current_object_name);
-        if let Some(Object::Text(text)) = current_obj {
-            Ok(text)
-        } else {
-            Err(Box::from(format!(
-                "object {} is not a text",
-                self.current_object_name
-            )))
-        }
-    }
-
-    pub fn current_text_mut(&mut self) -> Result<&mut Text, Box<dyn Error>> {
-        let current_obj = self.objects.get_mut(&self.current_object_name);
-        if let Some(Object::Text(text)) = current_obj {
-            Ok(text)
-        } else {
-            Err(Box::from(format!(
-                "object {} is not a text",
-                self.current_object_name
-            )))
-        }
-    }
-
     pub fn set_current_object(&mut self, name: &str) -> bool {
         if self.objects.get(name).is_some() {
             self.current_object_name = Box::from(name);
@@ -107,11 +59,11 @@ impl Canvas {
         }
     }
 
-    pub fn get_turtle(&self, name: &str) -> Result<&Turtle, Box<dyn Error>> {
-        if let Some(Object::Turtle(turtle)) = self.objects.get(name) {
-            Ok(turtle)
+    pub fn get_object(&self, name: &str) -> Result<&Object, Box<dyn Error>> {
+        if let Some(object) = self.objects.get(name) {
+            Ok(object)
         } else {
-            Err(Box::from(format!("turtle {} does not exist", name)))
+            Err(Box::from(format!("object {} does not exist", name)))
         }
     }
 

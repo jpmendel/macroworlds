@@ -3,6 +3,7 @@ use crate::gui::editor::Editor;
 use crate::gui::object::ObjectView;
 use crate::interpreter::event::InputEvent;
 use crate::interpreter::interpreter::Interpreter;
+use crate::interpreter::state::object::Point;
 use crate::interpreter::state::state::State;
 use eframe::egui::*;
 use std::collections::HashSet;
@@ -91,6 +92,46 @@ impl App {
         ));
         let mut canvas = self.canvas.lock().unwrap();
         *canvas = new_canvas;
+    }
+
+    pub fn handle_keys(&mut self, input: &InputState) {
+        let keys: HashSet<String> = input
+            .keys_down
+            .iter()
+            .map(|key| key.name().to_string())
+            .collect();
+
+        // Keys that were just pressed.
+        for key in keys.difference(&self.current_keys) {
+            let _ = self
+                .input_sender
+                .send(InputEvent::KeyDown(key.clone().to_lowercase()));
+        }
+
+        // Keys that were just released.
+        for key in self.current_keys.difference(&keys) {
+            let _ = self
+                .input_sender
+                .send(InputEvent::KeyUp(key.clone().to_lowercase()));
+        }
+
+        // Set new keys to current keys.
+        self.current_keys = keys;
+    }
+
+    pub fn handle_mouse(&self, input: &InputState) {
+        if input.pointer.has_pointer() && input.pointer.any_click() {
+            if let Some(mouse_pos) = input.pointer.interact_pos() {
+                let canvas = self.canvas.lock().unwrap();
+
+                // Only handle clicks that are on the app canvas area.
+                if canvas.is_point_within(mouse_pos) {
+                    let pos = canvas.from_canvas_coordinates(mouse_pos);
+                    let point = Point::new(pos.x.round(), pos.y.round());
+                    let _ = self.input_sender.send(InputEvent::Click(point));
+                }
+            }
+        }
     }
 }
 
@@ -360,32 +401,12 @@ impl eframe::App for App {
                 });
             });
 
-        // Handle Keyboard Events
+        // Handle Mouse & Keyboard Events
         let is_focused = ctx.memory(|memory| memory.focus().is_some());
         if !is_focused {
             ctx.input(|input| {
-                let keys: HashSet<String> = input
-                    .keys_down
-                    .iter()
-                    .map(|key| key.name().to_string())
-                    .collect();
-
-                // Keys that were just pressed.
-                for key in keys.difference(&self.current_keys) {
-                    let _ = self
-                        .input_sender
-                        .send(InputEvent::KeyDown(key.clone().to_lowercase()));
-                }
-
-                // Keys that were just released.
-                for key in self.current_keys.difference(&keys) {
-                    let _ = self
-                        .input_sender
-                        .send(InputEvent::KeyUp(key.clone().to_lowercase()));
-                }
-
-                // Set new keys to current keys.
-                self.current_keys = keys;
+                self.handle_keys(input);
+                self.handle_mouse(input);
             });
         }
     }

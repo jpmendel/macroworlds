@@ -88,8 +88,8 @@ impl Command {
             "who",
             Params::None,
             |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle()?;
-                Ok(Token::Word(turtle.name.to_string()))
+                let object = int.state.canvas.current_object()?;
+                Ok(Token::Word(object.name().to_string()))
             },
         )
     }
@@ -219,6 +219,31 @@ impl Command {
                     }
                 };
                 Ok(Token::Boolean(is_down))
+            },
+        )
+    }
+
+    pub fn clicked() -> Self {
+        Command::reserved(
+            "clicked?",
+            Params::None,
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                let has_click = int.state.input.has_click();
+                Ok(Token::Boolean(has_click))
+            },
+        )
+    }
+
+    pub fn readclick() -> Self {
+        Command::reserved(
+            "readclick",
+            Params::None,
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                if let Some(click) = int.state.input.get_one_click() {
+                    Ok(Token::List(format!("{} {}", click.x, click.y)))
+                } else {
+                    Ok(Token::List(String::new()))
+                }
             },
         )
     }

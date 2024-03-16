@@ -6,6 +6,7 @@ use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::decode_token;
 use crate::interpreter::lexer::Lexer;
 use crate::interpreter::performance::PerformanceTracker;
+use crate::interpreter::state::object::Object;
 use crate::interpreter::state::state::State;
 use crate::interpreter::util::{is_eof, is_interrupt};
 use std::error::Error;
@@ -198,7 +199,9 @@ impl Interpreter {
             name,
             Params::None,
             |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
-                let turtle = int.state.canvas.current_turtle()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 if let Some(value) = turtle.backpack.get(com) {
                     Ok(value.clone())
                 } else {
@@ -214,7 +217,9 @@ impl Interpreter {
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
                 let item_name = com.chars().skip(3).collect::<String>().into_boxed_str();
-                let turtle = int.state.canvas.current_turtle_mut()?;
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
                 turtle.backpack.insert(item_name, token);
                 Ok(Token::Void)
             },
@@ -311,6 +316,10 @@ impl Interpreter {
             }
             InputEvent::KeyUp(key) => {
                 self.state.input.set_key_up(&key);
+                Ok(())
+            }
+            InputEvent::Click(pos) => {
+                self.state.input.add_click_to_buffer(pos);
                 Ok(())
             }
         }

@@ -52,9 +52,9 @@ impl Language {
         language.add(Command::forever());
         language.add(Command::forward());
         language.add(Command::fput());
+        language.add(Command::freeze());
         language.add(Command::greater());
         language.add(Command::heading());
-        language.add(Command::hidetext());
         language.add(Command::home());
         language.add(Command::ht());
         language.add(Command::ifelse());
@@ -121,7 +121,6 @@ impl Language {
         language.add(Command::sety());
         language.add(Command::shape());
         language.add(Command::show());
-        language.add(Command::showtext());
         language.add(Command::sin());
         language.add(Command::size());
         language.add(Command::sqrt());
@@ -136,6 +135,7 @@ impl Language {
         language.add(Command::touching());
         language.add(Command::towards());
         language.add(Command::turtlesown());
+        language.add(Command::unfreeze());
         language.add(Command::visible());
         language.add(Command::wait());
         language.add(Command::who());

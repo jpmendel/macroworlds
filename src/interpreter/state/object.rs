@@ -49,6 +49,27 @@ impl Object {
             Self::Text(text) => text.is_visible,
         }
     }
+
+    pub fn set_visible(&mut self, is_visible: bool) {
+        match self {
+            Self::Turtle(turtle) => turtle.is_visible = is_visible,
+            Self::Text(text) => text.is_visible = is_visible,
+        }
+    }
+
+    pub fn is_locked(&self) -> bool {
+        match self {
+            Self::Turtle(turtle) => turtle.is_locked,
+            Self::Text(text) => text.is_locked,
+        }
+    }
+
+    pub fn set_locked(&mut self, is_locked: bool) {
+        match self {
+            Self::Turtle(turtle) => turtle.is_locked = is_locked,
+            Self::Text(text) => text.is_locked = is_locked,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -62,6 +83,7 @@ pub struct Turtle {
     pub shape: TurtleShape,
     pub is_visible: bool,
     pub is_drawing: bool,
+    pub is_locked: bool,
     pub backpack: HashMap<Box<str>, Token>,
 }
 
@@ -77,6 +99,7 @@ impl Turtle {
             shape: TurtleShape::Triangle,
             is_visible: true,
             is_drawing: true,
+            is_locked: false,
             backpack: HashMap::new(),
         }
     }
@@ -110,10 +133,11 @@ impl TurtleShape {
 pub struct Text {
     pub name: Box<str>,
     pub pos: Point,
-    pub color: f32,
-    pub is_visible: bool,
     pub text: String,
     pub font_size: f32,
+    pub color: f32,
+    pub is_visible: bool,
+    pub is_locked: bool,
 }
 
 impl Text {
@@ -121,10 +145,11 @@ impl Text {
         Text {
             name,
             pos: Point::zero(),
-            color: 1.0, // Black
-            is_visible: true,
             text: String::from("New Text"),
             font_size: 12.0,
+            color: 1.0, // Black
+            is_visible: true,
+            is_locked: false,
         }
     }
 }

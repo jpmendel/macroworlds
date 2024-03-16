@@ -19,14 +19,14 @@ setpos [0 50]
 setfontsize 60
 setc 130
 ct print "TRON
-showtext
+st
 
 info,
 setpos [0 -50]
 setfontsize 20
 setc 130
 ct print [Press Space to Start]
-showtext
+st
 end
 
 to ready
@@ -45,7 +45,7 @@ seth 0
 st
 clean
 
-info, hidetext
+info, ht
 title,
 setpos [0 0]
 ct print "3
@@ -54,7 +54,7 @@ ct print "2
 wait 1000
 ct print "1
 wait 1000
-hidetext
+ht
 end
 
 to boundary
@@ -102,12 +102,12 @@ ifelse :player = "p1 [
 ] [
  print [Blue Wins!]
 ]
-showtext
+st
 
 info,
 setpos [0 -50]
 ct print [Press Space to Play Again]
-showtext
+st
 end
 
 to game

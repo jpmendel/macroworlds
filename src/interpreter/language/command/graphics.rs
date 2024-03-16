@@ -19,6 +19,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 let original_pos = turtle.pos.clone();
                 let h = turtle.true_heading();
                 let x = dist * h.cos();
@@ -49,6 +52,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 let original_pos = turtle.pos.clone();
                 let h = turtle.true_heading();
                 let x = -dist * h.cos();
@@ -79,6 +85,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 turtle.heading -= angle;
                 int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
@@ -98,6 +107,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 turtle.heading += angle;
                 int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
@@ -126,6 +138,9 @@ impl Command {
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let x = decode_number(com, &args, 0)?;
                 let object = int.state.canvas.current_object_mut()?;
+                if object.is_locked() {
+                    return Ok(Token::Void);
+                }
                 let original_pos = object.pos().clone();
                 let new_pos = Point::new(x, original_pos.y);
                 object.set_pos(new_pos.clone());
@@ -166,6 +181,9 @@ impl Command {
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let y = decode_number(com, &args, 0)?;
                 let object = int.state.canvas.current_object_mut()?;
+                if object.is_locked() {
+                    return Ok(Token::Void);
+                }
                 let original_pos = object.pos().clone();
                 let new_pos = Point::new(original_pos.x, y);
                 object.set_pos(new_pos.clone());
@@ -216,6 +234,9 @@ impl Command {
                     return Err(Box::from("setpos expected number for y-coordinate"));
                 };
                 let object = int.state.canvas.current_object_mut()?;
+                if object.is_locked() {
+                    return Ok(Token::Void);
+                }
                 let original_pos = object.pos().clone();
                 let new_pos = Point::new(*x, *y);
                 object.set_pos(new_pos.clone());
@@ -260,6 +281,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 turtle.heading = heading;
                 int.event.send_ui(UiEvent::TurtleHeading(
                     turtle.name.clone(),
@@ -288,6 +312,9 @@ impl Command {
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let color = decode_number(com, &args, 0)?;
                 let object = int.state.canvas.current_object_mut()?;
+                if object.is_locked() {
+                    return Ok(Token::Void);
+                }
                 object.set_color(color);
                 int.event.send_ui(UiEvent::ObjectColor(
                     Box::from(object.name()),
@@ -335,6 +362,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 turtle.size = size;
                 int.event.send_ui(UiEvent::ObjectSize(
                     turtle.name.clone(),
@@ -367,6 +397,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 turtle.pen_size = size;
                 Ok(Token::Void)
             },
@@ -398,6 +431,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 turtle.shape = shape.clone();
                 int.event.send_ui(UiEvent::TurtleShape(
                     turtle.name.clone(),
@@ -416,6 +452,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 turtle.is_drawing = true;
                 Ok(Token::Void)
             },
@@ -430,6 +469,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 turtle.is_drawing = false;
                 Ok(Token::Void)
             },
@@ -451,13 +493,14 @@ impl Command {
         Command::reserved(
             "st",
             Params::None,
-            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
-                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
-                    return Err(Box::from(format!("{} expected a turtle", com)));
-                };
-                turtle.is_visible = true;
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                let object = int.state.canvas.current_object_mut()?;
+                if object.is_locked() {
+                    return Ok(Token::Void);
+                }
+                object.set_visible(true);
                 int.event
-                    .send_ui(UiEvent::ObjectVisible(turtle.name.clone(), true));
+                    .send_ui(UiEvent::ObjectVisible(Box::from(object.name()), true));
                 Ok(Token::Void)
             },
         )
@@ -467,13 +510,38 @@ impl Command {
         Command::reserved(
             "ht",
             Params::None,
-            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
-                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
-                    return Err(Box::from(format!("{} expected a turtle", com)));
-                };
-                turtle.is_visible = false;
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                let object = int.state.canvas.current_object_mut()?;
+                if object.is_locked() {
+                    return Ok(Token::Void);
+                }
+                object.set_visible(false);
                 int.event
-                    .send_ui(UiEvent::ObjectVisible(turtle.name.clone(), false));
+                    .send_ui(UiEvent::ObjectVisible(Box::from(object.name()), false));
+                Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn freeze() -> Self {
+        Command::reserved(
+            "freeze",
+            Params::None,
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                let object = int.state.canvas.current_object_mut()?;
+                object.set_locked(true);
+                Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn unfreeze() -> Self {
+        Command::reserved(
+            "unfreeze",
+            Params::None,
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                let object = int.state.canvas.current_object_mut()?;
+                object.set_locked(false);
                 Ok(Token::Void)
             },
         )
@@ -518,6 +586,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 let x = other_pos.x - turtle.pos.x;
                 let y = other_pos.y - turtle.pos.y;
                 let angle = y.atan2(x).to_degrees();
@@ -599,41 +670,12 @@ impl Command {
                 let Object::Text(text) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a text", com)));
                 };
+                if text.is_locked {
+                    return Ok(Token::Void);
+                }
                 text.font_size = font_size;
                 int.event
                     .send_ui(UiEvent::TextSize(text.name.clone(), text.font_size.clone()));
-                Ok(Token::Void)
-            },
-        )
-    }
-
-    pub fn showtext() -> Self {
-        Command::reserved(
-            "showtext",
-            Params::None,
-            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
-                let Object::Text(text) = int.state.canvas.current_object_mut()? else {
-                    return Err(Box::from(format!("{} expected a text", com)));
-                };
-                text.is_visible = true;
-                int.event
-                    .send_ui(UiEvent::ObjectVisible(text.name.clone(), true));
-                Ok(Token::Void)
-            },
-        )
-    }
-
-    pub fn hidetext() -> Self {
-        Command::reserved(
-            "hidetext",
-            Params::None,
-            |int: &mut Interpreter, com: &str, _args: Vec<Token>| {
-                let Object::Text(text) = int.state.canvas.current_object_mut()? else {
-                    return Err(Box::from(format!("{} expected a text", com)));
-                };
-                text.is_visible = false;
-                int.event
-                    .send_ui(UiEvent::ObjectVisible(text.name.clone(), false));
                 Ok(Token::Void)
             },
         )
@@ -671,6 +713,9 @@ impl Command {
                 let Object::Text(text) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a text", com)));
                 };
+                if text.is_locked {
+                    return Ok(Token::Void);
+                }
                 text.text = string.clone();
                 int.event
                     .send_ui(UiEvent::TextPrint(text.name.clone(), string));
@@ -687,6 +732,9 @@ impl Command {
                 let Object::Text(text) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a text", com)));
                 };
+                if text.is_locked {
+                    return Ok(Token::Void);
+                }
                 text.text = String::new();
                 int.event.send_ui(UiEvent::TextClear(text.name.clone()));
                 Ok(Token::Void)
@@ -756,6 +804,9 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
+                if turtle.is_locked {
+                    return Ok(Token::Void);
+                }
                 let original_pos = turtle.pos.clone();
                 let new_pos = Point::zero();
                 turtle.pos = new_pos.clone();
@@ -800,14 +851,16 @@ impl Command {
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
-                turtle.pos = Point::zero();
-                turtle.heading = 0.0;
-                int.event
-                    .send_ui(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
-                int.event.send_ui(UiEvent::TurtleHeading(
-                    turtle.name.clone(),
-                    turtle.heading.clone(),
-                ));
+                if !turtle.is_locked {
+                    turtle.pos = Point::zero();
+                    turtle.heading = 0.0;
+                    int.event
+                        .send_ui(UiEvent::ObjectPos(turtle.name.clone(), turtle.pos.clone()));
+                    int.event.send_ui(UiEvent::TurtleHeading(
+                        turtle.name.clone(),
+                        turtle.heading.clone(),
+                    ));
+                }
                 int.event.send_ui(UiEvent::Clean);
                 Ok(Token::Void)
             },

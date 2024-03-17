@@ -47,7 +47,7 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let name = decode_word(com, &args, 0)?;
-                int.state.data.set_local(&name, Token::Void);
+                int.state.data.init_local(&name, Token::Void);
                 Ok(Token::Void)
             },
         )
@@ -63,7 +63,7 @@ impl Command {
                 for index in (0..list_items.len()).step_by(2) {
                     if let Some(Token::Word(name)) = list_items.get(index) {
                         if let Some(value) = list_items.get(index + 1) {
-                            int.state.data.set_local(&name, value.clone());
+                            int.state.data.init_local(&name, value.clone());
                         }
                     }
                 }

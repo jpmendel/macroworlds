@@ -140,9 +140,9 @@ impl Command {
         )
     }
 
-    pub fn recurse() -> Self {
+    pub fn again() -> Self {
         Command::reserved(
-            "recurse",
+            "again",
             Params::None,
             |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
                 int.lexer.return_to_start_of_block();

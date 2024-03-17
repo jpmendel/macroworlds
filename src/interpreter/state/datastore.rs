@@ -79,9 +79,13 @@ impl DataStore {
         global_scope.variables.insert(Box::from(name), value);
     }
 
-    pub fn set_local(&mut self, name: &str, value: Token) {
+    pub fn init_local(&mut self, name: &str, value: Token) {
+        // Initializes a variable in the local scope with a default value
+        // only if it does not exist already.
         let local_scope = self.scopes.front_mut().unwrap();
-        local_scope.variables.insert(Box::from(name), value);
+        if !local_scope.variables.contains_key(name) {
+            local_scope.variables.insert(Box::from(name), value);
+        }
     }
 
     pub fn remove_variable(&mut self, name: &str) {

@@ -15,6 +15,7 @@ impl Language {
 
         // General Commands
         language.add(Command::abs());
+        language.add(Command::again());
         language.add(Command::and());
         language.add(Command::announce());
         language.add(Command::arctan());
@@ -101,7 +102,6 @@ impl Language {
         language.add(Command::random());
         language.add(Command::readchar());
         language.add(Command::readclick());
-        language.add(Command::recurse());
         language.add(Command::remainder());
         language.add(Command::remove());
         language.add(Command::repeat());

@@ -1,5 +1,6 @@
-use crate::interpreter::state::object::{Line, Point, Size, TurtleShape};
+use crate::interpreter::state::object::{Line, Point, Size, TextStyle, TurtleShape};
 use std::any::Any;
+use std::collections::HashSet;
 use std::error::Error;
 use std::sync::{mpsc, Arc, Mutex};
 
@@ -21,7 +22,7 @@ pub enum UiEvent {
     TextPrint(Box<str>, String),
     TextClear(Box<str>),
     TextSize(Box<str>, f32),
-    TextStyle(Box<str>, bool, bool, bool),
+    TextStyle(Box<str>, HashSet<TextStyle>),
     CanvasSize(f32, f32),
     BgColor(f32),
     AddLine(Box<str>, Line),

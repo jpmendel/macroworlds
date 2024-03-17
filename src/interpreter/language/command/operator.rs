@@ -60,7 +60,7 @@ impl Command {
                 let num1 = decode_number(com, &args, 0)?;
                 let num2 = decode_number(com, &args, 1)?;
                 if num2 == 0.0 {
-                    return Err(Box::from("cannot divide by zero"));
+                    return Err(Box::from("quotient cannot divide by zero"));
                 }
                 let result = num1 / num2;
                 Ok(Token::Number(result))
@@ -444,17 +444,19 @@ impl Command {
                         if let Some(item) = items.get(index) {
                             Ok(item.clone())
                         } else {
-                            Err(Box::from("list index out of bounds"))
+                            let message = format!("item couldn't find index {} in list", index);
+                            Err(Box::from(message))
                         }
                     }
                     Token::Word(word) => {
                         if let Some(chr) = word.chars().nth(index) {
                             Ok(Token::Word(chr.to_string()))
                         } else {
-                            Err(Box::from("word index out of bounds"))
+                            let message = format!("item couldn't find index {} in word", index);
+                            Err(Box::from(message))
                         }
                     }
-                    _ => Err(Box::from("cannot get item")),
+                    _ => Err(Box::from("item expected a word or list for input 1")),
                 }
             },
         )
@@ -470,7 +472,7 @@ impl Command {
                 if let Some(first) = items.first() {
                     Ok(first.clone())
                 } else {
-                    Err(Box::from("list is empty"))
+                    Err(Box::from("first cannot get from empty list"))
                 }
             },
         )
@@ -486,7 +488,7 @@ impl Command {
                 if let Some(last) = items.last() {
                     Ok(last.clone())
                 } else {
-                    Err(Box::from("list is empty"))
+                    Err(Box::from("last cannot get from empty list"))
                 }
             },
         )
@@ -500,7 +502,7 @@ impl Command {
                 let list = decode_list(com, &args, 0)?;
                 let items = int.parse_list(&list, false)?;
                 if items.is_empty() {
-                    return Err(Box::from("list is empty"));
+                    return Err(Box::from("butfirst cannot get from empty list"));
                 }
                 let rest = &items[1..];
                 let joined = join_to_list_string(rest.to_vec());
@@ -517,7 +519,7 @@ impl Command {
                 let list = decode_list(com, &args, 0)?;
                 let items = int.parse_list(&list, false)?;
                 if items.is_empty() {
-                    return Err(Box::from("list is empty"));
+                    return Err(Box::from("butlast cannot get from empty list"));
                 }
                 let rest = &items[..items.len() - 1];
                 let joined = join_to_list_string(rest.to_vec());
@@ -575,7 +577,7 @@ impl Command {
                 let result = match token {
                     Token::Word(word) => word.is_empty(),
                     Token::List(list) => list.is_empty(),
-                    _ => return Err(Box::from("type cannot be empty")),
+                    _ => return Err(Box::from("empty? expected a word or list as input")),
                 };
                 Ok(Token::Boolean(result))
             },

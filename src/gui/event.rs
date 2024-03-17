@@ -109,11 +109,9 @@ impl UiEventHandler for CanvasView {
                     self.print_to_console(format!("object named {} does not exist", name));
                 }
             }
-            UiEvent::TextStyle(name, is_bold, is_italic, is_underlined) => {
+            UiEvent::TextStyle(name, style) => {
                 if let Some(ObjectView::Text(text)) = self.objects.get_mut(&name) {
-                    text.is_bold = is_bold;
-                    text.is_italic = is_italic;
-                    text.is_underlined = is_underlined;
+                    text.style = style;
                 } else {
                     self.print_to_console(format!("object named {} does not exist", name));
                 }

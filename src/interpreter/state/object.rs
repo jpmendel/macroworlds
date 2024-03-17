@@ -1,5 +1,5 @@
 use crate::interpreter::language::token::Token;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
 pub enum Object {
@@ -136,9 +136,7 @@ pub struct Text {
     pub text: String,
     pub font_size: f32,
     pub color: f32,
-    pub is_bold: bool,
-    pub is_italic: bool,
-    pub is_underlined: bool,
+    pub style: HashSet<TextStyle>,
     pub is_visible: bool,
     pub is_locked: bool,
 }
@@ -151,11 +149,27 @@ impl Text {
             text: String::from("New Text"),
             font_size: 12.0,
             color: 1.0, // Black
-            is_bold: false,
-            is_italic: false,
-            is_underlined: false,
+            style: HashSet::new(),
             is_visible: true,
             is_locked: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum TextStyle {
+    Bold,
+    Italic,
+    Underline,
+}
+
+impl TextStyle {
+    pub fn from(string: String) -> Option<Self> {
+        match string.as_str() {
+            "bold" => Some(Self::Bold),
+            "italic" => Some(Self::Italic),
+            "underline" => Some(Self::Underline),
+            _ => None,
         }
     }
 }

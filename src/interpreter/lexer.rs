@@ -317,15 +317,38 @@ impl Lexer {
             }
         }
 
-        // Find the "end" keyword to know when to stop.
+        // Read the code block.
         self.consume_until_newline();
-        let block = self.current_block();
         let mut code = String::new();
-        while !code.ends_with("end\n") && block.current_char() != '\0' {
-            code.push(block.current_char().clone());
+        let mut code_line = String::new();
+        let mut is_proc_complete = false;
+        let block = self.current_block();
+        while block.current_char() != '\0' {
+            while block.current_char().is_whitespace() && block.current_char() != '\0' {
+                block.next();
+            }
+            while block.current_char() != '\n' && block.current_char() != '\0' {
+                code_line.push(block.current_char().clone());
+                block.next();
+            }
+
+            // Include the newline.
+            code_line.push(block.current_char().clone());
             block.next();
+
+            // Find the "end" keyword to know when to stop.
+            if code_line == "end\n" {
+                is_proc_complete = true;
+                break;
+            }
+
+            // Add the line to the code and continue.
+            code += &code_line;
+            code_line = String::new();
         }
-        code = code.replacen("end\n", "", 1);
+        if !is_proc_complete {
+            return Err(Box::from(format!("procedure {} has no end", name)));
+        }
         Ok(Token::Procedure(name, params, code))
     }
 }
@@ -342,9 +365,7 @@ impl CodeBlock {
         self.text.chars().nth(self.position).unwrap_or('\0')
     }
 
-    fn next(&mut self) -> char {
-        let chr = self.current_char();
+    fn next(&mut self) {
         self.position += 1;
-        chr
     }
 }

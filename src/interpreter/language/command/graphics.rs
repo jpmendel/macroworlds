@@ -5,7 +5,8 @@ use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::{
     decode_list, decode_number, decode_token, decode_word, join_to_list_string,
 };
-use crate::interpreter::state::object::{Line, Object, Point, Size};
+use crate::interpreter::state::object::{Line, Object, Point, Size, TextStyle};
+use std::collections::HashSet;
 use std::thread;
 use std::time::Duration;
 
@@ -686,23 +687,28 @@ impl Command {
             "setstyle",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let style = decode_token(com, &args, 0)?;
-                let (is_bold, is_italic, is_underlined) = match style {
-                    Token::Word(word) => (word == "bold", word == "italic", word == "underline"),
+                let token = decode_token(com, &args, 0)?;
+                let style_set = match token {
+                    Token::Word(word) => {
+                        if let Some(style) = TextStyle::from(word) {
+                            HashSet::from([style])
+                        } else {
+                            HashSet::new()
+                        }
+                    }
                     Token::List(list) => {
                         let list_items = int.parse_list(&list, false)?;
-                        let mut is_bold = false;
-                        let mut is_italic = false;
-                        let mut is_underlined = false;
+                        let mut style_set = HashSet::new();
                         for item in list_items {
-                            match item {
-                                Token::Word(word) if word == "bold" => is_bold = true,
-                                Token::Word(word) if word == "italic" => is_italic = true,
-                                Token::Word(word) if word == "underline" => is_underlined = true,
-                                _ => return Err(Box::from("setstyle expected a list of words")),
-                            }
+                            let Token::Word(word) = item else {
+                                continue;
+                            };
+                            let Some(style) = TextStyle::from(word) else {
+                                continue;
+                            };
+                            style_set.insert(style);
                         }
-                        (is_bold, is_italic, is_underlined)
+                        style_set
                     }
                     _ => return Err(Box::from("setstyle expected a word or list as input")),
                 };
@@ -712,14 +718,8 @@ impl Command {
                 if text.is_locked {
                     return Ok(Token::Void);
                 }
-                text.is_bold = is_bold;
-                text.is_italic = is_italic;
-                int.event.send_ui(UiEvent::TextStyle(
-                    text.name.clone(),
-                    is_bold,
-                    is_italic,
-                    is_underlined,
-                ));
+                int.event
+                    .send_ui(UiEvent::TextStyle(text.name.clone(), style_set));
                 Ok(Token::Void)
             },
         )

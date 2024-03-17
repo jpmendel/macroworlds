@@ -197,8 +197,8 @@ impl eframe::App for App {
                                     FontId::proportional(text.font_size),
                                     text.color,
                                 );
-                                format.italics = text.is_italic;
-                                format.underline = if text.is_underlined {
+                                format.italics = text.is_italic();
+                                format.underline = if text.is_underlined() {
                                     Stroke::new(text.font_size / 20.0, text.color)
                                 } else {
                                     Stroke::NONE

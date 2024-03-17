@@ -8,6 +8,10 @@ carefully [newtext "info] []
 setbg 1
 
 make "gamestate "start
+make "xmin minus ((first projectsize) / 2)
+make "xmax (first projectsize) / 2
+make "ymin minus ((last projectsize) / 2)
+make "ymax (last projectsize) / 2
 
 to startpage
 clean
@@ -58,7 +62,7 @@ ht
 end
 
 to boundary
-op (or xcor < -300 xcor > 300 ycor < -200 ycor > 200)
+op (or xcor < :xmin xcor > :xmax ycor < :ymin ycor > :ymax)
 end
 
 to move

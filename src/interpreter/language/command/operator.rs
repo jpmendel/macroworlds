@@ -425,7 +425,7 @@ impl Command {
                         Ok(Token::Number(items.len() as f32))
                     }
                     Token::Word(word) => Ok(Token::Number(word.len() as f32)),
-                    _ => Err(Box::from("must be word or list to get count")),
+                    _ => Err(Box::from("count expected a word or list as input")),
                 }
             },
         )

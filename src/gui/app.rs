@@ -5,6 +5,7 @@ use crate::interpreter::event::InputEvent;
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::state::object::Point;
 use crate::interpreter::state::state::State;
+use eframe::egui::text::LayoutJob;
 use eframe::egui::*;
 use std::collections::HashSet;
 use std::sync::mpsc;
@@ -71,7 +72,7 @@ impl App {
     }
 
     pub fn interrupt_code(&mut self) {
-        self.input_sender.send(InputEvent::Interrupt).unwrap_or(());
+        let _ = self.input_sender.send(InputEvent::Interrupt);
     }
 
     pub fn reset_state(&mut self) {
@@ -153,7 +154,7 @@ impl eframe::App for App {
                 let painter = ui.painter();
                 let canvas_pos = pos2(
                     main_frame_width / 2.0 - canvas.size.x / 2.0,
-                    main_frame_height / 2.0 - canvas.size.y / 2.0,
+                    main_frame_height / 2.0 - canvas.size.y / 2.0 + 6.0,
                 );
                 canvas.pos = canvas_pos;
                 let rect = Rect::from_x_y_ranges(
@@ -192,11 +193,23 @@ impl eframe::App for App {
                         }
                         ObjectView::Text(text) => {
                             if text.is_visible {
-                                content_painter.text(
-                                    canvas.to_canvas_coordinates(text.pos),
-                                    Align2::CENTER_CENTER,
-                                    text.text.to_string(),
+                                let mut format = TextFormat::simple(
                                     FontId::proportional(text.font_size),
+                                    text.color,
+                                );
+                                format.italics = text.is_italic;
+                                format.underline = if text.is_underlined {
+                                    Stroke::new(text.font_size / 20.0, text.color)
+                                } else {
+                                    Stroke::NONE
+                                };
+                                let mut job =
+                                    LayoutJob::single_section(text.text.to_string(), format);
+                                job.halign = Align::Center;
+                                let galley = content_painter.layout_job(job);
+                                content_painter.galley(
+                                    canvas.to_canvas_coordinates(text.pos),
+                                    galley,
                                     text.color,
                                 );
                             }

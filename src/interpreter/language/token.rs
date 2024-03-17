@@ -21,6 +21,7 @@ impl Token {
             Self::Number(number) => number.to_string(),
             Self::Boolean(boolean) => boolean.to_string(),
             Self::List(list) => format!("[{}]", list),
+            Self::Variable(variable) => format!(":{}", variable),
             Self::Undefined(undef) => undef.clone(),
             _ => String::new(),
         }

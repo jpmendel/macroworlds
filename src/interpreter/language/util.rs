@@ -8,7 +8,7 @@ pub fn decode_number(com: &str, args: &Vec<Token>, index: usize) -> Result<f32, 
         Ok(num.clone())
     } else {
         Err(Box::from(format!(
-            "{} expected number for input {}",
+            "{} expected a number for input {}",
             com, index
         )))
     }
@@ -19,7 +19,7 @@ pub fn decode_word(com: &str, args: &Vec<Token>, index: usize) -> Result<String,
         Ok(word.clone())
     } else {
         Err(Box::from(format!(
-            "{} expected word for input {}",
+            "{} expected a word for input {}",
             com, index
         )))
     }
@@ -30,7 +30,7 @@ pub fn decode_boolean(com: &str, args: &Vec<Token>, index: usize) -> Result<bool
         Ok(boolean.clone())
     } else {
         Err(Box::from(format!(
-            "{} expected boolean for input {}",
+            "{} expected a boolean for input {}",
             com, index
         )))
     }
@@ -41,7 +41,7 @@ pub fn decode_list(com: &str, args: &Vec<Token>, index: usize) -> Result<String,
         Ok(list.clone())
     } else {
         Err(Box::from(format!(
-            "{} expected list for input {}",
+            "{} expected a list for input {}",
             com, index
         )))
     }
@@ -60,7 +60,7 @@ pub fn decode_proc(
         })
     } else {
         Err(Box::from(format!(
-            "{} expected code block for input {}",
+            "{} expected a code block for input {}",
             com, index
         )))
     }

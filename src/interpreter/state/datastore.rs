@@ -93,8 +93,17 @@ impl DataStore {
         current_scope.variables.remove(name);
     }
 
+    pub fn remove_all_variables_in_scope(&mut self) {
+        let current_scope = self.scopes.front_mut().unwrap();
+        current_scope.variables.clear();
+    }
+
     pub fn get_procedure(&mut self, name: &str) -> Option<&Procedure> {
         self.procedures.get(name)
+    }
+
+    pub fn get_all_procedures(&mut self) -> Vec<&Procedure> {
+        self.procedures.iter().map(|(_, value)| value).collect()
     }
 
     pub fn set_procedure(&mut self, procedure: Procedure) {

@@ -53,20 +53,26 @@ impl TurtleView {
 
 pub struct TextView {
     pub pos: Pos2,
-    pub color: Color32,
-    pub is_visible: bool,
     pub text: String,
     pub font_size: f32,
+    pub color: Color32,
+    pub is_bold: bool,
+    pub is_italic: bool,
+    pub is_underlined: bool,
+    pub is_visible: bool,
 }
 
 impl TextView {
     pub fn new(pos: Pos2) -> Self {
         TextView {
             pos,
-            color: Color32::from_gray(0),
-            is_visible: true,
             text: String::from("New Text"),
             font_size: 12.0,
+            color: Color32::from_gray(0),
+            is_bold: false,
+            is_italic: false,
+            is_underlined: false,
+            is_visible: true,
         }
     }
 }

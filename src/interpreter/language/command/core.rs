@@ -72,6 +72,41 @@ impl Command {
         )
     }
 
+    pub fn clearname() -> Self {
+        Command::reserved(
+            "clearname",
+            Params::Fixed(1),
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let token = decode_token(com, &args, 0)?;
+                match token {
+                    Token::Word(word) => int.state.data.remove_variable(&word),
+                    Token::List(list) => {
+                        let list_items = int.parse_list(&list, false)?;
+                        for item in list_items {
+                            match item {
+                                Token::Word(word) => int.state.data.remove_variable(&word),
+                                _ => return Err(Box::from("clearname expected a list of words")),
+                            }
+                        }
+                    }
+                    _ => return Err(Box::from("clearname expected a word or list as input")),
+                };
+                Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn clearnames() -> Self {
+        Command::reserved(
+            "clearnames",
+            Params::None,
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                int.state.data.remove_all_variables_in_scope();
+                Ok(Token::Void)
+            },
+        )
+    }
+
     pub fn output() -> Self {
         Command::reserved(
             "output",
@@ -79,6 +114,41 @@ impl Command {
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let return_value = decode_token(com, &args, 0)?;
                 Ok(return_value.clone())
+            },
+        )
+    }
+
+    pub fn run() -> Self {
+        Command::reserved(
+            "run",
+            Params::Fixed(1),
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let code = match decode_token(com, &args, 0)? {
+                    Token::Word(word) => word,
+                    Token::List(list) => list,
+                    _ => return Err(Box::from("run expected a word or list as input")),
+                };
+                int.interpret(&code)?;
+                Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn procedures() -> Self {
+        Command::reserved(
+            "procedures",
+            Params::None,
+            |int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
+                let procs = int.state.data.get_all_procedures();
+                let mut list_string = String::new();
+                for index in 0..procs.len() {
+                    if index == 0 {
+                        list_string += &format!("{}", procs[index].name);
+                    } else {
+                        list_string += &format!(" {}", procs[index].name);
+                    }
+                }
+                Ok(Token::List(list_string))
             },
         )
     }
@@ -102,7 +172,7 @@ impl Command {
                 let name = decode_word(com, &args, 0)?;
                 let success = int.state.canvas.set_current_object(&name);
                 if !success {
-                    return Err(Box::from(format!("no turtle named {}", name)));
+                    return Err(Box::from(format!("talkto found no object named {}", name)));
                 }
                 Ok(Token::Void)
             },
@@ -134,7 +204,7 @@ impl Command {
                             Err(Box::from(format!("no object named {}", name)))
                         }
                     }
-                    _ => Err(Box::from("expected word or list as input")),
+                    _ => Err(Box::from("ask expected a word or list as input")),
                 }
             },
         )

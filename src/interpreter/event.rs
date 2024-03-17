@@ -21,6 +21,7 @@ pub enum UiEvent {
     TextPrint(Box<str>, String),
     TextClear(Box<str>),
     TextSize(Box<str>, f32),
+    TextStyle(Box<str>, bool, bool, bool),
     CanvasSize(f32, f32),
     BgColor(f32),
     AddLine(Box<str>, Line),

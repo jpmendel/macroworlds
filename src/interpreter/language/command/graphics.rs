@@ -681,6 +681,50 @@ impl Command {
         )
     }
 
+    pub fn setstyle() -> Self {
+        Command::reserved(
+            "setstyle",
+            Params::Fixed(1),
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let style = decode_token(com, &args, 0)?;
+                let (is_bold, is_italic, is_underlined) = match style {
+                    Token::Word(word) => (word == "bold", word == "italic", word == "underline"),
+                    Token::List(list) => {
+                        let list_items = int.parse_list(&list, false)?;
+                        let mut is_bold = false;
+                        let mut is_italic = false;
+                        let mut is_underlined = false;
+                        for item in list_items {
+                            match item {
+                                Token::Word(word) if word == "bold" => is_bold = true,
+                                Token::Word(word) if word == "italic" => is_italic = true,
+                                Token::Word(word) if word == "underline" => is_underlined = true,
+                                _ => return Err(Box::from("setstyle expected a list of words")),
+                            }
+                        }
+                        (is_bold, is_italic, is_underlined)
+                    }
+                    _ => return Err(Box::from("setstyle expected a word or list as input")),
+                };
+                let Object::Text(text) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a text", com)));
+                };
+                if text.is_locked {
+                    return Ok(Token::Void);
+                }
+                text.is_bold = is_bold;
+                text.is_italic = is_italic;
+                int.event.send_ui(UiEvent::TextStyle(
+                    text.name.clone(),
+                    is_bold,
+                    is_italic,
+                    is_underlined,
+                ));
+                Ok(Token::Void)
+            },
+        )
+    }
+
     pub fn text() -> Self {
         Command::reserved(
             "text",
@@ -938,14 +982,10 @@ impl Command {
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
                 let token = decode_token(com, &args, 0)?;
-                let text: String;
-                match token {
-                    Token::Word(string) => text = string.clone(),
-                    Token::Number(number) => text = number.to_string(),
-                    Token::Boolean(boolean) => text = boolean.to_string(),
-                    Token::List(list) => text = list.clone(),
-                    _ => text = String::new(),
-                }
+                let text = match token {
+                    Token::List(list) => list.clone(),
+                    token => token.to_string(),
+                };
                 int.event.send_ui(UiEvent::Announce(text));
                 Ok(Token::Void)
             },

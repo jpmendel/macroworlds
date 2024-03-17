@@ -75,10 +75,12 @@ impl Command {
                 let code = decode_list(com, &args, 1)?;
                 let config_items = int.parse_list(&loop_config, true)?;
                 let Some(Token::Word(var_name)) = config_items.get(0) else {
-                    return Err(Box::from("dotimes expected word for input 0 in input 0"));
+                    return Err(Box::from("dotimes expected a word for input 0 in input 0"));
                 };
                 let Some(Token::Number(count)) = config_items.get(1) else {
-                    return Err(Box::from("dotimes expected number for input 1 in input 0"));
+                    return Err(Box::from(
+                        "dotimes expected a number for input 1 in input 0",
+                    ));
                 };
                 for index in 0..(*count as usize) {
                     let local_params = vec![(var_name.clone(), Token::Number(index as f32))];
@@ -98,10 +100,10 @@ impl Command {
                 let code = decode_list(com, &args, 1)?;
                 let config_items = int.parse_list(&loop_config, false)?;
                 let Some(Token::Word(var_name)) = config_items.get(0) else {
-                    return Err(Box::from("dolist expected word for input 0 in input 0"));
+                    return Err(Box::from("dolist expected a word for input 0 in input 0"));
                 };
                 let Some(Token::List(list)) = config_items.get(1) else {
-                    return Err(Box::from("dolist expected list for input 1 in input 0"));
+                    return Err(Box::from("dolist expected a list for input 1 in input 0"));
                 };
                 let list_items = int.parse_list(&list, true)?;
                 for item in list_items {

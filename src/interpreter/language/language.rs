@@ -31,6 +31,8 @@ impl Language {
         language.add(Command::char());
         language.add(Command::chdir());
         language.add(Command::clean());
+        language.add(Command::clearname());
+        language.add(Command::clearnames());
         language.add(Command::cleartext());
         language.add(Command::clicked());
         language.add(Command::color());
@@ -95,6 +97,7 @@ impl Language {
         language.add(Command::pos());
         language.add(Command::power());
         language.add(Command::print());
+        language.add(Command::procedures());
         language.add(Command::product());
         language.add(Command::projectsize());
         language.add(Command::pu());
@@ -108,6 +111,7 @@ impl Language {
         language.add(Command::resett());
         language.add(Command::right());
         language.add(Command::round());
+        language.add(Command::run());
         language.add(Command::setbg());
         language.add(Command::setcolor());
         language.add(Command::setfontsize());
@@ -117,6 +121,7 @@ impl Language {
         language.add(Command::setprojectsize());
         language.add(Command::setshape());
         language.add(Command::setsize());
+        language.add(Command::setstyle());
         language.add(Command::setx());
         language.add(Command::sety());
         language.add(Command::shape());

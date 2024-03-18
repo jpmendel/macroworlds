@@ -94,7 +94,7 @@ impl Command {
                     let Ok(file_name) = entry.file_name().into_string() else {
                         return false;
                     };
-                    file_name.ends_with(".txt")
+                    file_name.ends_with(".txt") || file_name.ends_with(".logo")
                 })?;
                 Ok(Token::List(files))
             },

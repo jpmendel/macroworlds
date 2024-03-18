@@ -1,5 +1,8 @@
 use crate::interpreter::language::command::command::Command;
 use std::collections::HashMap;
+use std::error::Error;
+use std::fs::File;
+use std::io::Write;
 
 pub struct Language {
     commands: HashMap<Box<str>, Command>,
@@ -206,5 +209,20 @@ impl Language {
 
     pub fn add_infix(&mut self, name: &str, command: Command) {
         self.infix_operators.insert(Box::from(name), command);
+    }
+
+    pub fn _export(&self) -> Result<(), Box<dyn Error>> {
+        let mut contents = String::new();
+        for (name, _) in &self.commands {
+            contents += &format!("\"{}\"\n", name);
+        }
+        let file_path = "./assets/language.txt";
+        let Ok(mut file) = File::create(file_path) else {
+            return Err(Box::from("failed to write file"));
+        };
+        match file.write_all(contents.as_bytes()) {
+            Ok(..) => Ok(()),
+            Err(err) => Err(Box::from(err)),
+        }
     }
 }

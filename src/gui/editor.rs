@@ -1,3 +1,4 @@
+use crate::gui::highlighter::highlighter::Highlighter;
 use rfd::FileDialog;
 use std::ffi::OsStr;
 use std::fs::File;
@@ -6,16 +7,16 @@ use std::path::PathBuf;
 
 pub struct Editor {
     pub code: String,
+    pub highlighter: Highlighter,
     pub current_file: Option<FileDescription>,
-    pub is_edited: bool,
 }
 
 impl Editor {
     pub fn new() -> Editor {
         Editor {
             code: String::new(),
+            highlighter: Highlighter::new(),
             current_file: None,
-            is_edited: false,
         }
     }
 

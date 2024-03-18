@@ -402,11 +402,20 @@ impl eframe::App for App {
                         }
                     });
 
+                let mut layouter = |ui: &Ui, text: &str, wrap_width: f32| {
+                    let job = self
+                        .editor
+                        .highlighter
+                        .highlight(ui.ctx(), text, wrap_width as u32);
+                    ui.fonts(|font| font.layout_job(job))
+                };
+
                 // Text Area
                 ScrollArea::vertical().show(ui, |ui: &mut Ui| {
                     let text_field = TextEdit::multiline(&mut self.editor.code)
                         .code_editor()
-                        .font(FontId::monospace(16.0));
+                        .font(FontId::monospace(16.0))
+                        .layouter(&mut layouter);
                     ui.add_sized(
                         vec2(ui.available_width() - 2.0, ui.available_height()),
                         text_field,

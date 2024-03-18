@@ -13,5 +13,6 @@ performance = []
 [dependencies]
 eframe = "0.26.2"
 image = "0.25.0"
+phf = { version = "0.11.2", features = ["macros"] }
 rand = "0.8.5"
 rfd = "0.14.0"

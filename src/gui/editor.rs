@@ -1,4 +1,5 @@
 use crate::gui::highlighter::highlighter::Highlighter;
+use eframe::egui::FontId;
 use rfd::FileDialog;
 use std::ffi::OsStr;
 use std::fs::File;
@@ -7,14 +8,16 @@ use std::path::PathBuf;
 
 pub struct Editor {
     pub code: String,
+    pub font: FontId,
     pub highlighter: Highlighter,
     pub current_file: Option<FileDescription>,
 }
 
 impl Editor {
-    pub fn new() -> Editor {
+    pub fn new(font: FontId) -> Editor {
         Editor {
             code: String::new(),
+            font,
             highlighter: Highlighter::new(),
             current_file: None,
         }

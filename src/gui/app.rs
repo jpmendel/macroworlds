@@ -29,14 +29,11 @@ impl App {
         let (input_sender, input_receiver) = mpsc::channel::<InputEvent>();
         let mut interpreter = Interpreter::new();
         interpreter.bind_input_receiver(input_receiver);
-        let canvas_size = vec2(
-            State::DEFAULT_CANVAS_WIDTH.clone(),
-            State::DEFAULT_CANVAS_HEIGHT.clone(),
-        );
+        let canvas_size = vec2(State::DEFAULT_CANVAS_WIDTH, State::DEFAULT_CANVAS_HEIGHT);
         App {
             interpreter: Arc::from(Mutex::from(interpreter)),
             canvas: Arc::from(Mutex::from(CanvasView::new(canvas_size))),
-            editor: Editor::new(),
+            editor: Editor::new(FontId::monospace(16.0)),
             input_sender,
             is_running: Arc::from(Mutex::from(false)),
             current_keys: HashSet::new(),
@@ -406,7 +403,7 @@ impl eframe::App for App {
                     let job = self
                         .editor
                         .highlighter
-                        .highlight(ui.ctx(), text, wrap_width as u32);
+                        .highlight(ui.ctx(), text, wrap_width);
                     ui.fonts(|font| font.layout_job(job))
                 };
 
@@ -414,7 +411,7 @@ impl eframe::App for App {
                 ScrollArea::vertical().show(ui, |ui: &mut Ui| {
                     let text_field = TextEdit::multiline(&mut self.editor.code)
                         .code_editor()
-                        .font(FontId::monospace(16.0))
+                        .font(self.editor.font.clone())
                         .layouter(&mut layouter);
                     ui.add_sized(
                         vec2(ui.available_width() - 2.0, ui.available_height()),

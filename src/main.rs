@@ -13,7 +13,7 @@ fn main() {
         ..Default::default()
     };
     let result = eframe::run_native(
-        "MicroWorlds.rs",
+        "MacroWorlds",
         native_options,
         Box::new(|cc| Box::new(App::new(cc))),
     );

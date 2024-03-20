@@ -92,7 +92,7 @@ impl App {
         *canvas = new_canvas;
     }
 
-    pub fn handle_shortcuts(&mut self, input: &InputState) {
+    pub fn handle_key_commands(&mut self, input: &InputState) {
         if input.modifiers.command {
             if input.key_pressed(Key::S) {
                 self.editor.save_current_file();
@@ -111,11 +111,14 @@ impl App {
     }
 
     pub fn handle_keys(&mut self, input: &InputState) {
-        let keys: HashSet<String> = input
+        let mut keys: HashSet<String> = input
             .keys_down
             .iter()
             .map(|key| key.name().to_string())
             .collect();
+        if input.modifiers.shift {
+            keys.insert(String::from("shift"));
+        }
 
         // Keys that were just pressed.
         for key in keys.difference(&self.current_keys) {
@@ -240,7 +243,7 @@ impl eframe::App for App {
                         ui.add_space(10.0);
                         ui.horizontal(|ui: &mut Ui| {
                             ui.add_space(10.0);
-                            let title = RichText::new(String::from("MicroWorlds.rs"))
+                            let title = RichText::new(String::from("MacroWorlds"))
                                 .font(FontId::proportional(18.0))
                                 .color(Color32::from_gray(255));
                             let title_label = Label::new(title);
@@ -501,7 +504,7 @@ impl eframe::App for App {
 
         // Handle Mouse & Keyboard Events
         ctx.input(|input: &InputState| {
-            self.handle_shortcuts(input);
+            self.handle_key_commands(input);
         });
         let is_focused = ctx.memory(|memory| memory.focus().is_some());
         if !is_focused {

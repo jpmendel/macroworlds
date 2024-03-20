@@ -1,5 +1,6 @@
+use crate::gui::files::FileHandle;
 use crate::gui::highlighter::highlighter::Highlighter;
-use eframe::egui::{FontId, TextBuffer};
+use eframe::egui::FontId;
 use rfd::FileDialog;
 use std::ffi::OsStr;
 use std::fs::File;
@@ -11,12 +12,12 @@ pub struct Editor {
     pub should_highlight: bool,
     pub highlighter: Highlighter,
     pub current_file_index: Option<usize>,
-    pub open_files: Vec<FileDescription>,
+    pub open_files: Vec<FileHandle>,
 }
 
 impl Editor {
     pub fn new(font: FontId) -> Editor {
-        let open_files = vec![FileDescription::new(String::from("untitled.logo"))];
+        let open_files = vec![FileHandle::new(String::from("untitled.logo"))];
         Editor {
             font,
             should_highlight: true,
@@ -26,18 +27,18 @@ impl Editor {
         }
     }
 
-    pub fn get_file_mut(&mut self, index: usize) -> Option<&mut FileDescription> {
+    pub fn get_file_mut(&mut self, index: usize) -> Option<&mut FileHandle> {
         self.open_files.get_mut(index)
     }
 
-    pub fn current_file(&self) -> Option<&FileDescription> {
+    pub fn current_file(&self) -> Option<&FileHandle> {
         let Some(index) = self.current_file_index else {
             return None;
         };
         self.open_files.get(index)
     }
 
-    pub fn current_file_mut(&mut self) -> Option<&mut FileDescription> {
+    pub fn current_file_mut(&mut self) -> Option<&mut FileHandle> {
         let Some(index) = self.current_file_index else {
             return None;
         };
@@ -68,8 +69,15 @@ impl Editor {
         }
     }
 
+    pub fn close_current_file(&mut self) {
+        let Some(index) = self.current_file_index else {
+            return;
+        };
+        self.close_file(index);
+    }
+
     pub fn new_file(&mut self) {
-        let file = FileDescription::new(String::from("untitled.logo"));
+        let file = FileHandle::new(String::from("untitled.logo"));
         self.open_files.push(file);
         self.current_file_index = Some(self.open_files.len() - 1);
     }
@@ -79,26 +87,27 @@ impl Editor {
             .add_filter("logo", &["txt", "logo"])
             .set_directory(".")
             .pick_file();
-        if let Some(file_path) = file_path {
-            if let Ok(mut file) = File::open(file_path.clone()) {
-                let mut contents = String::new();
-                if let Err(err) = file.read_to_string(&mut contents) {
-                    println!("Failed to load file: {}", err);
-                } else {
-                    if let Some(file_name) = file_path.clone().file_name() {
-                        let file_name = file_name.to_string_lossy().to_string();
-                        let file = FileDescription::from_open(file_name, file_path, contents);
-                        self.open_files.push(file);
-                        self.current_file_index = Some(self.open_files.len() - 1);
-                    }
-                    return true;
-                }
-            }
+        let Some(file_path) = file_path else {
+            return false;
+        };
+        let Ok(mut file) = File::open(file_path.clone()) else {
+            return false;
+        };
+        let mut contents = String::new();
+        if let Err(err) = file.read_to_string(&mut contents) {
+            println!("Failed to load file: {}", err);
+            return false;
         }
-        false
+        if let Some(file_name) = file_path.clone().file_name() {
+            let file_name = file_name.to_string_lossy().to_string();
+            let file = FileHandle::from_open(file_name, file_path, contents);
+            self.open_files.push(file);
+            self.current_file_index = Some(self.open_files.len() - 1);
+        }
+        true
     }
 
-    pub fn save_file(&mut self) {
+    pub fn save_current_file(&mut self) {
         let Some(current_file) = self.current_file() else {
             return;
         };
@@ -111,74 +120,28 @@ impl Editor {
                 .set_directory(".")
                 .save_file();
         }
-        if let Some(file_path) = file_path {
-            if let Ok(mut file) = File::create(file_path.clone()) {
-                let file_name = file_path
-                    .clone()
-                    .file_name()
-                    .unwrap_or(&OsStr::new("unknown"))
-                    .to_string_lossy()
-                    .to_string();
-                match file.write_all(current_file.content.as_bytes()) {
-                    Ok(..) => {
-                        let Some(current_file) = self.current_file_mut() else {
-                            return;
-                        };
-                        current_file.name = file_name;
-                        current_file.path = Some(file_path);
-                        current_file.is_edited = false;
-                    }
-                    Err(err) => println!("Failed to save file: {}", err),
-                }
+        let Some(file_path) = file_path else {
+            return;
+        };
+        let Ok(mut file) = File::create(file_path.clone()) else {
+            return;
+        };
+        let file_name = file_path
+            .clone()
+            .file_name()
+            .unwrap_or(&OsStr::new("unknown"))
+            .to_string_lossy()
+            .to_string();
+        match file.write_all(current_file.content.as_bytes()) {
+            Ok(..) => {
+                let Some(current_file) = self.current_file_mut() else {
+                    return;
+                };
+                current_file.name = file_name;
+                current_file.path = Some(file_path);
+                current_file.is_edited = false;
             }
+            Err(err) => println!("Failed to save file: {}", err),
         }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct FileDescription {
-    pub name: String,
-    pub path: Option<PathBuf>,
-    pub content: String,
-    pub is_edited: bool,
-}
-
-impl FileDescription {
-    pub fn new(name: String) -> Self {
-        FileDescription {
-            name,
-            path: None,
-            content: String::new(),
-            is_edited: false,
-        }
-    }
-
-    pub fn from_open(name: String, path: PathBuf, content: String) -> Self {
-        FileDescription {
-            name,
-            path: Some(path),
-            content,
-            is_edited: false,
-        }
-    }
-}
-
-impl TextBuffer for FileDescription {
-    fn is_mutable(&self) -> bool {
-        self.content.is_mutable()
-    }
-
-    fn as_str(&self) -> &str {
-        self.content.as_str()
-    }
-
-    fn insert_text(&mut self, text: &str, char_index: usize) -> usize {
-        self.is_edited = true;
-        self.content.insert_text(text, char_index)
-    }
-
-    fn delete_char_range(&mut self, char_range: std::ops::Range<usize>) {
-        self.is_edited = true;
-        self.content.delete_char_range(char_range)
     }
 }

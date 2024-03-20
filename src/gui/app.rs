@@ -92,6 +92,24 @@ impl App {
         *canvas = new_canvas;
     }
 
+    pub fn handle_shortcuts(&mut self, input: &InputState) {
+        if input.modifiers.command {
+            if input.key_pressed(Key::S) {
+                self.editor.save_current_file();
+            } else if input.key_pressed(Key::N) {
+                self.editor.new_file();
+            } else if input.key_pressed(Key::O) {
+                self.editor.open_file();
+            } else if input.key_pressed(Key::W) {
+                self.editor.close_current_file();
+            }
+        } else if input.modifiers.ctrl {
+            if input.key_pressed(Key::C) {
+                let _ = self.input_sender.send(InputEvent::Interrupt);
+            }
+        }
+    }
+
     pub fn handle_keys(&mut self, input: &InputState) {
         let keys: HashSet<String> = input
             .keys_down
@@ -324,7 +342,7 @@ impl eframe::App for App {
                             let save_button = Button::new(save_button_label);
                             let save_button_ref = ui.add_sized(vec2(60.0, 20.0), save_button);
                             if save_button_ref.clicked() {
-                                self.editor.save_file()
+                                self.editor.save_current_file()
                             }
 
                             // Syntax Highlighting
@@ -458,24 +476,23 @@ impl eframe::App for App {
                         let size = vec2(ui.available_width() - 2.0, ui.available_height());
                         if self.editor.should_highlight {
                             let highlighter = self.editor.highlighter.clone();
-                            let Some(file_desc) = self.editor.get_file_mut(index) else {
+                            let Some(file) = self.editor.get_file_mut(index) else {
                                 return;
                             };
                             let mut layouter = |ui: &Ui, text: &str, wrap_width: f32| {
                                 let job = highlighter.highlight(ui.ctx(), text, wrap_width);
                                 ui.fonts(|font| font.layout_job(job))
                             };
-                            let text_field = TextEdit::multiline(file_desc)
+                            let text_field = TextEdit::multiline(file)
                                 .code_editor()
                                 .font(font)
                                 .layouter(&mut layouter);
                             ui.add_sized(size, text_field);
                         } else {
-                            let Some(file_desc) = self.editor.get_file_mut(index) else {
+                            let Some(file) = self.editor.get_file_mut(index) else {
                                 return;
                             };
-                            let text_field =
-                                TextEdit::multiline(file_desc).code_editor().font(font);
+                            let text_field = TextEdit::multiline(file).code_editor().font(font);
                             ui.add_sized(size, text_field);
                         }
                     });
@@ -483,9 +500,12 @@ impl eframe::App for App {
             });
 
         // Handle Mouse & Keyboard Events
+        ctx.input(|input: &InputState| {
+            self.handle_shortcuts(input);
+        });
         let is_focused = ctx.memory(|memory| memory.focus().is_some());
         if !is_focused {
-            ctx.input(|input| {
+            ctx.input(|input: &InputState| {
                 self.handle_keys(input);
                 self.handle_mouse(input);
             });

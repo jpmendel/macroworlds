@@ -1,0 +1,7 @@
+to move :turtle
+tto :turtle
+if keydown? "w [sety ycor + 5]
+if keydown? "s [sety ycor - 5]
+if keydown? "a [setx xcor - 5]
+if keydown? "d [setx xcor + 5]
+end

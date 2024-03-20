@@ -6,7 +6,7 @@ use eframe::egui::text::LayoutJob;
 use eframe::egui::util::cache::{ComputerMut, FrameCache};
 use eframe::egui::*;
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct Highlighter {}
 
 impl Highlighter {
@@ -152,7 +152,7 @@ impl Highlighter {
                     }
                 } else if element
                     .chars()
-                    .all(|c| c.is_numeric() || c == '-' || c == '.' || c == '_')
+                    .all(|c| c.is_numeric() || c == '-' || c == '.')
                 {
                     // Numbers
                     self.append_job(&mut job, &element, Self::NUMBER_COLOR);

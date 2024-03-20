@@ -48,7 +48,7 @@ impl App {
         let canvas_mutex = self.canvas.clone();
         let ctx_mutex = Arc::from(Mutex::from(ctx.clone())).clone();
         let is_running_mutex = self.is_running.clone();
-        let code = self.editor.code.clone();
+        let code = self.editor.current_code().to_string();
         thread::spawn(move || {
             let mut interpreter = interpreter_mutex.lock().unwrap();
 
@@ -281,6 +281,8 @@ impl eframe::App for App {
             .exact_width(App::EDITOR_WIDTH)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
+                let current_file_index = self.editor.current_file_index.clone();
+
                 // Toolbar
                 TopBottomPanel::top("top_right")
                     .frame(Frame::default().fill(Color32::from_gray(20)))
@@ -289,14 +291,7 @@ impl eframe::App for App {
                         ui.add_space(10.0);
 
                         ui.horizontal(|ui: &mut Ui| {
-                            // Title
                             ui.add_space(10.0);
-                            let title = RichText::new("Editor")
-                                .font(FontId::proportional(18.0))
-                                .color(Color32::from_gray(255));
-                            let title_label = Label::new(title).truncate(true);
-                            ui.add(title_label);
-                            ui.add_space(70.0);
 
                             // New File
                             let new_button_label = RichText::new(String::from("New"))
@@ -332,6 +327,17 @@ impl eframe::App for App {
                                 self.editor.save_file()
                             }
 
+                            // Syntax Highlighting
+                            let highlight_button_label = RichText::new(String::from("Hi-Lite"))
+                                .font(FontId::proportional(14.0))
+                                .color(Color32::from_gray(255));
+                            let highlight_button = Button::new(highlight_button_label);
+                            let highlight_button_ref =
+                                ui.add_sized(vec2(60.0, 20.0), highlight_button);
+                            if highlight_button_ref.clicked() {
+                                self.editor.should_highlight = !self.editor.should_highlight;
+                            }
+
                             // Reset State and Variables
                             let reset_button_label = RichText::new(String::from("Reset"))
                                 .font(FontId::proportional(14.0))
@@ -349,28 +355,74 @@ impl eframe::App for App {
                             let docs_button = Button::new(docs_button_label);
                             let docs_button_ref = ui.add_sized(vec2(60.0, 20.0), docs_button);
                             if docs_button_ref.clicked() {
-                                // Show Documentation
+                                // Heh
                             }
                         });
 
-                        ui.add_space(5.0);
-
-                        ui.horizontal(|ui: &mut Ui| {
-                            // File Name
+                        // File Tabs
+                        if !self.editor.open_files.is_empty() {
                             ui.add_space(10.0);
-                            let mut file_name = String::from("untitled.logo");
-                            if let Some(file_desc) = self.editor.current_file.clone() {
-                                file_name = file_desc.name;
-                            }
-                            let file_text = RichText::new(file_name)
-                                .font(FontId::proportional(12.0))
-                                .color(Color32::from_gray(255));
-                            let file_text_label = Label::new(file_text).truncate(true);
-                            ui.add(file_text_label);
-                            ui.add_space(10.0);
-                        });
-
-                        ui.add_space(5.0);
+                            ScrollArea::horizontal().show(ui, |ui: &mut Ui| {
+                                ui.horizontal(|ui: &mut Ui| {
+                                    ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+                                    let files = self.editor.open_files.clone();
+                                    for (index, file) in files.iter().enumerate() {
+                                        let bg_color = if index == current_file_index.unwrap_or(0) {
+                                            Color32::from_gray(50)
+                                        } else {
+                                            Color32::from_gray(20)
+                                        };
+                                        let frame = Frame::default().fill(bg_color);
+                                        frame.show(ui, |ui: &mut Ui| {
+                                            ui.set_max_size(vec2(120.0, 30.0));
+                                            ui.vertical(|ui: &mut Ui| {
+                                                ui.add_space(7.5);
+                                                ui.horizontal(|ui: &mut Ui| {
+                                                    ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+                                                    ui.add_space(15.0);
+                                                    let mut file_text =
+                                                        RichText::new(file.name.clone())
+                                                            .font(FontId::proportional(12.0))
+                                                            .color(Color32::from_gray(255));
+                                                    if file.is_edited {
+                                                        file_text = file_text.italics();
+                                                    }
+                                                    let file_text_label =
+                                                        Label::new(file_text).truncate(true);
+                                                    let file_text_label_ref = ui
+                                                        .add(file_text_label)
+                                                        .on_hover_and_drag_cursor(
+                                                            CursorIcon::Default,
+                                                        );
+                                                    if file_text_label_ref.clicked() {
+                                                        self.editor.select_file(index.clone());
+                                                    }
+                                                    ui.add_space(10.0);
+                                                    let close_text =
+                                                        RichText::new(String::from("x"))
+                                                            .font(FontId::proportional(12.0))
+                                                            .color(Color32::from_gray(255));
+                                                    let close_text_label =
+                                                        Label::new(close_text).truncate(true);
+                                                    let close_text_label_ref = ui
+                                                        .add(close_text_label)
+                                                        .on_hover_and_drag_cursor(
+                                                            CursorIcon::PointingHand,
+                                                        );
+                                                    if close_text_label_ref.clicked() {
+                                                        self.editor.close_file(index.clone());
+                                                    }
+                                                    ui.add_space(15.0);
+                                                });
+                                                ui.add_space(7.5);
+                                            });
+                                        });
+                                    }
+                                });
+                            });
+                        } else {
+                            ui.add_space(40.0);
+                        }
                     });
 
                 // Run/Stop Code Button
@@ -399,25 +451,35 @@ impl eframe::App for App {
                         }
                     });
 
-                let mut layouter = |ui: &Ui, text: &str, wrap_width: f32| {
-                    let job = self
-                        .editor
-                        .highlighter
-                        .highlight(ui.ctx(), text, wrap_width);
-                    ui.fonts(|font| font.layout_job(job))
-                };
-
                 // Text Area
-                ScrollArea::vertical().show(ui, |ui: &mut Ui| {
-                    let text_field = TextEdit::multiline(&mut self.editor.code)
-                        .code_editor()
-                        .font(self.editor.font.clone())
-                        .layouter(&mut layouter);
-                    ui.add_sized(
-                        vec2(ui.available_width() - 2.0, ui.available_height()),
-                        text_field,
-                    );
-                });
+                if let Some(index) = current_file_index {
+                    ScrollArea::vertical().show(ui, |ui: &mut Ui| {
+                        let font = self.editor.font.clone();
+                        let size = vec2(ui.available_width() - 2.0, ui.available_height());
+                        if self.editor.should_highlight {
+                            let highlighter = self.editor.highlighter.clone();
+                            let Some(file_desc) = self.editor.get_file_mut(index) else {
+                                return;
+                            };
+                            let mut layouter = |ui: &Ui, text: &str, wrap_width: f32| {
+                                let job = highlighter.highlight(ui.ctx(), text, wrap_width);
+                                ui.fonts(|font| font.layout_job(job))
+                            };
+                            let text_field = TextEdit::multiline(file_desc)
+                                .code_editor()
+                                .font(font)
+                                .layouter(&mut layouter);
+                            ui.add_sized(size, text_field);
+                        } else {
+                            let Some(file_desc) = self.editor.get_file_mut(index) else {
+                                return;
+                            };
+                            let text_field =
+                                TextEdit::multiline(file_desc).code_editor().font(font);
+                            ui.add_sized(size, text_field);
+                        }
+                    });
+                }
             });
 
         // Handle Mouse & Keyboard Events

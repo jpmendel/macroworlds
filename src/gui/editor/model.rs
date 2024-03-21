@@ -1,5 +1,5 @@
-use crate::gui::files::FileHandle;
-use crate::gui::highlighter::highlighter::Highlighter;
+use crate::gui::editor::files::FileHandle;
+use crate::gui::editor::highlighter::Highlighter;
 use eframe::egui::FontId;
 use rfd::FileDialog;
 use std::ffi::OsStr;

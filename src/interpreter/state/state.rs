@@ -1,4 +1,4 @@
-use crate::interpreter::state::canvas::Canvas;
+use crate::interpreter::state::canvas::CanvasState;
 use crate::interpreter::state::datastore::DataStore;
 use crate::interpreter::state::input::InputManager;
 use std::error::Error;
@@ -8,19 +8,16 @@ use std::time::SystemTime;
 pub struct State {
     pub program_time: SystemTime,
     pub data: DataStore,
-    pub canvas: Canvas,
+    pub canvas: CanvasState,
     pub input: InputManager,
 }
 
 impl State {
-    pub const DEFAULT_CANVAS_WIDTH: f32 = 600.0;
-    pub const DEFAULT_CANVAS_HEIGHT: f32 = 400.0;
-
     pub fn new() -> Self {
         State {
             program_time: SystemTime::now(),
             data: DataStore::new(),
-            canvas: Canvas::new(),
+            canvas: CanvasState::new(),
             input: InputManager::new(),
         }
     }

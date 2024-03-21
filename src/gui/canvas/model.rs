@@ -1,10 +1,10 @@
-use crate::gui::object::{ObjectView, TurtleView};
+use crate::gui::canvas::object::{ObjectView, TurtleView};
 use crate::interpreter::state::object::TurtleShape;
 use eframe::egui::*;
 use eframe::epaint::{CircleShape, Hsva, PathShape, RectShape};
 use std::collections::HashMap;
 
-pub struct CanvasView {
+pub struct Canvas {
     pub pos: Pos2,
     pub size: Vec2,
     pub objects: HashMap<Box<str>, ObjectView>,
@@ -18,9 +18,9 @@ pub struct CanvasView {
     pub is_window_open: bool,
 }
 
-impl CanvasView {
+impl Canvas {
     pub fn new(size: Vec2) -> Self {
-        CanvasView {
+        Canvas {
             pos: pos2(0.0, 0.0),
             size,
             objects: HashMap::new(),

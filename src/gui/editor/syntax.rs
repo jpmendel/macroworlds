@@ -15,6 +15,7 @@ pub const DEFINITION_COMMANDS: phf::Set<&'static str> = phf_set!(
 );
 
 pub const CONTROL_FLOW_COMMANDS: phf::Set<&'static str> = phf_set!(
+    "again",
     "and",
     "carefully",
     "dolist",
@@ -161,10 +162,10 @@ pub const OTHER_COMMANDS: phf::Set<&'static str> = phf_set!(
 );
 
 pub const VAR_DEF_COUNT: phf::Map<&'static str, u8> = phf_map!(
-    "make" => 1,
-    "local" => 1,
-    "turtlesown" => 1,
     "clearname" => 1,
+    "local" => 1,
+    "make" => 1,
+    "turtlesown" => 1,
 );
 
 pub const OBJ_DEF_COUNT: phf::Map<&'static str, u8> = phf_map!(

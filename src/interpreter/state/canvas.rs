@@ -1,11 +1,10 @@
 use crate::interpreter::language::token::Token;
 use crate::interpreter::state::object::{Line, Object, Point, Size, Text, Turtle};
-use crate::interpreter::state::state::State;
 use std::collections::HashMap;
 use std::error::Error;
 
 #[derive(Debug)]
-pub struct Canvas {
+pub struct CanvasState {
     size: Size,
     pixels: Vec<u8>,
     bg_color: u8,
@@ -13,14 +12,14 @@ pub struct Canvas {
     current_object_name: Box<str>,
 }
 
-impl Canvas {
+impl CanvasState {
+    pub const DEFAULT_WIDTH: f32 = 600.0;
+    pub const DEFAULT_HEIGHT: f32 = 400.0;
+
     pub fn new() -> Self {
-        let pixel_count = (State::DEFAULT_CANVAS_WIDTH * State::DEFAULT_CANVAS_HEIGHT) as usize;
-        Canvas {
-            size: Size::new(
-                State::DEFAULT_CANVAS_WIDTH.clone(),
-                State::DEFAULT_CANVAS_HEIGHT.clone(),
-            ),
+        let pixel_count = (Self::DEFAULT_WIDTH * Self::DEFAULT_HEIGHT) as usize;
+        CanvasState {
+            size: Size::new(Self::DEFAULT_WIDTH, Self::DEFAULT_HEIGHT),
             pixels: vec![0; pixel_count],
             bg_color: 255,
             objects: HashMap::new(),

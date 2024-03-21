@@ -1,12 +1,12 @@
-use crate::gui::canvas::{CanvasView, PathConfig};
-use crate::gui::object::{ObjectView, TextView, TurtleView};
+use crate::gui::canvas::model::{Canvas, PathConfig};
+use crate::gui::canvas::object::{ObjectView, TextView, TurtleView};
 use crate::interpreter::event::{UiContext, UiEvent, UiEventHandler};
 use eframe::egui::*;
 use std::any::Any;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
-impl UiEventHandler for CanvasView {
+impl UiEventHandler for Canvas {
     fn handle_ui_event(&mut self, ctx: Arc<Mutex<dyn UiContext>>, event: UiEvent) {
         match event {
             UiEvent::Done => {

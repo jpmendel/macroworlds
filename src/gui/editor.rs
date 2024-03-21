@@ -82,21 +82,21 @@ impl Editor {
         self.current_file_index = Some(self.open_files.len() - 1);
     }
 
-    pub fn open_file(&mut self) -> bool {
+    pub fn open_file(&mut self) {
         let file_path = FileDialog::new()
             .add_filter("logo", &["txt", "logo"])
             .set_directory(".")
             .pick_file();
         let Some(file_path) = file_path else {
-            return false;
+            return;
         };
         let Ok(mut file) = File::open(file_path.clone()) else {
-            return false;
+            return;
         };
         let mut contents = String::new();
         if let Err(err) = file.read_to_string(&mut contents) {
             println!("Failed to load file: {}", err);
-            return false;
+            return;
         }
         if let Some(file_name) = file_path.clone().file_name() {
             let file_name = file_name.to_string_lossy().to_string();
@@ -104,7 +104,6 @@ impl Editor {
             self.open_files.push(file);
             self.current_file_index = Some(self.open_files.len() - 1);
         }
-        true
     }
 
     pub fn save_current_file(&mut self) {

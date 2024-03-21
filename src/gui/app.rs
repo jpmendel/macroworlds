@@ -92,16 +92,22 @@ impl App {
         *canvas = new_canvas;
     }
 
-    pub fn handle_key_commands(&mut self, input: &InputState) {
+    pub fn handle_key_commands(&mut self, input: &InputState, ctx: &Context) {
         if input.modifiers.command {
-            if input.key_pressed(Key::S) {
-                self.editor.save_current_file();
-            } else if input.key_pressed(Key::N) {
-                self.editor.new_file();
-            } else if input.key_pressed(Key::O) {
-                self.editor.open_file();
-            } else if input.key_pressed(Key::W) {
-                self.editor.close_current_file();
+            if input.modifiers.shift {
+                if input.key_pressed(Key::R) {
+                    self.run_code(ctx);
+                }
+            } else {
+                if input.key_pressed(Key::S) {
+                    self.editor.save_current_file();
+                } else if input.key_pressed(Key::N) {
+                    self.editor.new_file();
+                } else if input.key_pressed(Key::O) {
+                    self.editor.open_file();
+                } else if input.key_pressed(Key::W) {
+                    self.editor.close_current_file();
+                }
             }
         } else if input.modifiers.ctrl {
             if input.key_pressed(Key::C) {
@@ -166,88 +172,140 @@ impl eframe::App for App {
             .exact_width(main_frame_width)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
-                let mut canvas = self.canvas.lock().unwrap();
+                // Canvas
+                CentralPanel::default()
+                    .frame(Frame::default().fill(Color32::from_gray(20)))
+                    .show_inside(ui, |ui: &mut Ui| {
+                        let mut canvas = self.canvas.lock().unwrap();
 
-                // Blank Canvas
-                let painter = ui.painter();
-                let canvas_pos = pos2(
-                    main_frame_width / 2.0 - canvas.size.x / 2.0,
-                    main_frame_height / 2.0 - canvas.size.y / 2.0 + 6.0,
-                );
-                canvas.pos = canvas_pos;
-                let rect = Rect::from_x_y_ranges(
-                    Rangef::new(canvas_pos.x, canvas_pos.x + canvas.size.x),
-                    Rangef::new(canvas_pos.y, canvas_pos.y + canvas.size.y),
-                );
-                if let Some(texture) = &canvas.bg_picture {
-                    painter.image(
-                        texture.id(),
-                        rect,
-                        Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)),
-                        Color32::WHITE,
-                    );
-                } else {
-                    painter.rect_filled(rect, Rounding::same(0.0), canvas.bg_color);
-                }
+                        // Blank Canvas
+                        let painter = ui.painter();
+                        let canvas_pos = pos2(
+                            main_frame_width / 2.0 - canvas.size.x / 2.0,
+                            main_frame_height / 2.0 - canvas.size.y / 2.0 + 6.0,
+                        );
+                        canvas.pos = canvas_pos;
+                        let rect = Rect::from_x_y_ranges(
+                            Rangef::new(canvas_pos.x, canvas_pos.x + canvas.size.x),
+                            Rangef::new(canvas_pos.y, canvas_pos.y + canvas.size.y),
+                        );
+                        if let Some(texture) = &canvas.bg_picture {
+                            painter.image(
+                                texture.id(),
+                                rect,
+                                Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)),
+                                Color32::WHITE,
+                            );
+                        } else {
+                            painter.rect_filled(rect, Rounding::same(0.0), canvas.bg_color);
+                        }
 
-                // Lines
-                let content_painter = ui.painter_at(rect);
-                for config in &canvas.drawn_paths {
-                    content_painter.add(canvas.path_for_config(config));
-                }
-                for (_, config) in &canvas.current_turtle_paths {
-                    content_painter.add(canvas.path_for_config(config));
-                }
+                        // Lines
+                        let content_painter = ui.painter_at(rect);
+                        for config in &canvas.drawn_paths {
+                            content_painter.add(canvas.path_for_config(config));
+                        }
+                        for (_, config) in &canvas.current_turtle_paths {
+                            content_painter.add(canvas.path_for_config(config));
+                        }
 
-                // Turtles and Text
-                for (_, obj) in &canvas.objects {
-                    match obj {
-                        ObjectView::Turtle(turtle) => {
-                            if turtle.is_visible {
-                                if let Some(shape) = canvas.shape_for_turtle(turtle) {
-                                    content_painter.add(shape);
+                        // Turtles and Text
+                        for (_, obj) in &canvas.objects {
+                            match obj {
+                                ObjectView::Turtle(turtle) => {
+                                    if turtle.is_visible {
+                                        if let Some(shape) = canvas.shape_for_turtle(turtle) {
+                                            content_painter.add(shape);
+                                        }
+                                    }
+                                }
+                                ObjectView::Text(text) => {
+                                    if text.is_visible {
+                                        let mut format = TextFormat::simple(
+                                            FontId::proportional(text.font_size),
+                                            text.color,
+                                        );
+                                        format.italics = text.is_italic();
+                                        format.underline = if text.is_underlined() {
+                                            Stroke::new(text.font_size / 20.0, text.color)
+                                        } else {
+                                            Stroke::NONE
+                                        };
+                                        let mut job = LayoutJob::single_section(
+                                            text.text.to_string(),
+                                            format,
+                                        );
+                                        job.halign = Align::Center;
+                                        let galley = content_painter.layout_job(job);
+                                        content_painter.galley(
+                                            canvas.to_canvas_coordinates(text.pos),
+                                            galley,
+                                            text.color,
+                                        );
+                                    }
                                 }
                             }
                         }
-                        ObjectView::Text(text) => {
-                            if text.is_visible {
-                                let mut format = TextFormat::simple(
-                                    FontId::proportional(text.font_size),
-                                    text.color,
-                                );
-                                format.italics = text.is_italic();
-                                format.underline = if text.is_underlined() {
-                                    Stroke::new(text.font_size / 20.0, text.color)
-                                } else {
-                                    Stroke::NONE
-                                };
-                                let mut job =
-                                    LayoutJob::single_section(text.text.to_string(), format);
-                                job.halign = Align::Center;
-                                let galley = content_painter.layout_job(job);
-                                content_painter.galley(
-                                    canvas.to_canvas_coordinates(text.pos),
-                                    galley,
-                                    text.color,
-                                );
-                            }
-                        }
-                    }
-                }
 
-                // Title
+                        // Handle Announcements
+                        if canvas.is_window_open.clone() {
+                            let announcement = canvas.announce_text.clone();
+                            Window::new("Announcement")
+                                .open(&mut canvas.is_window_open)
+                                .resizable(false)
+                                .collapsible(false)
+                                .movable(true)
+                                .anchor(
+                                    Align2::LEFT_TOP,
+                                    vec2(main_frame_width / 2.0, main_frame_height / 2.0),
+                                )
+                                .show(ctx, |ui: &mut Ui| {
+                                    ui.add_space(10.0);
+                                    ui.with_layout(
+                                        Layout::left_to_right(Align::TOP),
+                                        |ui: &mut Ui| {
+                                            ui.add_space(10.0);
+                                            ui.label(
+                                                RichText::new(announcement)
+                                                    .font(FontId::proportional(18.0)),
+                                            );
+                                            ui.add_space(10.0);
+                                        },
+                                    );
+                                    ui.add_space(10.0);
+                                });
+                        }
+                    });
+
+                // Header Bar
                 TopBottomPanel::top("top_left")
                     .frame(Frame::default().fill(Color32::from_gray(20)))
                     .resizable(false)
                     .show_inside(ui, |ui: &mut Ui| {
                         ui.add_space(10.0);
-                        ui.horizontal(|ui: &mut Ui| {
-                            ui.add_space(10.0);
-                            let title = RichText::new(String::from("MacroWorlds"))
-                                .font(FontId::proportional(18.0))
-                                .color(Color32::from_gray(255));
-                            let title_label = Label::new(title);
-                            ui.add(title_label);
+                        ui.with_layout(Layout::left_to_right(Align::TOP), |ui: &mut Ui| {
+                            ui.with_layout(Layout::left_to_right(Align::TOP), |ui: &mut Ui| {
+                                // Title
+                                ui.add_space(10.0);
+                                let title = RichText::new(String::from("MacroWorlds"))
+                                    .font(FontId::proportional(18.0))
+                                    .color(Color32::from_gray(255));
+                                let title_label = Label::new(title);
+                                ui.add(title_label);
+                            });
+
+                            ui.with_layout(Layout::right_to_left(Align::TOP), |ui: &mut Ui| {
+                                // Reset State and Variables
+                                ui.add_space(10.0);
+                                let reset_button_label = RichText::new(String::from("Reset"))
+                                    .font(FontId::proportional(14.0))
+                                    .color(Color32::from_gray(255));
+                                let reset_button = Button::new(reset_button_label);
+                                let reset_button_ref = ui.add_sized(vec2(60.0, 20.0), reset_button);
+                                if reset_button_ref.clicked() {
+                                    self.reset_state();
+                                }
+                            });
                         });
                         ui.add_space(10.0);
                     });
@@ -260,7 +318,8 @@ impl eframe::App for App {
                     .show_inside(ui, |ui: &mut Ui| {
                         ui.add_space(6.0);
 
-                        ui.horizontal(|ui: &mut Ui| {
+                        ui.with_layout(Layout::left_to_right(Align::TOP), |ui: &mut Ui| {
+                            let canvas = self.canvas.lock().unwrap();
                             ui.add_space(6.0);
                             let print_output = RichText::new(canvas.console_text.clone())
                                 .font(FontId::proportional(16.0))
@@ -269,31 +328,6 @@ impl eframe::App for App {
                             ui.add(print_output_label);
                         });
                     });
-
-                // Handle Announcements
-                if canvas.is_window_open.clone() {
-                    let announcement = canvas.announce_text.clone();
-                    Window::new("Announcement")
-                        .open(&mut canvas.is_window_open)
-                        .resizable(false)
-                        .collapsible(false)
-                        .movable(true)
-                        .anchor(
-                            Align2::LEFT_TOP,
-                            vec2(main_frame_width / 2.0, main_frame_height / 2.0),
-                        )
-                        .show(ctx, |ui: &mut Ui| {
-                            ui.add_space(10.0);
-                            ui.horizontal(|ui: &mut Ui| {
-                                ui.add_space(10.0);
-                                ui.label(
-                                    RichText::new(announcement).font(FontId::proportional(18.0)),
-                                );
-                                ui.add_space(10.0);
-                            });
-                            ui.add_space(10.0);
-                        });
-                }
             });
 
         // Code Editor
@@ -311,80 +345,79 @@ impl eframe::App for App {
                     .show_inside(ui, |ui: &mut Ui| {
                         ui.add_space(10.0);
 
-                        ui.horizontal(|ui: &mut Ui| {
-                            ui.add_space(10.0);
+                        ui.with_layout(Layout::left_to_right(Align::TOP), |ui: &mut Ui| {
+                            ui.with_layout(Layout::left_to_right(Align::TOP), |ui: &mut Ui| {
+                                // Title
+                                ui.add_space(10.0);
+                                let title = RichText::new(String::from("Code"))
+                                    .font(FontId::proportional(18.0))
+                                    .color(Color32::from_gray(255));
+                                let title_label = Label::new(title);
+                                ui.add(title_label);
+                            });
 
-                            // New File
-                            let new_button_label = RichText::new(String::from("New"))
-                                .font(FontId::proportional(14.0))
-                                .color(Color32::from_gray(255));
-                            let new_button = Button::new(new_button_label);
-                            let new_button_ref = ui.add_sized(vec2(60.0, 20.0), new_button);
-                            if new_button_ref.clicked() {
-                                self.reset_state();
-                                self.editor.new_file();
-                            }
+                            // Buttons
+                            ui.with_layout(Layout::right_to_left(Align::TOP), |ui: &mut Ui| {
+                                ui.add_space(10.0);
 
-                            // Open File
-                            let open_button_label = RichText::new(String::from("Open"))
-                                .font(FontId::proportional(14.0))
-                                .color(Color32::from_gray(255));
-                            let open_button = Button::new(open_button_label);
-                            let open_button_ref = ui.add_sized(vec2(60.0, 20.0), open_button);
-                            if open_button_ref.clicked() {
-                                let did_open = self.editor.open_file();
-                                if did_open {
-                                    self.reset_state();
+                                // Show Documentation
+                                let docs_button_label = RichText::new(String::from("Docs"))
+                                    .font(FontId::proportional(14.0))
+                                    .color(Color32::from_gray(255));
+                                let docs_button = Button::new(docs_button_label);
+                                let docs_button_ref = ui.add_sized(vec2(60.0, 20.0), docs_button);
+                                if docs_button_ref.clicked() {
+                                    // Heh
                                 }
-                            }
 
-                            // Save File
-                            let save_button_label = RichText::new(String::from("Save"))
-                                .font(FontId::proportional(14.0))
-                                .color(Color32::from_gray(255));
-                            let save_button = Button::new(save_button_label);
-                            let save_button_ref = ui.add_sized(vec2(60.0, 20.0), save_button);
-                            if save_button_ref.clicked() {
-                                self.editor.save_current_file()
-                            }
+                                // Syntax Highlighting
+                                let highlight_button_label = RichText::new(String::from("Hi-Lite"))
+                                    .font(FontId::proportional(14.0))
+                                    .color(Color32::from_gray(255));
+                                let highlight_button = Button::new(highlight_button_label);
+                                let highlight_button_ref =
+                                    ui.add_sized(vec2(60.0, 20.0), highlight_button);
+                                if highlight_button_ref.clicked() {
+                                    self.editor.should_highlight = !self.editor.should_highlight;
+                                }
 
-                            // Syntax Highlighting
-                            let highlight_button_label = RichText::new(String::from("Hi-Lite"))
-                                .font(FontId::proportional(14.0))
-                                .color(Color32::from_gray(255));
-                            let highlight_button = Button::new(highlight_button_label);
-                            let highlight_button_ref =
-                                ui.add_sized(vec2(60.0, 20.0), highlight_button);
-                            if highlight_button_ref.clicked() {
-                                self.editor.should_highlight = !self.editor.should_highlight;
-                            }
+                                // Save File
+                                let save_button_label = RichText::new(String::from("Save"))
+                                    .font(FontId::proportional(14.0))
+                                    .color(Color32::from_gray(255));
+                                let save_button = Button::new(save_button_label);
+                                let save_button_ref = ui.add_sized(vec2(60.0, 20.0), save_button);
+                                if save_button_ref.clicked() {
+                                    self.editor.save_current_file();
+                                }
 
-                            // Reset State and Variables
-                            let reset_button_label = RichText::new(String::from("Reset"))
-                                .font(FontId::proportional(14.0))
-                                .color(Color32::from_gray(255));
-                            let reset_button = Button::new(reset_button_label);
-                            let reset_button_ref = ui.add_sized(vec2(60.0, 20.0), reset_button);
-                            if reset_button_ref.clicked() {
-                                self.reset_state();
-                            }
+                                // Open File
+                                let open_button_label = RichText::new(String::from("Open"))
+                                    .font(FontId::proportional(14.0))
+                                    .color(Color32::from_gray(255));
+                                let open_button = Button::new(open_button_label);
+                                let open_button_ref = ui.add_sized(vec2(60.0, 20.0), open_button);
+                                if open_button_ref.clicked() {
+                                    self.editor.open_file();
+                                }
 
-                            // Show Documentation
-                            let docs_button_label = RichText::new(String::from("Docs"))
-                                .font(FontId::proportional(14.0))
-                                .color(Color32::from_gray(255));
-                            let docs_button = Button::new(docs_button_label);
-                            let docs_button_ref = ui.add_sized(vec2(60.0, 20.0), docs_button);
-                            if docs_button_ref.clicked() {
-                                // Heh
-                            }
+                                // New File
+                                let new_button_label = RichText::new(String::from("New"))
+                                    .font(FontId::proportional(14.0))
+                                    .color(Color32::from_gray(255));
+                                let new_button = Button::new(new_button_label);
+                                let new_button_ref = ui.add_sized(vec2(60.0, 20.0), new_button);
+                                if new_button_ref.clicked() {
+                                    self.editor.new_file();
+                                }
+                            });
                         });
 
                         // File Tabs
                         if !self.editor.open_files.is_empty() {
                             ui.add_space(10.0);
                             ScrollArea::horizontal().show(ui, |ui: &mut Ui| {
-                                ui.horizontal(|ui: &mut Ui| {
+                                ui.with_layout(Layout::left_to_right(Align::TOP), |ui: &mut Ui| {
                                     ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
                                     let files = self.editor.open_files.clone();
                                     for (index, file) in files.iter().enumerate() {
@@ -396,47 +429,62 @@ impl eframe::App for App {
                                         let frame = Frame::default().fill(bg_color);
                                         frame.show(ui, |ui: &mut Ui| {
                                             ui.set_max_size(vec2(120.0, 30.0));
-                                            ui.vertical(|ui: &mut Ui| {
-                                                ui.add_space(7.5);
-                                                ui.horizontal(|ui: &mut Ui| {
-                                                    ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
-                                                    ui.add_space(15.0);
-                                                    let mut file_text =
-                                                        RichText::new(file.name.clone())
-                                                            .font(FontId::proportional(12.0))
-                                                            .color(Color32::from_gray(255));
-                                                    if file.is_edited {
-                                                        file_text = file_text.italics();
-                                                    }
-                                                    let file_text_label =
-                                                        Label::new(file_text).truncate(true);
-                                                    let file_text_label_ref = ui
-                                                        .add(file_text_label)
-                                                        .on_hover_and_drag_cursor(
-                                                            CursorIcon::Default,
-                                                        );
-                                                    if file_text_label_ref.clicked() {
-                                                        self.editor.select_file(index.clone());
-                                                    }
-                                                    ui.add_space(10.0);
-                                                    let close_text =
-                                                        RichText::new(String::from("x"))
-                                                            .font(FontId::proportional(12.0))
-                                                            .color(Color32::from_gray(255));
-                                                    let close_text_label =
-                                                        Label::new(close_text).truncate(true);
-                                                    let close_text_label_ref = ui
-                                                        .add(close_text_label)
-                                                        .on_hover_and_drag_cursor(
-                                                            CursorIcon::PointingHand,
-                                                        );
-                                                    if close_text_label_ref.clicked() {
-                                                        self.editor.close_file(index.clone());
-                                                    }
-                                                    ui.add_space(15.0);
-                                                });
-                                                ui.add_space(7.5);
-                                            });
+                                            ui.with_layout(
+                                                Layout::top_down(Align::LEFT),
+                                                |ui: &mut Ui| {
+                                                    ui.add_space(7.5);
+                                                    ui.with_layout(
+                                                        Layout::left_to_right(Align::TOP),
+                                                        |ui: &mut Ui| {
+                                                            ui.spacing_mut().item_spacing =
+                                                                vec2(0.0, 0.0);
+                                                            ui.add_space(15.0);
+                                                            let mut file_text =
+                                                                RichText::new(file.name.clone())
+                                                                    .font(FontId::proportional(
+                                                                        12.0,
+                                                                    ))
+                                                                    .color(Color32::from_gray(255));
+                                                            if file.is_edited {
+                                                                file_text = file_text.italics();
+                                                            }
+                                                            let file_text_label =
+                                                                Label::new(file_text)
+                                                                    .truncate(true);
+                                                            let file_text_label_ref = ui
+                                                                .add(file_text_label)
+                                                                .on_hover_and_drag_cursor(
+                                                                    CursorIcon::Default,
+                                                                );
+                                                            if file_text_label_ref.clicked() {
+                                                                self.editor
+                                                                    .select_file(index.clone());
+                                                            }
+                                                            ui.add_space(10.0);
+                                                            let close_text =
+                                                                RichText::new(String::from("x"))
+                                                                    .font(FontId::proportional(
+                                                                        12.0,
+                                                                    ))
+                                                                    .color(Color32::from_gray(255));
+                                                            let close_text_label =
+                                                                Label::new(close_text)
+                                                                    .truncate(true);
+                                                            let close_text_label_ref = ui
+                                                                .add(close_text_label)
+                                                                .on_hover_and_drag_cursor(
+                                                                    CursorIcon::PointingHand,
+                                                                );
+                                                            if close_text_label_ref.clicked() {
+                                                                self.editor
+                                                                    .close_file(index.clone());
+                                                            }
+                                                            ui.add_space(15.0);
+                                                        },
+                                                    );
+                                                    ui.add_space(7.5);
+                                                },
+                                            );
                                         });
                                     }
                                 });
@@ -473,38 +521,43 @@ impl eframe::App for App {
                     });
 
                 // Text Area
-                if let Some(index) = current_file_index {
-                    ScrollArea::vertical().show(ui, |ui: &mut Ui| {
-                        let font = self.editor.font.clone();
-                        let size = vec2(ui.available_width() - 2.0, ui.available_height());
-                        if self.editor.should_highlight {
-                            let highlighter = self.editor.highlighter.clone();
-                            let Some(file) = self.editor.get_file_mut(index) else {
-                                return;
-                            };
-                            let mut layouter = |ui: &Ui, text: &str, wrap_width: f32| {
-                                let job = highlighter.highlight(ui.ctx(), text, wrap_width);
-                                ui.fonts(|font| font.layout_job(job))
-                            };
-                            let text_field = TextEdit::multiline(file)
-                                .code_editor()
-                                .font(font)
-                                .layouter(&mut layouter);
-                            ui.add_sized(size, text_field);
-                        } else {
-                            let Some(file) = self.editor.get_file_mut(index) else {
-                                return;
-                            };
-                            let text_field = TextEdit::multiline(file).code_editor().font(font);
-                            ui.add_sized(size, text_field);
+                CentralPanel::default()
+                    .frame(Frame::default().fill(Color32::from_gray(20)))
+                    .show_inside(ui, |ui: &mut Ui| {
+                        if let Some(index) = current_file_index {
+                            ScrollArea::vertical().show(ui, |ui: &mut Ui| {
+                                let font = self.editor.font.clone();
+                                let size = vec2(ui.available_width() - 2.0, ui.available_height());
+                                if self.editor.should_highlight {
+                                    let highlighter = self.editor.highlighter.clone();
+                                    let Some(file) = self.editor.get_file_mut(index) else {
+                                        return;
+                                    };
+                                    let mut layouter = |ui: &Ui, text: &str, wrap_width: f32| {
+                                        let job = highlighter.highlight(ui.ctx(), text, wrap_width);
+                                        ui.fonts(|font| font.layout_job(job))
+                                    };
+                                    let text_field = TextEdit::multiline(file)
+                                        .code_editor()
+                                        .font(font)
+                                        .layouter(&mut layouter);
+                                    ui.add_sized(size, text_field);
+                                } else {
+                                    let Some(file) = self.editor.get_file_mut(index) else {
+                                        return;
+                                    };
+                                    let text_field =
+                                        TextEdit::multiline(file).code_editor().font(font);
+                                    ui.add_sized(size, text_field);
+                                }
+                            });
                         }
                     });
-                }
             });
 
         // Handle Mouse & Keyboard Events
         ctx.input(|input: &InputState| {
-            self.handle_key_commands(input);
+            self.handle_key_commands(input, ctx);
         });
         let is_focused = ctx.memory(|memory| memory.focus().is_some());
         if !is_focused {

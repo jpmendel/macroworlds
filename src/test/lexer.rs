@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
     use crate::interpreter::language::command::command::Command;
+    use crate::interpreter::language::lexer::Lexer;
     use crate::interpreter::language::token::Token;
-    use crate::interpreter::lexer::Lexer;
 
     fn check_expected_tokens(tokens: Vec<Token>, expect: Vec<(&str, Vec<Token>)>) {
         for index in 0..expect.len() {

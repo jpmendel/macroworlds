@@ -8,6 +8,7 @@ pub struct DataStore {
     scopes: VecDeque<Scope>,
     procedures: HashMap<Box<str>, Procedure>,
     shapes: HashMap<Box<str>, TurtleShape>,
+    pictures: HashMap<Box<str>, String>,
     base_file_directory: String,
     last_error_message: String,
 }
@@ -27,6 +28,7 @@ impl DataStore {
             ]
             .into_iter()
             .collect(),
+            pictures: HashMap::new(),
             base_file_directory: String::new(),
             last_error_message: String::new(),
         }
@@ -116,6 +118,14 @@ impl DataStore {
 
     pub fn set_shape(&mut self, name: &str, shape: TurtleShape) {
         self.shapes.insert(Box::from(name), shape);
+    }
+
+    pub fn get_picture(&self, name: &str) -> Option<&String> {
+        self.pictures.get(name)
+    }
+
+    pub fn set_picture(&mut self, name: &str, path: String) {
+        self.pictures.insert(Box::from(name), path);
     }
 
     pub fn get_base_directory(&self) -> &String {

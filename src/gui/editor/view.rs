@@ -5,7 +5,7 @@ impl App {
     pub fn code_editor_view(&mut self, ctx: &Context) {
         SidePanel::right("right")
             .frame(Frame::default().fill(Color32::from_gray(20)))
-            .exact_width(App::EDITOR_WIDTH)
+            .exact_width(Self::EDITOR_WIDTH)
             .resizable(false)
             .show(ctx, |ui: &mut Ui| {
                 let current_file_index = self.editor.current_file_index.clone();

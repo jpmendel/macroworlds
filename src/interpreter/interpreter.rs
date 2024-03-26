@@ -1,10 +1,10 @@
 use crate::interpreter::event::{EventHandler, InputEvent, UiEvent};
 use crate::interpreter::event::{UiContext, UiEventHandler};
 use crate::interpreter::language::command::command::Params;
+use crate::interpreter::language::lexer::Lexer;
 use crate::interpreter::language::procedure::Procedure;
 use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::decode_token;
-use crate::interpreter::lexer::Lexer;
 use crate::interpreter::performance::PerformanceTracker;
 use crate::interpreter::state::object::Object;
 use crate::interpreter::state::state::State;

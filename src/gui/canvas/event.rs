@@ -6,6 +6,8 @@ use std::any::Any;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
+use super::model::PictureConfig;
+
 impl UiEventHandler for Canvas {
     fn handle_ui_event(&mut self, ctx: Arc<Mutex<dyn UiContext>>, event: UiEvent) {
         match event {
@@ -124,6 +126,14 @@ impl UiEventHandler for Canvas {
                 let color = self.to_canvas_color(hue);
                 self.bg_color = color;
             }
+            UiEvent::PlacePicture(name, pos, size) => {
+                let name_ptr = name.clone().into_boxed_str();
+                self.pictures.push(PictureConfig {
+                    name: name_ptr,
+                    pos: pos2(pos.x, pos.y),
+                    size: vec2(size.w, size.h),
+                });
+            }
             UiEvent::AddLine(name, line) => {
                 let start = pos2(line.start.x, line.start.y);
                 let end = pos2(line.end.x, line.end.y);
@@ -147,7 +157,7 @@ impl UiEventHandler for Canvas {
                 };
                 self.current_turtle_paths.insert(name, path);
             }
-            UiEvent::AddShape(name, path) => {
+            UiEvent::AddImage(name, path) => {
                 let ctx = ctx.lock().unwrap();
                 let result = match ctx.load_image(name.clone(), path) {
                     Ok(result) => result,
@@ -162,31 +172,10 @@ impl UiEventHandler for Canvas {
                 };
                 self.image_textures.insert(name, *handle);
             }
-            UiEvent::SetPicture(path) => {
-                let path_ptr = path.clone().into_boxed_str();
-                if let Some(picture) = self.image_textures.get(&path_ptr) {
-                    self.bg_picture = Some(picture.clone());
-                    return;
-                }
-                let ctx = ctx.lock().unwrap();
-                let result = match ctx.load_image(path_ptr.clone(), path) {
-                    Ok(result) => result,
-                    Err(err) => {
-                        self.print_to_console(format!("failed to load image: {}", err));
-                        return;
-                    }
-                };
-                let Ok(handle) = result.downcast::<TextureHandle>() else {
-                    self.print_to_console(String::from("failed to load image"));
-                    return;
-                };
-                self.image_textures.insert(path_ptr, *handle.clone());
-                self.bg_picture = Some(*handle);
-            }
             UiEvent::Clean => {
+                self.pictures.clear();
                 self.current_turtle_paths.clear();
                 self.drawn_paths.clear();
-                self.bg_picture = None;
             }
             UiEvent::ClearConsole => {
                 self.console_text = String::new();

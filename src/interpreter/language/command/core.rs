@@ -353,15 +353,4 @@ impl Command {
             },
         )
     }
-
-    pub fn pi() -> Self {
-        Command::reserved(
-            "pi",
-            Params::None,
-            |_int: &mut Interpreter, _com: &str, _args: Vec<Token>| {
-                let pi = std::f32::consts::PI;
-                Ok(Token::Number(pi))
-            },
-        )
-    }
 }

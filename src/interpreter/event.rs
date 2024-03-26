@@ -25,9 +25,9 @@ pub enum UiEvent {
     TextStyle(Box<str>, HashSet<TextStyle>),
     CanvasSize(f32, f32),
     BgColor(f32),
+    PlacePicture(String, Point, Size),
     AddLine(Box<str>, Line),
-    AddShape(Box<str>, String),
-    SetPicture(String),
+    AddImage(Box<str>, String),
     Clean,
     ClearConsole,
 }

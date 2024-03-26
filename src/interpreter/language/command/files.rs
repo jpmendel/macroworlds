@@ -110,25 +110,11 @@ impl Command {
                 let path = decode_word(com, &args, 1)?;
                 let name_ptr = name.into_boxed_str();
                 let full_path = format!("{}{}", int.state.data.get_base_directory(), path);
-                if let Some(shape) = int.state.data.get_shape(&name_ptr) {
-                    if let TurtleShape::Image(existing_name, existing_path) = shape {
-                        // If the image is already loaded with the same name and path, overwrite without error.
-                        if name_ptr == *existing_name && full_path == *existing_path {
-                            return Ok(Token::Void);
-                        }
-                    } else {
-                        // If a different image has this name, throw an error to prevent overwrite.
-                        return Err(Box::from(format!(
-                            "shape named {} already exists",
-                            name_ptr
-                        )));
-                    }
-                }
                 int.state.data.set_shape(
                     &name_ptr,
                     TurtleShape::Image(name_ptr.clone(), full_path.clone()),
                 );
-                int.event.send_ui(UiEvent::AddShape(name_ptr, full_path));
+                int.event.send_ui(UiEvent::AddImage(name_ptr, full_path));
                 Ok(Token::Void)
             },
         )
@@ -137,11 +123,14 @@ impl Command {
     pub fn loadpict() -> Self {
         Command::reserved(
             "loadpict",
-            Params::Fixed(1),
+            Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let path = decode_word(com, &args, 0)?;
+                let name = decode_word(com, &args, 0)?;
+                let path = decode_word(com, &args, 1)?;
+                let name_ptr = name.into_boxed_str();
                 let full_path = format!("{}{}", int.state.data.get_base_directory(), path);
-                int.event.send_ui(UiEvent::SetPicture(full_path));
+                int.state.data.set_picture(&name_ptr, full_path.clone());
+                int.event.send_ui(UiEvent::AddImage(name_ptr, full_path));
                 Ok(Token::Void)
             },
         )

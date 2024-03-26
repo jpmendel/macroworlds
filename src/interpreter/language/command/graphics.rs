@@ -840,6 +840,75 @@ impl Command {
         )
     }
 
+    pub fn setpict() -> Self {
+        Command::reserved(
+            "setpict",
+            Params::Fixed(1),
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let pict = decode_word(com, &args, 0)?;
+                if int.state.data.get_picture(&pict).is_none() {
+                    return Err(Box::from(format!(
+                        "placepict picture named {} does not exist",
+                        pict
+                    )));
+                }
+                int.event.send_ui(UiEvent::PlacePicture(
+                    pict,
+                    Point::new(
+                        -int.state.canvas.get_size().w / 2.0,
+                        int.state.canvas.get_size().h / 2.0,
+                    ),
+                    int.state.canvas.get_size().clone(),
+                ));
+                Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn placepict() -> Self {
+        Command::reserved(
+            "placepict",
+            Params::Fixed(3),
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let pict = decode_word(com, &args, 0)?;
+                let pos = decode_list(com, &args, 1)?;
+                let size = decode_list(com, &args, 2)?;
+                if int.state.data.get_picture(&pict).is_none() {
+                    return Err(Box::from(format!(
+                        "placepict picture named {} does not exist",
+                        pict
+                    )));
+                }
+                let pos_items = int.parse_list(&pos, true)?;
+                if pos_items.len() != 2 {
+                    return Err(Box::from("placepict expected 2 coordinates in input 1"));
+                }
+                let size_items = int.parse_list(&size, true)?;
+                if size_items.len() != 2 {
+                    return Err(Box::from("placepict expected 2 dimensions in input 2"));
+                }
+                let Some(Token::Number(x)) = pos_items.get(0) else {
+                    return Err(Box::from("placepict expected number for x-coordinate"));
+                };
+                let Some(Token::Number(y)) = pos_items.get(1) else {
+                    return Err(Box::from("placepict expected number for y-coordinate"));
+                };
+                let Some(Token::Number(w)) = size_items.get(0) else {
+                    return Err(Box::from("placepict expected number for width"));
+                };
+                let Some(Token::Number(h)) = size_items.get(1) else {
+                    return Err(Box::from("placepict expected number for height"));
+                };
+                int.event.send_ui(UiEvent::PlacePicture(
+                    pict,
+                    Point::new(*x, *y),
+                    Size::new(*w, *h),
+                ));
+                Ok(Token::Void)
+            },
+        )
+    }
+
     pub fn home() -> Self {
         Command::reserved(
             "home",

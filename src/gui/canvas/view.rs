@@ -6,8 +6,8 @@ use eframe::egui::*;
 impl App {
     pub fn canvas_view(&mut self, ctx: &Context) {
         let size = ctx.input(|i| i.viewport().outer_rect).unwrap();
-        let main_frame_width = size.width() - App::EDITOR_WIDTH;
-        let main_frame_height = size.height() - App::CONSOLE_HEIGHT;
+        let main_frame_width = size.width() - Self::EDITOR_WIDTH;
+        let main_frame_height = size.height() - Self::CONSOLE_HEIGHT;
 
         SidePanel::left("left")
             .frame(Frame::default().fill(Color32::from_gray(20)))
@@ -31,19 +31,27 @@ impl App {
                             Rangef::new(canvas_pos.x, canvas_pos.x + canvas.size.x),
                             Rangef::new(canvas_pos.y, canvas_pos.y + canvas.size.y),
                         );
-                        if let Some(texture) = &canvas.bg_picture {
-                            painter.image(
+                        painter.rect_filled(rect, Rounding::same(0.0), canvas.bg_color);
+
+                        let content_painter = ui.painter_at(rect);
+
+                        // Pictures
+                        for config in &canvas.pictures {
+                            let Some(texture) = canvas.image_textures.get(&config.name) else {
+                                continue;
+                            };
+                            content_painter.image(
                                 texture.id(),
-                                rect,
+                                Rect::from_min_size(
+                                    canvas.to_canvas_coordinates(config.pos),
+                                    config.size,
+                                ),
                                 Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)),
                                 Color32::WHITE,
                             );
-                        } else {
-                            painter.rect_filled(rect, Rounding::same(0.0), canvas.bg_color);
                         }
 
                         // Lines
-                        let content_painter = ui.painter_at(rect);
                         for config in &canvas.drawn_paths {
                             content_painter.add(canvas.path_for_config(config));
                         }
@@ -155,7 +163,7 @@ impl App {
                 // Output Console
                 TopBottomPanel::bottom("bottom_left")
                     .frame(Frame::default().fill(Color32::from_gray(40)))
-                    .exact_height(App::CONSOLE_HEIGHT)
+                    .exact_height(Self::CONSOLE_HEIGHT)
                     .resizable(false)
                     .show_inside(ui, |ui: &mut Ui| {
                         ui.add_space(6.0);

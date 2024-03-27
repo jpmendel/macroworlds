@@ -121,7 +121,6 @@ impl Language {
         language.add(Command::setfontsize());
         language.add(Command::setheading());
         language.add(Command::setpensize());
-        language.add(Command::setpict());
         language.add(Command::setpos());
         language.add(Command::setprojectsize());
         language.add(Command::setshape());

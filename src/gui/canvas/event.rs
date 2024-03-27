@@ -126,10 +126,52 @@ impl UiEventHandler for Canvas {
                 let color = self.to_canvas_color(hue);
                 self.bg_color = color;
             }
-            UiEvent::PlacePicture(name, pos, size) => {
-                let name_ptr = name.clone().into_boxed_str();
+            UiEvent::BgPicture(path) => {
+                let path_ptr = path.clone().into_boxed_str();
+                if let Some(picture) = self.image_textures.get(&path_ptr) {
+                    self.bg_picture = Some(picture.clone());
+                    return;
+                }
+                let ctx = ctx.lock().unwrap();
+                let result = match ctx.load_image(path_ptr.clone(), path) {
+                    Ok(result) => result,
+                    Err(err) => {
+                        self.print_to_console(format!("failed to load image: {}", err));
+                        return;
+                    }
+                };
+                let Ok(handle) = result.downcast::<TextureHandle>() else {
+                    self.print_to_console(String::from("failed to load image"));
+                    return;
+                };
+                self.image_textures.insert(path_ptr, *handle.clone());
+                self.bg_picture = Some(*handle);
+            }
+            UiEvent::PlacePicture(path, pos, size) => {
+                let path_ptr = path.clone().into_boxed_str();
+                if self.image_textures.get(&path_ptr).is_some() {
+                    self.pictures.push(PictureConfig {
+                        path: path_ptr,
+                        pos: pos2(pos.x, pos.y),
+                        size: vec2(size.w, size.h),
+                    });
+                    return;
+                }
+                let ctx = ctx.lock().unwrap();
+                let result = match ctx.load_image(path_ptr.clone(), path) {
+                    Ok(result) => result,
+                    Err(err) => {
+                        self.print_to_console(format!("failed to load image: {}", err));
+                        return;
+                    }
+                };
+                let Ok(handle) = result.downcast::<TextureHandle>() else {
+                    self.print_to_console(String::from("failed to load image"));
+                    return;
+                };
+                self.image_textures.insert(path_ptr.clone(), *handle);
                 self.pictures.push(PictureConfig {
-                    name: name_ptr,
+                    path: path_ptr,
                     pos: pos2(pos.x, pos.y),
                     size: vec2(size.w, size.h),
                 });
@@ -157,7 +199,7 @@ impl UiEventHandler for Canvas {
                 };
                 self.current_turtle_paths.insert(name, path);
             }
-            UiEvent::AddImage(name, path) => {
+            UiEvent::AddShape(name, path) => {
                 let ctx = ctx.lock().unwrap();
                 let result = match ctx.load_image(name.clone(), path) {
                     Ok(result) => result,

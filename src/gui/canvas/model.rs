@@ -10,6 +10,7 @@ pub struct Canvas {
     pub objects: HashMap<Box<str>, ObjectView>,
     pub image_textures: HashMap<Box<str>, TextureHandle>,
     pub bg_color: Color32,
+    pub bg_picture: Option<TextureHandle>,
     pub pictures: Vec<PictureConfig>,
     pub current_turtle_paths: HashMap<Box<str>, PathConfig>,
     pub drawn_paths: Vec<PathConfig>,
@@ -26,6 +27,7 @@ impl Canvas {
             objects: HashMap::new(),
             image_textures: HashMap::new(),
             bg_color: Color32::from_gray(255),
+            bg_picture: None,
             pictures: vec![],
             current_turtle_paths: HashMap::new(),
             drawn_paths: vec![],
@@ -143,7 +145,7 @@ impl Canvas {
 }
 
 pub struct PictureConfig {
-    pub name: Box<str>,
+    pub path: Box<str>,
     pub pos: Pos2,
     pub size: Vec2,
 }

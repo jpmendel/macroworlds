@@ -2,8 +2,8 @@ use crate::interpreter::event::UiEvent;
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::language::command::command::{Command, Params};
 use crate::interpreter::language::token::Token;
-use crate::interpreter::language::util::{decode_word, query_files};
-use crate::interpreter::state::object::TurtleShape;
+use crate::interpreter::language::util::{decode_list, decode_word, query_files};
+use crate::interpreter::state::object::{Point, Size, TurtleShape};
 use std::fs::{DirEntry, File};
 use std::io::Read;
 
@@ -114,7 +114,7 @@ impl Command {
                     &name_ptr,
                     TurtleShape::Image(name_ptr.clone(), full_path.clone()),
                 );
-                int.event.send_ui(UiEvent::AddImage(name_ptr, full_path));
+                int.event.send_ui(UiEvent::AddShape(name_ptr, full_path));
                 Ok(Token::Void)
             },
         )
@@ -123,14 +123,50 @@ impl Command {
     pub fn loadpict() -> Self {
         Command::reserved(
             "loadpict",
-            Params::Fixed(2),
+            Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let name = decode_word(com, &args, 0)?;
-                let path = decode_word(com, &args, 1)?;
-                let name_ptr = name.into_boxed_str();
+                let path = decode_word(com, &args, 0)?;
                 let full_path = format!("{}{}", int.state.data.get_base_directory(), path);
-                int.state.data.set_picture(&name_ptr, full_path.clone());
-                int.event.send_ui(UiEvent::AddImage(name_ptr, full_path));
+                int.event.send_ui(UiEvent::BgPicture(full_path));
+                Ok(Token::Void)
+            },
+        )
+    }
+
+    pub fn placepict() -> Self {
+        Command::reserved(
+            "placepict",
+            Params::Fixed(3),
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let path = decode_word(com, &args, 0)?;
+                let pos = decode_list(com, &args, 1)?;
+                let size = decode_list(com, &args, 2)?;
+                let full_path = format!("{}{}", int.state.data.get_base_directory(), path);
+                let pos_items = int.parse_list(&pos, true)?;
+                if pos_items.len() != 2 {
+                    return Err(Box::from("placepict expected 2 coordinates in input 1"));
+                }
+                let size_items = int.parse_list(&size, true)?;
+                if size_items.len() != 2 {
+                    return Err(Box::from("placepict expected 2 dimensions in input 2"));
+                }
+                let Some(Token::Number(x)) = pos_items.get(0) else {
+                    return Err(Box::from("placepict expected number for x-coordinate"));
+                };
+                let Some(Token::Number(y)) = pos_items.get(1) else {
+                    return Err(Box::from("placepict expected number for y-coordinate"));
+                };
+                let Some(Token::Number(w)) = size_items.get(0) else {
+                    return Err(Box::from("placepict expected number for width"));
+                };
+                let Some(Token::Number(h)) = size_items.get(1) else {
+                    return Err(Box::from("placepict expected number for height"));
+                };
+                int.event.send_ui(UiEvent::PlacePicture(
+                    full_path,
+                    Point::new(*x, *y),
+                    Size::new(*w, *h),
+                ));
                 Ok(Token::Void)
             },
         )

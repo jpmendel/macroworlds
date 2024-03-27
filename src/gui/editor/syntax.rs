@@ -130,7 +130,6 @@ pub const OTHER_COMMANDS: phf::Set<&'static str> = phf_set!(
     "seth",
     "setheading",
     "setpensize",
-    "setpict",
     "setpos",
     "setprojectsize",
     "setsh",

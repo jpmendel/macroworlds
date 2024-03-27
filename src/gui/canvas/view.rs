@@ -31,13 +31,22 @@ impl App {
                             Rangef::new(canvas_pos.x, canvas_pos.x + canvas.size.x),
                             Rangef::new(canvas_pos.y, canvas_pos.y + canvas.size.y),
                         );
-                        painter.rect_filled(rect, Rounding::same(0.0), canvas.bg_color);
+                        if let Some(texture) = &canvas.bg_picture {
+                            painter.image(
+                                texture.id(),
+                                rect,
+                                Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)),
+                                Color32::WHITE,
+                            );
+                        } else {
+                            painter.rect_filled(rect, Rounding::same(0.0), canvas.bg_color);
+                        }
 
                         let content_painter = ui.painter_at(rect);
 
                         // Pictures
                         for config in &canvas.pictures {
-                            let Some(texture) = canvas.image_textures.get(&config.name) else {
+                            let Some(texture) = canvas.image_textures.get(&config.path) else {
                                 continue;
                             };
                             content_painter.image(

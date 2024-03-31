@@ -3,7 +3,7 @@ use crate::interpreter::event::{UiContext, UiEventHandler};
 use crate::interpreter::language::lexer::Lexer;
 use crate::interpreter::language::structure::{Params, Procedure};
 use crate::interpreter::language::token::Token;
-use crate::interpreter::language::util::decode_token;
+use crate::interpreter::language::util::decode;
 use crate::interpreter::state::object::Object;
 use crate::interpreter::state::state::State;
 use crate::interpreter::util::error::{is_eof, is_interrupt};
@@ -216,7 +216,7 @@ impl Interpreter {
             &format!("set{}", name),
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let item_name = com.chars().skip(3).collect::<String>().into_boxed_str();
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));

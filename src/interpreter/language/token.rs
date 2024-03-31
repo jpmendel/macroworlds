@@ -47,3 +47,30 @@ impl PartialEq for Token {
 }
 
 impl Eq for Token {}
+
+pub trait TokenVec {
+    fn join_to_list_string(&self) -> String;
+}
+
+impl TokenVec for Vec<Token> {
+    fn join_to_list_string(&self) -> String {
+        let mut list = String::new();
+        for token in self {
+            match token {
+                Token::Word(word) => {
+                    if word.contains(' ') {
+                        list += &format!("|{}|", word);
+                    } else {
+                        list += &word
+                    }
+                }
+                Token::Number(number) => list += &number.to_string(),
+                Token::List(other) => list += &format!("[{}]", other),
+                Token::Boolean(bool) => list += &bool.to_string(),
+                _ => continue,
+            }
+            list.push(' ');
+        }
+        list.trim().to_string()
+    }
+}

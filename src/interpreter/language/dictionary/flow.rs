@@ -1,8 +1,7 @@
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::language::structure::{Command, Params};
 use crate::interpreter::language::token::Token;
-use crate::interpreter::language::util::decode_boolean;
-use crate::interpreter::language::util::{decode_list, decode_number};
+use crate::interpreter::language::util::decode;
 
 impl Command {
     pub fn ifthen() -> Self {
@@ -10,8 +9,8 @@ impl Command {
             "if",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let condition = decode_boolean(com, &args, 0)?;
-                let true_code = decode_list(com, &args, 1)?;
+                let condition = decode::boolean(com, &args, 0)?;
+                let true_code = decode::list(com, &args, 1)?;
                 if condition {
                     int.interpret(&true_code)?;
                 }
@@ -25,9 +24,9 @@ impl Command {
             "ifelse",
             Params::Fixed(3),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let condition = decode_boolean(com, &args, 0)?;
-                let true_code = decode_list(com, &args, 1)?;
-                let false_code = decode_list(com, &args, 2)?;
+                let condition = decode::boolean(com, &args, 0)?;
+                let true_code = decode::list(com, &args, 1)?;
+                let false_code = decode::list(com, &args, 2)?;
                 if condition {
                     int.interpret(&true_code)?;
                 } else {
@@ -43,8 +42,8 @@ impl Command {
             "repeat",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let count = decode_number(com, &args, 0)? as usize;
-                let code = decode_list(com, &args, 1)?;
+                let count = decode::number(com, &args, 0)? as usize;
+                let code = decode::list(com, &args, 1)?;
                 for _ in 0..count {
                     int.interpret(&code)?;
                 }
@@ -58,7 +57,7 @@ impl Command {
             "forever",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let code = decode_list(com, &args, 0)?;
+                let code = decode::list(com, &args, 0)?;
                 loop {
                     int.interpret(&code)?;
                 }
@@ -71,8 +70,8 @@ impl Command {
             "dotimes",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let loop_config = decode_list(com, &args, 0)?;
-                let code = decode_list(com, &args, 1)?;
+                let loop_config = decode::list(com, &args, 0)?;
+                let code = decode::list(com, &args, 1)?;
                 let config_items = int.parse_list(&loop_config, true)?;
                 let Some(Token::Word(var_name)) = config_items.get(0) else {
                     return Err(Box::from("dotimes expected a word for input 0 in input 0"));
@@ -96,8 +95,8 @@ impl Command {
             "dolist",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let loop_config = decode_list(com, &args, 0)?;
-                let code = decode_list(com, &args, 1)?;
+                let loop_config = decode::list(com, &args, 0)?;
+                let code = decode::list(com, &args, 1)?;
                 let config_items = int.parse_list(&loop_config, false)?;
                 let Some(Token::Word(var_name)) = config_items.get(0) else {
                     return Err(Box::from("dolist expected a word for input 0 in input 0"));
@@ -120,8 +119,8 @@ impl Command {
             "carefully",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let check_code = decode_list(com, &args, 0)?;
-                let error_code = decode_list(com, &args, 1)?;
+                let check_code = decode::list(com, &args, 0)?;
+                let error_code = decode::list(com, &args, 1)?;
                 if let Err(err) = int.interpret(&check_code) {
                     int.state.data.set_last_error_message(err.to_string());
                     int.interpret(&error_code)?;
@@ -158,7 +157,7 @@ impl Command {
             "__paren",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let code = decode_list(com, &args, 0)?;
+                let code = decode::list(com, &args, 0)?;
                 let code_with_return = format!("op {}", code);
                 int.interpret_in_parenthesis(&code_with_return)
             },

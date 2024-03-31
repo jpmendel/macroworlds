@@ -1,10 +1,8 @@
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::language::structure::{Command, Params};
-use crate::interpreter::language::token::Token;
-use crate::interpreter::language::util::{
-    decode_list, decode_number, decode_proc, decode_token, decode_word, join_to_list_string,
-    key_for_ascii,
-};
+use crate::interpreter::language::token::{Token, TokenVec};
+use crate::interpreter::language::util::decode;
+use crate::interpreter::language::util::io::KeyCode;
 use rand::Rng;
 
 impl Command {
@@ -13,12 +11,12 @@ impl Command {
             "make",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let name = decode_word(com, &args, 0)?;
-                let token = decode_token(com, &args, 1)?;
+                let name = decode::word(com, &args, 0)?;
+                let token = decode::token(com, &args, 1)?;
                 let value = match token {
                     Token::List(list) => {
                         let tokens = int.parse_list(&list, false)?;
-                        let joined = join_to_list_string(tokens);
+                        let joined = tokens.join_to_list_string();
                         Token::List(joined)
                     }
                     token => token,
@@ -34,7 +32,7 @@ impl Command {
             "to",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let proc = decode_proc(com, &args, 0)?;
+                let proc = decode::procedure(com, &args, 0)?;
                 int.define_procedure(proc)?;
                 Ok(Token::Void)
             },
@@ -46,7 +44,7 @@ impl Command {
             "local",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let name = decode_word(com, &args, 0)?;
+                let name = decode::word(com, &args, 0)?;
                 int.state.data.init_local(&name, Token::Void);
                 Ok(Token::Void)
             },
@@ -58,7 +56,7 @@ impl Command {
             "let",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let list = decode_list(com, &args, 0)?;
+                let list = decode::list(com, &args, 0)?;
                 let list_items = int.parse_list(&list, true)?;
                 for index in (0..list_items.len()).step_by(2) {
                     if let Some(Token::Word(name)) = list_items.get(index) {
@@ -77,7 +75,7 @@ impl Command {
             "clearname",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 match token {
                     Token::Word(word) => int.state.data.remove_variable(&word),
                     Token::List(list) => {
@@ -112,7 +110,7 @@ impl Command {
             "output",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let return_value = decode_token(com, &args, 0)?;
+                let return_value = decode::token(com, &args, 0)?;
                 Ok(return_value.clone())
             },
         )
@@ -123,7 +121,7 @@ impl Command {
             "run",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let code = match decode_token(com, &args, 0)? {
+                let code = match decode::token(com, &args, 0)? {
                     Token::Word(word) => word,
                     Token::List(list) => list,
                     _ => return Err(Box::from("run expected a word or list as input")),
@@ -169,7 +167,7 @@ impl Command {
             "talkto",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let name = decode_word(com, &args, 0)?;
+                let name = decode::word(com, &args, 0)?;
                 let success = int.state.canvas.set_current_object(&name);
                 if !success {
                     return Err(Box::from(format!("talkto found no object named {}", name)));
@@ -184,8 +182,8 @@ impl Command {
             "ask",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let name = decode_word(com, &args, 0)?;
-                let token = decode_token(com, &args, 1)?;
+                let name = decode::word(com, &args, 0)?;
+                let token = decode::token(com, &args, 1)?;
                 match token {
                     Token::Word(word) => {
                         let code = format!("op {}", word);
@@ -215,7 +213,7 @@ impl Command {
             "turtlesown",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let name = decode_word(com, &args, 0)?;
+                let name = decode::word(com, &args, 0)?;
                 int.define_object_property(&name)?;
                 Ok(Token::Void)
             },
@@ -277,11 +275,11 @@ impl Command {
             "keydown?",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let is_down = match token {
                     Token::Word(word) => int.state.input.is_key_down(&word),
                     Token::Number(number) => {
-                        let key = key_for_ascii(number as u8)?;
+                        let key = (number as u8).to_key_name()?;
                         int.state.input.is_key_down(&key)
                     }
                     _ => {
@@ -323,7 +321,7 @@ impl Command {
             "random",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let max = decode_number(com, &args, 0)? as u32;
+                let max = decode::number(com, &args, 0)? as u32;
                 let random = rand::thread_rng().gen_range(0..max);
                 Ok(Token::Number(random as f32))
             },
@@ -335,7 +333,7 @@ impl Command {
             "pick",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 match token {
                     Token::Word(word) => {
                         let random = rand::thread_rng().gen_range(0..word.len());

@@ -2,7 +2,8 @@ use crate::interpreter::event::UiEvent;
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::language::structure::{Command, Params};
 use crate::interpreter::language::token::Token;
-use crate::interpreter::language::util::{decode_list, decode_word, query_files};
+use crate::interpreter::language::util::decode;
+use crate::interpreter::language::util::io::query_files;
 use crate::interpreter::state::object::{Point, Size, TurtleShape};
 use std::fs::{DirEntry, File};
 use std::io::Read;
@@ -24,7 +25,7 @@ impl Command {
             "chdir",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let path = decode_word(com, &args, 0)?;
+                let path = decode::word(com, &args, 0)?;
                 int.state.data.set_base_directory(path);
                 Ok(Token::Void)
             },
@@ -106,8 +107,8 @@ impl Command {
             "loadshape",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let name = decode_word(com, &args, 0)?;
-                let path = decode_word(com, &args, 1)?;
+                let name = decode::word(com, &args, 0)?;
+                let path = decode::word(com, &args, 1)?;
                 let name_ptr = name.into_boxed_str();
                 let full_path = format!("{}{}", int.state.data.get_base_directory(), path);
                 int.state.data.set_shape(
@@ -125,7 +126,7 @@ impl Command {
             "loadpict",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let path = decode_word(com, &args, 0)?;
+                let path = decode::word(com, &args, 0)?;
                 let full_path = format!("{}{}", int.state.data.get_base_directory(), path);
                 int.event.send_ui(UiEvent::BgPicture(full_path));
                 Ok(Token::Void)
@@ -138,9 +139,9 @@ impl Command {
             "placepict",
             Params::Fixed(3),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let path = decode_word(com, &args, 0)?;
-                let pos = decode_list(com, &args, 1)?;
-                let size = decode_list(com, &args, 2)?;
+                let path = decode::word(com, &args, 0)?;
+                let pos = decode::list(com, &args, 1)?;
+                let size = decode::list(com, &args, 2)?;
                 let full_path = format!("{}{}", int.state.data.get_base_directory(), path);
                 let pos_items = int.parse_list(&pos, true)?;
                 if pos_items.len() != 2 {
@@ -177,7 +178,7 @@ impl Command {
             "loadtext",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let path = decode_word(com, &args, 0)?;
+                let path = decode::word(com, &args, 0)?;
                 let full_path = format!("{}{}", int.state.data.get_base_directory(), path);
                 let mut file = match File::open(full_path) {
                     Ok(file) => file,

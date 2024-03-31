@@ -2,11 +2,9 @@ use std::f32::consts::E;
 
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::language::structure::{Command, Params};
-use crate::interpreter::language::token::Token;
-use crate::interpreter::language::util::{
-    are_tokens_equal, ascii_for_key, decode_boolean, decode_list, decode_number, decode_token,
-    decode_word, join_to_list_string, key_for_ascii,
-};
+use crate::interpreter::language::token::{Token, TokenVec};
+use crate::interpreter::language::util::decode;
+use crate::interpreter::language::util::io::{KeyCode, KeyName};
 
 impl Command {
     pub fn sum() -> Self {
@@ -14,9 +12,9 @@ impl Command {
             "sum",
             Params::Variadic(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let mut result = decode_number(com, &args, 0)?;
+                let mut result = decode::number(com, &args, 0)?;
                 for index in 1..args.len() {
-                    let num = decode_number(com, &args, index)?;
+                    let num = decode::number(com, &args, index)?;
                     result += num;
                 }
                 Ok(Token::Number(result))
@@ -29,8 +27,8 @@ impl Command {
             "difference",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let num1 = decode_number(com, &args, 0)?;
-                let num2 = decode_number(com, &args, 1)?;
+                let num1 = decode::number(com, &args, 0)?;
+                let num2 = decode::number(com, &args, 1)?;
                 let result = num1 - num2;
                 Ok(Token::Number(result))
             },
@@ -42,9 +40,9 @@ impl Command {
             "product",
             Params::Variadic(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let mut result = decode_number(com, &args, 0)?;
+                let mut result = decode::number(com, &args, 0)?;
                 for index in 1..args.len() {
-                    let num = decode_number(com, &args, index)?;
+                    let num = decode::number(com, &args, index)?;
                     result *= num;
                 }
                 Ok(Token::Number(result))
@@ -57,8 +55,8 @@ impl Command {
             "quotient",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let num1 = decode_number(com, &args, 0)?;
-                let num2 = decode_number(com, &args, 1)?;
+                let num1 = decode::number(com, &args, 0)?;
+                let num2 = decode::number(com, &args, 1)?;
                 if num2 == 0.0 {
                     return Err(Box::from("quotient cannot divide by zero"));
                 }
@@ -73,8 +71,8 @@ impl Command {
             "remainder",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let num1 = decode_number(com, &args, 0)?;
-                let num2 = decode_number(com, &args, 1)?;
+                let num1 = decode::number(com, &args, 0)?;
+                let num2 = decode::number(com, &args, 1)?;
                 let result = num1 % num2;
                 Ok(Token::Number(result))
             },
@@ -86,8 +84,8 @@ impl Command {
             "power",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let num1 = decode_number(com, &args, 0)?;
-                let num2 = decode_number(com, &args, 1)?;
+                let num1 = decode::number(com, &args, 0)?;
+                let num2 = decode::number(com, &args, 1)?;
                 let result = num1.powf(num2);
                 Ok(Token::Number(result))
             },
@@ -99,7 +97,7 @@ impl Command {
             "sqrt",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 if number < 0.0 {
                     return Err(Box::from("cannot sqrt negative number"));
                 }
@@ -114,7 +112,7 @@ impl Command {
             "minus",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 let result = -number;
                 Ok(Token::Number(result))
             },
@@ -126,7 +124,7 @@ impl Command {
             "abs",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 let result = number.abs();
                 Ok(Token::Number(result))
             },
@@ -138,7 +136,7 @@ impl Command {
             "int",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 Ok(Token::Number(number.floor()))
             },
         )
@@ -149,7 +147,7 @@ impl Command {
             "round",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 Ok(Token::Number(number.round()))
             },
         )
@@ -160,7 +158,7 @@ impl Command {
             "sin",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 Ok(Token::Number(number.sin().to_degrees()))
             },
         )
@@ -171,7 +169,7 @@ impl Command {
             "cos",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 Ok(Token::Number(number.cos().to_degrees()))
             },
         )
@@ -182,7 +180,7 @@ impl Command {
             "tan",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 Ok(Token::Number(number.tan().to_degrees()))
             },
         )
@@ -193,7 +191,7 @@ impl Command {
             "arctan",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 Ok(Token::Number(number.atan().to_degrees()))
             },
         )
@@ -215,7 +213,7 @@ impl Command {
             "exp",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 Ok(Token::Number(E.powf(number)))
             },
         )
@@ -226,7 +224,7 @@ impl Command {
             "ln",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)?;
+                let number = decode::number(com, &args, 0)?;
                 Ok(Token::Number(number.ln()))
             },
         )
@@ -237,8 +235,8 @@ impl Command {
             "log",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let base = decode_number(com, &args, 0)?;
-                let number = decode_number(com, &args, 1)?;
+                let base = decode::number(com, &args, 0)?;
+                let number = decode::number(com, &args, 1)?;
                 Ok(Token::Number(number.log(base)))
             },
         )
@@ -249,9 +247,9 @@ impl Command {
             "equal?",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let arg1 = decode_token(com, &args, 0)?;
-                let arg2 = decode_token(com, &args, 1)?;
-                let result = are_tokens_equal(&arg1, &arg2);
+                let arg1 = decode::token(com, &args, 0)?;
+                let arg2 = decode::token(com, &args, 1)?;
+                let result = arg1 == arg2;
                 Ok(Token::Boolean(result))
             },
         )
@@ -262,8 +260,8 @@ impl Command {
             "greater?",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let arg1 = decode_number(com, &args, 0)?;
-                let arg2 = decode_number(com, &args, 1)?;
+                let arg1 = decode::number(com, &args, 0)?;
+                let arg2 = decode::number(com, &args, 1)?;
                 let result = arg1 > arg2;
                 Ok(Token::Boolean(result))
             },
@@ -275,8 +273,8 @@ impl Command {
             "less?",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let arg1 = decode_number(com, &args, 0)?;
-                let arg2 = decode_number(com, &args, 1)?;
+                let arg1 = decode::number(com, &args, 0)?;
+                let arg2 = decode::number(com, &args, 1)?;
                 let result = arg1 < arg2;
                 Ok(Token::Boolean(result))
             },
@@ -288,9 +286,9 @@ impl Command {
             "or",
             Params::Variadic(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let mut result = decode_boolean(com, &args, 0)?;
+                let mut result = decode::boolean(com, &args, 0)?;
                 for index in 1..args.len() {
-                    let bool = decode_boolean(com, &args, index)?;
+                    let bool = decode::boolean(com, &args, index)?;
                     result = result || bool;
                 }
                 Ok(Token::Boolean(result))
@@ -303,9 +301,9 @@ impl Command {
             "and",
             Params::Variadic(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let mut result = decode_boolean(com, &args, 0)?;
+                let mut result = decode::boolean(com, &args, 0)?;
                 for index in 1..args.len() {
-                    let bool = decode_boolean(com, &args, index)?;
+                    let bool = decode::boolean(com, &args, index)?;
                     result = result && bool;
                 }
                 Ok(Token::Boolean(result))
@@ -318,7 +316,7 @@ impl Command {
             "not",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let boolean = decode_boolean(com, &args, 0)?;
+                let boolean = decode::boolean(com, &args, 0)?;
                 let result = !boolean;
                 Ok(Token::Boolean(result))
             },
@@ -330,7 +328,7 @@ impl Command {
             "number?",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let result = match token {
                     Token::Number(..) => true,
                     _ => false,
@@ -345,7 +343,7 @@ impl Command {
             "word?",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let result = match token {
                     Token::Word(..) => true,
                     _ => false,
@@ -360,7 +358,7 @@ impl Command {
             "list?",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let result = match token {
                     Token::List(..) => true,
                     _ => false,
@@ -375,9 +373,9 @@ impl Command {
             "word",
             Params::Variadic(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let mut result = decode_word(com, &args, 0)?;
+                let mut result = decode::word(com, &args, 0)?;
                 for index in 1..args.len() {
-                    let word = decode_word(com, &args, index)?;
+                    let word = decode::word(com, &args, index)?;
                     result += &word;
                 }
                 Ok(Token::Word(result))
@@ -390,8 +388,8 @@ impl Command {
             "ascii",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let word = decode_word(com, &args, 0)?;
-                let result = ascii_for_key(&word)?;
+                let word = decode::word(com, &args, 0)?;
+                let result = word.to_key_code()?;
                 Ok(Token::Number(result as f32))
             },
         )
@@ -402,8 +400,8 @@ impl Command {
             "char",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let number = decode_number(com, &args, 0)? as u8;
-                let result = key_for_ascii(number)?;
+                let number = decode::number(com, &args, 0)? as u8;
+                let result = number.to_key_name()?;
                 Ok(Token::Word(result))
             },
         )
@@ -414,9 +412,9 @@ impl Command {
             "list",
             Params::Variadic(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let mut result = decode_token(com, &args, 0)?.to_string();
+                let mut result = decode::token(com, &args, 0)?.to_string();
                 for index in 1..args.len() {
-                    let word = decode_token(com, &args, index)?.to_string();
+                    let word = decode::token(com, &args, index)?.to_string();
                     result += &format!(" {}", word);
                 }
                 Ok(Token::List(result))
@@ -429,7 +427,7 @@ impl Command {
             "count",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 match token {
                     Token::List(list) => {
                         let items = int.parse_list(&list, false)?;
@@ -447,8 +445,8 @@ impl Command {
             "item",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let index = decode_number(com, &args, 0)? as usize;
-                let token = decode_token(com, &args, 1)?;
+                let index = decode::number(com, &args, 0)? as usize;
+                let token = decode::token(com, &args, 1)?;
                 match token {
                     Token::List(list) => {
                         let items = int.parse_list(&list, true)?;
@@ -478,7 +476,7 @@ impl Command {
             "first",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let list = decode_list(com, &args, 0)?;
+                let list = decode::list(com, &args, 0)?;
                 let items = int.parse_list(&list, true)?;
                 if let Some(first) = items.first() {
                     Ok(first.clone())
@@ -494,7 +492,7 @@ impl Command {
             "last",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let list = decode_list(com, &args, 0)?;
+                let list = decode::list(com, &args, 0)?;
                 let items = int.parse_list(&list, true)?;
                 if let Some(last) = items.last() {
                     Ok(last.clone())
@@ -510,13 +508,13 @@ impl Command {
             "butfirst",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let list = decode_list(com, &args, 0)?;
+                let list = decode::list(com, &args, 0)?;
                 let items = int.parse_list(&list, false)?;
                 if items.is_empty() {
                     return Err(Box::from("butfirst cannot get from empty list"));
                 }
                 let rest = &items[1..];
-                let joined = join_to_list_string(rest.to_vec());
+                let joined = rest.to_vec().join_to_list_string();
                 Ok(Token::List(joined))
             },
         )
@@ -527,13 +525,13 @@ impl Command {
             "butlast",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let list = decode_list(com, &args, 0)?;
+                let list = decode::list(com, &args, 0)?;
                 let items = int.parse_list(&list, false)?;
                 if items.is_empty() {
                     return Err(Box::from("butlast cannot get from empty list"));
                 }
                 let rest = &items[..items.len() - 1];
-                let joined = join_to_list_string(rest.to_vec());
+                let joined = rest.to_vec().join_to_list_string();
                 Ok(Token::List(joined))
             },
         )
@@ -544,8 +542,8 @@ impl Command {
             "fput",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let item = decode_token(com, &args, 0)?;
-                let list = decode_list(com, &args, 1)?;
+                let item = decode::token(com, &args, 0)?;
+                let list = decode::list(com, &args, 1)?;
                 let result = format!("{} {}", item.to_string(), list);
                 Ok(Token::List(result))
             },
@@ -557,8 +555,8 @@ impl Command {
             "lput",
             Params::Fixed(2),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let item = decode_token(com, &args, 0)?;
-                let list = decode_list(com, &args, 1)?;
+                let item = decode::token(com, &args, 0)?;
+                let list = decode::list(com, &args, 1)?;
                 let result = format!("{} {}", list, item.to_string());
                 Ok(Token::List(result))
             },
@@ -570,8 +568,8 @@ impl Command {
             "member?",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let item = decode_token(com, &args, 0)?;
-                let list = decode_list(com, &args, 1)?;
+                let item = decode::token(com, &args, 0)?;
+                let list = decode::list(com, &args, 1)?;
                 let list_items = int.parse_list(&list, true)?;
                 let result = list_items.contains(&item);
                 Ok(Token::Boolean(result))
@@ -584,7 +582,7 @@ impl Command {
             "empty?",
             Params::Fixed(1),
             |_int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let result = match token {
                     Token::Word(word) => word.is_empty(),
                     Token::List(list) => list.is_empty(),

@@ -1,10 +1,8 @@
 use crate::interpreter::event::UiEvent;
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::language::structure::{Command, Params};
-use crate::interpreter::language::token::Token;
-use crate::interpreter::language::util::{
-    decode_list, decode_number, decode_token, decode_word, join_to_list_string,
-};
+use crate::interpreter::language::token::{Token, TokenVec};
+use crate::interpreter::language::util::decode;
 use crate::interpreter::state::object::{Line, Object, Point, Size, TextStyle};
 use std::collections::HashSet;
 use std::thread;
@@ -16,7 +14,7 @@ impl Command {
             "forward",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let dist = decode_number(com, &args, 0)?;
+                let dist = decode::number(com, &args, 0)?;
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
@@ -49,7 +47,7 @@ impl Command {
             "back",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let dist = decode_number(com, &args, 0)?;
+                let dist = decode::number(com, &args, 0)?;
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
@@ -82,7 +80,7 @@ impl Command {
             "left",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let angle = decode_number(com, &args, 0)?;
+                let angle = decode::number(com, &args, 0)?;
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
@@ -104,7 +102,7 @@ impl Command {
             "right",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let angle = decode_number(com, &args, 0)?;
+                let angle = decode::number(com, &args, 0)?;
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
@@ -137,7 +135,7 @@ impl Command {
             "setx",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let x = decode_number(com, &args, 0)?;
+                let x = decode::number(com, &args, 0)?;
                 let object = int.state.canvas.current_object_mut()?;
                 if object.is_locked() {
                     return Ok(Token::Void);
@@ -180,7 +178,7 @@ impl Command {
             "sety",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let y = decode_number(com, &args, 0)?;
+                let y = decode::number(com, &args, 0)?;
                 let object = int.state.canvas.current_object_mut()?;
                 if object.is_locked() {
                     return Ok(Token::Void);
@@ -223,7 +221,7 @@ impl Command {
             "setpos",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let list = decode_list(com, &args, 0)?;
+                let list = decode::list(com, &args, 0)?;
                 let list_items = int.parse_list(&list, true)?;
                 if list_items.len() != 2 {
                     return Err(Box::from("setpos expected 2 coordinates"));
@@ -278,7 +276,7 @@ impl Command {
             "setheading",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let heading = decode_number(com, &args, 0)?;
+                let heading = decode::number(com, &args, 0)?;
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
@@ -311,7 +309,7 @@ impl Command {
             "setcolor",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let color = decode_number(com, &args, 0)?;
+                let color = decode::number(com, &args, 0)?;
                 let object = int.state.canvas.current_object_mut()?;
                 if object.is_locked() {
                     return Ok(Token::Void);
@@ -345,7 +343,7 @@ impl Command {
             "setsize",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let size = match token {
                     Token::Number(number) => Size::new(number, number),
                     Token::List(list) => {
@@ -394,7 +392,7 @@ impl Command {
             "setpensize",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let size = decode_number(com, &args, 0)?;
+                let size = decode::number(com, &args, 0)?;
                 let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
@@ -425,7 +423,7 @@ impl Command {
             "setshape",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let shape_name = decode_word(com, &args, 0)?;
+                let shape_name = decode::word(com, &args, 0)?;
                 let Some(shape) = int.state.data.get_shape(&shape_name) else {
                     return Err(Box::from(format!("no shape named {}", shape_name)));
                 };
@@ -553,7 +551,7 @@ impl Command {
             "distance",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let other_name = decode_word(com, &args, 0)?;
+                let other_name = decode::word(com, &args, 0)?;
                 let Object::Turtle(current) = int.state.canvas.current_object()? else {
                     return Err(Box::from(format!("{} expected a turtle", com)));
                 };
@@ -576,7 +574,7 @@ impl Command {
             "towards",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let other_name = decode_word(com, &args, 0)?;
+                let other_name = decode::word(com, &args, 0)?;
                 let Object::Turtle(other) = int.state.canvas.get_object(&other_name)? else {
                     return Err(Box::from(format!(
                         "{} expected turtle name for input 0",
@@ -608,8 +606,8 @@ impl Command {
             "touching?",
             Params::Fixed(2),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let t1_name = decode_word(com, &args, 0)?;
-                let t2_name = decode_word(com, &args, 1)?;
+                let t1_name = decode::word(com, &args, 0)?;
+                let t2_name = decode::word(com, &args, 1)?;
                 let Object::Turtle(turtle1) = int.state.canvas.get_object(&t1_name)? else {
                     return Err(Box::from(format!(
                         "{} expected turtle name for input 0",
@@ -667,7 +665,7 @@ impl Command {
             "setfontsize",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let font_size = decode_number(com, &args, 0)?;
+                let font_size = decode::number(com, &args, 0)?;
                 let Object::Text(text) = int.state.canvas.current_object_mut()? else {
                     return Err(Box::from(format!("{} expected a text", com)));
                 };
@@ -687,7 +685,7 @@ impl Command {
             "setstyle",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let style_set = match token {
                     Token::Word(word) => {
                         if let Some(style) = TextStyle::from(word) {
@@ -744,13 +742,13 @@ impl Command {
             "print",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let string = match token {
                     Token::Word(word) => word.clone(),
                     Token::Number(number) => number.to_string(),
                     Token::List(list) => {
                         let items = int.parse_list(&list, false)?;
-                        join_to_list_string(items)
+                        items.join_to_list_string()
                     }
                     _ => return Err(Box::from("expected word, number or list")),
                 };
@@ -802,7 +800,7 @@ impl Command {
             "setprojectsize",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let list = decode_list(com, &args, 0)?;
+                let list = decode::list(com, &args, 0)?;
                 let size: Vec<&str> = list.split(' ').collect();
                 if size.len() != 2 {
                     return Err(Box::from("invalid project size"));
@@ -832,7 +830,7 @@ impl Command {
             "setbg",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let color = decode_number(com, &args, 0)?;
+                let color = decode::number(com, &args, 0)?;
                 int.state.canvas.set_bg_color(color as u8);
                 int.event.send_ui(UiEvent::BgColor(color));
                 Ok(Token::Void)
@@ -916,7 +914,7 @@ impl Command {
             "newturtle",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let name = decode_word(com, &args, 0)?;
+                let name = decode::word(com, &args, 0)?;
                 int.state.canvas.create_turtle(&name)?;
                 int.event.send_ui(UiEvent::NewTurtle(name.into()));
                 Ok(Token::Void)
@@ -929,7 +927,7 @@ impl Command {
             "newtext",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let name = decode_word(com, &args, 0)?;
+                let name = decode::word(com, &args, 0)?;
                 int.state.canvas.create_text(&name)?;
                 int.event.send_ui(UiEvent::NewText(name.into()));
                 Ok(Token::Void)
@@ -942,7 +940,7 @@ impl Command {
             "remove",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let name = decode_word(com, &args, 0)?;
+                let name = decode::word(com, &args, 0)?;
                 int.state.canvas.remove_object(&name);
                 int.event.send_ui(UiEvent::RemoveObject(name.into()));
                 Ok(Token::Void)
@@ -955,7 +953,7 @@ impl Command {
             "wait",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let duration = decode_number(com, &args, 0)? as u64;
+                let duration = decode::number(com, &args, 0)? as u64;
                 int.event.send_ui(UiEvent::Wait(duration.clone()));
                 thread::sleep(Duration::from_millis(duration));
                 Ok(Token::Void)
@@ -968,7 +966,7 @@ impl Command {
             "show",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let text = token.to_string();
                 int.event.send_ui(UiEvent::ConsolePrint(text));
                 Ok(Token::Void)
@@ -981,7 +979,7 @@ impl Command {
             "announce",
             Params::Fixed(1),
             |int: &mut Interpreter, com: &str, args: Vec<Token>| {
-                let token = decode_token(com, &args, 0)?;
+                let token = decode::token(com, &args, 0)?;
                 let text = match token {
                     Token::List(list) => list.clone(),
                     token => token.to_string(),

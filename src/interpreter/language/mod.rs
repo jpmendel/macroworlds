@@ -1,4 +1,4 @@
-pub mod command;
+pub mod dictionary;
 pub mod language;
 pub mod lexer;
 pub mod structure;

@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::interpreter::language::command::command::Command;
     use crate::interpreter::language::lexer::Lexer;
+    use crate::interpreter::language::structure::Command;
     use crate::interpreter::language::token::Token;
 
     fn check_expected_tokens(tokens: Vec<Token>, expect: Vec<(&str, Vec<Token>)>) {

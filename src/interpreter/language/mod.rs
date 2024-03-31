@@ -1,6 +1,6 @@
 pub mod command;
 pub mod language;
 pub mod lexer;
-pub mod procedure;
+pub mod structure;
 pub mod token;
 pub mod util;

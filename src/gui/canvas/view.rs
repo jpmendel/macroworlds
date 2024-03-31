@@ -24,7 +24,7 @@ impl App {
                         let painter = ui.painter();
                         let canvas_pos = pos2(
                             main_frame_width / 2.0 - canvas.size.x / 2.0,
-                            main_frame_height / 2.0 - canvas.size.y / 2.0 + 6.0,
+                            main_frame_height / 2.0 - canvas.size.y / 2.0 + 8.0, // Small adjust to get vertical center
                         );
                         canvas.pos = canvas_pos;
                         let rect = Rect::from_x_y_ranges(

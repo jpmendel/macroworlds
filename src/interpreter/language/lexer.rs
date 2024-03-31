@@ -1,6 +1,7 @@
-use crate::interpreter::language::command::command::{Command, CommandAction, Params};
 use crate::interpreter::language::language::Language;
+use crate::interpreter::language::structure::{Command, CommandAction, Params};
 use crate::interpreter::language::token::Token;
+use crate::interpreter::util::error::eof_error;
 use std::collections::VecDeque;
 use std::error::Error;
 
@@ -67,7 +68,7 @@ impl Lexer {
         self.consume_whitespace();
         let block = self.current_block();
         if block.current_char() == '\0' {
-            return Err(Box::from("eof"));
+            return Err(eof_error());
         }
         // Check for Comments
         if block.current_char() == ';' {
@@ -119,7 +120,7 @@ impl Lexer {
             args.extend(rest_args);
             token = Token::Command(command, args);
         } else if identifier.is_empty() {
-            return Err(Box::from("eof"));
+            return Err(eof_error());
         } else {
             return Ok(Token::Undefined(identifier));
         }

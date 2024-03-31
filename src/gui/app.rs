@@ -159,6 +159,7 @@ impl App {
 }
 
 impl eframe::App for App {
+    // Build Main UI
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         // Left Side
         self.canvas_view(ctx);

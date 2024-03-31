@@ -1,19 +1,20 @@
 use crate::interpreter::event::{EventHandler, InputEvent, UiEvent};
 use crate::interpreter::event::{UiContext, UiEventHandler};
-use crate::interpreter::language::command::command::Params;
 use crate::interpreter::language::lexer::Lexer;
-use crate::interpreter::language::procedure::Procedure;
+use crate::interpreter::language::structure::{Params, Procedure};
 use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::decode_token;
-use crate::interpreter::performance::PerformanceTracker;
 use crate::interpreter::state::object::Object;
 use crate::interpreter::state::state::State;
-use crate::interpreter::util::{is_eof, is_interrupt};
+use crate::interpreter::util::error::{is_eof, is_interrupt};
+use crate::interpreter::util::performance::PerformanceTracker;
 use std::error::Error;
 use std::sync::{mpsc, Arc, Mutex};
 
 #[cfg(feature = "performance")]
 use std::time::Instant;
+
+use super::util::error::interrupt_error;
 
 static DEBUG: bool = false;
 
@@ -308,7 +309,7 @@ impl Interpreter {
 
     fn handle_input(&mut self, event: InputEvent) -> Result<(), Box<dyn Error>> {
         match event {
-            InputEvent::Interrupt => Err(Box::from("interrupt")),
+            InputEvent::Interrupt => Err(interrupt_error()),
             InputEvent::KeyDown(key) => {
                 self.state.input.set_key_down(key.clone());
                 self.state.input.add_key_to_buffer(key);

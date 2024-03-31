@@ -1,4 +1,4 @@
-use crate::interpreter::language::command::command::Command;
+use crate::interpreter::language::structure::Command;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;

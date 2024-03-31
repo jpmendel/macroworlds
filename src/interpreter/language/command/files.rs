@@ -1,6 +1,6 @@
 use crate::interpreter::event::UiEvent;
 use crate::interpreter::interpreter::Interpreter;
-use crate::interpreter::language::command::command::{Command, Params};
+use crate::interpreter::language::structure::{Command, Params};
 use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::{decode_list, decode_word, query_files};
 use crate::interpreter::state::object::{Point, Size, TurtleShape};

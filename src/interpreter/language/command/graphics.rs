@@ -1,6 +1,6 @@
 use crate::interpreter::event::UiEvent;
 use crate::interpreter::interpreter::Interpreter;
-use crate::interpreter::language::command::command::{Command, Params};
+use crate::interpreter::language::structure::{Command, Params};
 use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::{
     decode_list, decode_number, decode_token, decode_word, join_to_list_string,

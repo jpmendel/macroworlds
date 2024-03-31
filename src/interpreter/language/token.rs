@@ -1,4 +1,4 @@
-use crate::interpreter::language::command::command::Command;
+use crate::interpreter::language::structure::Command;
 
 #[derive(Debug, Clone)]
 pub enum Token {

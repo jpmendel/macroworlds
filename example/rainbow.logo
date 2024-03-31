@@ -15,7 +15,8 @@ ifelse :color = 254
 wait 5
 end
 
-cg
+setpos [0 0]
+clean
 ht
 setpensize 3
 forever [rainbow]

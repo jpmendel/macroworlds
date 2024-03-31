@@ -1,4 +1,4 @@
-use crate::interpreter::language::procedure::Procedure;
+use crate::interpreter::language::structure::Procedure;
 use crate::interpreter::language::token::Token;
 use crate::interpreter::state::object::TurtleShape;
 use std::collections::{HashMap, VecDeque};

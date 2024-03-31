@@ -180,38 +180,44 @@ impl App {
         };
         let frame = Frame::default().fill(fill).stroke(Stroke::new(1.0, stroke));
         frame.show(ui, |ui: &mut Ui| {
-            ui.set_min_size(vec2(120.0, ui.available_height()));
-            ui.set_max_size(vec2(160.0, ui.available_height()));
+            ui.set_min_size(vec2(140.0, ui.available_height()));
+            ui.set_max_size(vec2(140.0, ui.available_height()));
             ui.with_layout(Layout::top_down(Align::LEFT), |ui: &mut Ui| {
                 ui.add_space(10.0);
                 ui.with_layout(Layout::left_to_right(Align::TOP), |ui: &mut Ui| {
                     ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
-                    ui.add_space(15.0);
-                    let mut file_text = RichText::new(file.name.clone())
-                        .font(FontId::proportional(12.0))
-                        .color(Color32::from_gray(255));
-                    if file.is_edited {
-                        file_text = file_text.italics();
-                    }
-                    let file_text_label = Label::new(file_text).truncate(true);
-                    let file_text_label_ref = ui
-                        .add(file_text_label)
-                        .on_hover_and_drag_cursor(CursorIcon::Default);
-                    if file_text_label_ref.clicked() {
-                        self.editor.select_file(index.clone());
-                    }
+                    ui.with_layout(Layout::left_to_right(Align::TOP), |ui: &mut Ui| {
+                        ui.add_space(15.0);
+                        let mut file_text = RichText::new(file.name.clone())
+                            .font(FontId::proportional(12.0))
+                            .color(Color32::from_gray(255));
+                        if file.is_edited {
+                            file_text = file_text.italics();
+                        }
+                        let file_text_label = Label::new(file_text).truncate(true);
+                        let file_text_label_ref = ui
+                            .add(file_text_label)
+                            .on_hover_and_drag_cursor(CursorIcon::Default);
+                        if file_text_label_ref.clicked() {
+                            self.editor.select_file(index.clone());
+                        }
+                    });
+
                     ui.add_space(10.0);
-                    let close_text = RichText::new(String::from("x"))
-                        .font(FontId::proportional(12.0))
-                        .color(Color32::from_gray(255));
-                    let close_text_label = Label::new(close_text);
-                    let close_text_label_ref = ui
-                        .add(close_text_label)
-                        .on_hover_and_drag_cursor(CursorIcon::PointingHand);
-                    if close_text_label_ref.clicked() {
-                        self.editor.close_file(index.clone());
-                    }
-                    ui.add_space(15.0);
+
+                    ui.with_layout(Layout::right_to_left(Align::TOP), |ui: &mut Ui| {
+                        ui.add_space(15.0);
+                        let close_text = RichText::new(String::from("x"))
+                            .font(FontId::proportional(12.0))
+                            .color(Color32::from_gray(255));
+                        let close_text_label = Label::new(close_text);
+                        let close_text_label_ref = ui
+                            .add(close_text_label)
+                            .on_hover_and_drag_cursor(CursorIcon::PointingHand);
+                        if close_text_label_ref.clicked() {
+                            self.editor.close_file(index.clone());
+                        }
+                    });
                 });
                 ui.add_space(10.0);
             });

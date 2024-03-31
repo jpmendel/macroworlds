@@ -90,6 +90,7 @@ impl Language {
         language.add(Command::newtext());
         language.add(Command::newturtle());
         language.add(Command::not());
+        language.add(Command::on());
         language.add(Command::or());
         language.add(Command::output());
         language.add(Command::pd());

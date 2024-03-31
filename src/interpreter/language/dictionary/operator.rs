@@ -1,10 +1,9 @@
-use std::f32::consts::E;
-
 use crate::interpreter::interpreter::Interpreter;
 use crate::interpreter::language::structure::{Command, Params};
 use crate::interpreter::language::token::{Token, TokenVec};
 use crate::interpreter::language::util::decode;
 use crate::interpreter::language::util::io::{KeyCode, KeyName};
+use std::f32::consts::E;
 
 impl Command {
     pub fn sum() -> Self {

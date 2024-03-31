@@ -623,10 +623,40 @@ impl Command {
                 if !turtle1.is_visible || !turtle2.is_visible {
                     return Ok(Token::Boolean(false));
                 }
-                let result = turtle1.pos.x < turtle2.pos.x + turtle2.size.w
-                    && turtle1.pos.x + turtle1.size.w > turtle2.pos.x
-                    && turtle1.pos.y > turtle2.pos.y + turtle2.size.h
-                    && turtle1.pos.y + turtle1.size.h < turtle2.pos.y;
+                let result = turtle1.pos.x - turtle1.size.w / 2.0
+                    < turtle2.pos.x + turtle2.size.w / 2.0
+                    && turtle1.pos.x + turtle1.size.w / 2.0 > turtle2.pos.x - turtle2.size.w / 2.0
+                    && turtle1.pos.y - turtle1.size.h / 2.0 < turtle2.pos.y + turtle2.size.h / 2.0
+                    && turtle1.pos.y + turtle1.size.h / 2.0 > turtle2.pos.y - turtle2.size.h / 2.0;
+                Ok(Token::Boolean(result))
+            },
+        )
+    }
+
+    pub fn on() -> Self {
+        Command::reserved(
+            "on?",
+            Params::Fixed(1),
+            |int: &mut Interpreter, com: &str, args: Vec<Token>| {
+                let list = decode::list(com, &args, 0)?;
+                let list_items = int.parse_list(&list, true)?;
+                if list_items.len() != 2 {
+                    return Err(Box::from("on? expected 2 coordinates"));
+                }
+                let Some(Token::Number(x)) = list_items.get(0) else {
+                    return Err(Box::from("on? expected number for x-coordinate"));
+                };
+                let Some(Token::Number(y)) = list_items.get(1) else {
+                    return Err(Box::from("on? expected number for y-coordinate"));
+                };
+                let Object::Turtle(turtle) = int.state.canvas.current_object_mut()? else {
+                    return Err(Box::from(format!("{} expected a turtle", com)));
+                };
+                let result = *x >= turtle.pos.x - turtle.size.w / 2.0
+                    && *x <= turtle.pos.x + turtle.size.w / 2.0
+                    && *y >= turtle.pos.y - turtle.size.h / 2.0
+                    && *y <= turtle.pos.y + turtle.size.h / 2.0;
+
                 Ok(Token::Boolean(result))
             },
         )

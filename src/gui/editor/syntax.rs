@@ -96,6 +96,7 @@ pub const OTHER_COMMANDS: phf::Set<&'static str> = phf_set!(
     "member?",
     "minus",
     "number?",
+    "on?",
     "pd",
     "pensize",
     "pi",

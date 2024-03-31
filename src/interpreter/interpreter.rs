@@ -6,15 +6,13 @@ use crate::interpreter::language::token::Token;
 use crate::interpreter::language::util::decode;
 use crate::interpreter::state::object::Object;
 use crate::interpreter::state::state::State;
-use crate::interpreter::util::error::{is_eof, is_interrupt};
+use crate::interpreter::util::error::{interrupt_error, is_eof, is_interrupt};
 use crate::interpreter::util::performance::PerformanceTracker;
 use std::error::Error;
 use std::sync::{mpsc, Arc, Mutex};
 
 #[cfg(feature = "performance")]
 use std::time::Instant;
-
-use super::util::error::interrupt_error;
 
 static DEBUG: bool = false;
 

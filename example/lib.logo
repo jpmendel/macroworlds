@@ -1,7 +1,0 @@
-to move :obj :speed
-tto :obj
-if keydown? "w [sety ycor + :speed]
-if keydown? "s [sety ycor - :speed]
-if keydown? "a [setx xcor - :speed]
-if keydown? "d [setx xcor + :speed]
-end

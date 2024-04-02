@@ -4,22 +4,7 @@ mod tests {
     use crate::interpreter::language::structure::Command;
     use crate::interpreter::language::token::Token;
 
-    fn check_expected_tokens(tokens: Vec<Token>, expect: Vec<(&str, Vec<Token>)>) {
-        for index in 0..expect.len() {
-            let (expected_name, expected_args) = &expect[index];
-            let Token::Command(command, args) = &tokens[index] else {
-                panic!("expected command: {}", expected_name);
-            };
-            assert!(command.is(expected_name));
-            for index in 0..expected_args.len() {
-                assert_eq!(args[index], expected_args[index]);
-            }
-        }
-    }
-
-    #[test]
-    fn read_code_single_line() {
-        let code = "forward 50 right 90 back 50 left 90 setpos [20 -30] forward -50 setheading 180";
+    fn read_code_into_tokens(code: &str) -> Vec<Token> {
         let mut lexer = Lexer::new();
         lexer.push_block(code, false);
 
@@ -27,18 +12,25 @@ mod tests {
         while let Ok(token) = lexer.read_token() {
             tokens.push(token);
         }
+        tokens
+    }
+
+    #[test]
+    fn read_code_single_line() {
+        let code = "forward 50 right 90 back 50 left 90 setpos [20 -30] forward -50 setheading 180";
+        let tokens = read_code_into_tokens(code);
 
         let expect = vec![
-            ("forward", vec![Token::Number(50.0)]),
-            ("right", vec![Token::Number(90.0)]),
-            ("back", vec![Token::Number(50.0)]),
-            ("left", vec![Token::Number(90.0)]),
-            ("setpos", vec![Token::List(String::from("20 -30"))]),
-            ("forward", vec![Token::Number(-50.0)]),
-            ("setheading", vec![Token::Number(180.0)]),
+            Token::Command(Command::forward(), vec![Token::Number(50.0)]),
+            Token::Command(Command::right(), vec![Token::Number(90.0)]),
+            Token::Command(Command::back(), vec![Token::Number(50.0)]),
+            Token::Command(Command::left(), vec![Token::Number(90.0)]),
+            Token::Command(Command::setpos(), vec![Token::List(String::from("20 -30"))]),
+            Token::Command(Command::forward(), vec![Token::Number(-50.0)]),
+            Token::Command(Command::setheading(), vec![Token::Number(180.0)]),
         ];
 
-        check_expected_tokens(tokens, expect);
+        assert_eq!(tokens, expect);
     }
 
     #[test]
@@ -52,25 +44,19 @@ mod tests {
         back -50
         right -90
         ";
-        let mut lexer = Lexer::new();
-        lexer.push_block(code, false);
-
-        let mut tokens: Vec<Token> = vec![];
-        while let Ok(token) = lexer.read_token() {
-            tokens.push(token);
-        }
+        let tokens = read_code_into_tokens(code);
 
         let expect = vec![
-            ("setpos", vec![Token::List(String::from("-15 45"))]),
-            ("back", vec![Token::Number(30.0)]),
-            ("forward", vec![Token::Number(50.0)]),
-            ("left", vec![Token::Number(90.0)]),
-            ("setheading", vec![Token::Number(0.0)]),
-            ("back", vec![Token::Number(-50.0)]),
-            ("right", vec![Token::Number(-90.0)]),
+            Token::Command(Command::setpos(), vec![Token::List(String::from("-15 45"))]),
+            Token::Command(Command::back(), vec![Token::Number(30.0)]),
+            Token::Command(Command::forward(), vec![Token::Number(50.0)]),
+            Token::Command(Command::left(), vec![Token::Number(90.0)]),
+            Token::Command(Command::setheading(), vec![Token::Number(0.0)]),
+            Token::Command(Command::back(), vec![Token::Number(-50.0)]),
+            Token::Command(Command::right(), vec![Token::Number(-90.0)]),
         ];
 
-        check_expected_tokens(tokens, expect);
+        assert_eq!(tokens, expect);
     }
 
     #[test]
@@ -83,22 +69,19 @@ mod tests {
         if :var = 45 [bk 20]
         repeat 3 [fd :var]
         ";
-        let mut lexer = Lexer::new();
-        lexer.push_block(code, false);
-
-        let mut tokens: Vec<Token> = vec![];
-        while let Ok(token) = lexer.read_token() {
-            tokens.push(token);
-        }
+        let tokens = read_code_into_tokens(code);
 
         let expect = vec![
-            (
-                "make",
+            Token::Command(
+                Command::make(),
                 vec![Token::Word(String::from("var")), Token::Number(50.0)],
             ),
-            ("forward", vec![Token::Variable(String::from("var"))]),
-            (
-                "make",
+            Token::Command(
+                Command::forward(),
+                vec![Token::Variable(String::from("var"))],
+            ),
+            Token::Command(
+                Command::make(),
                 vec![
                     Token::Word(String::from("var")),
                     Token::Command(
@@ -107,21 +90,24 @@ mod tests {
                     ),
                 ],
             ),
-            ("back", vec![Token::Variable(String::from("var"))]),
-            (
-                "if",
-                vec![Token::Command(
-                    Command::equal(),
-                    vec![Token::Variable(String::from("var")), Token::Number(45.0)],
-                )],
+            Token::Command(Command::back(), vec![Token::Variable(String::from("var"))]),
+            Token::Command(
+                Command::ifthen(),
+                vec![
+                    Token::Command(
+                        Command::equal(),
+                        vec![Token::Variable(String::from("var")), Token::Number(45.0)],
+                    ),
+                    Token::List(String::from("bk 20")),
+                ],
             ),
-            (
-                "repeat",
+            Token::Command(
+                Command::repeat(),
                 vec![Token::Number(3.0), Token::List(String::from("fd :var"))],
             ),
         ];
 
-        check_expected_tokens(tokens, expect);
+        assert_eq!(tokens, expect);
     }
 
     #[test]
@@ -137,25 +123,19 @@ mod tests {
         output :val
         end
         ";
-        let mut lexer = Lexer::new();
-        lexer.push_block(code, false);
-
-        let mut tokens: Vec<Token> = vec![];
-        while let Ok(token) = lexer.read_token() {
-            tokens.push(token);
-        }
+        let tokens = read_code_into_tokens(code);
 
         let expect = vec![
-            (
-                "to",
+            Token::Command(
+                Command::to(),
                 vec![Token::Procedure(
                     String::from("function1"),
                     vec![],
                     String::from("code"),
                 )],
             ),
-            (
-                "to",
+            Token::Command(
+                Command::to(),
                 vec![Token::Procedure(
                     String::from("function2"),
                     vec![String::from("param")],
@@ -164,7 +144,7 @@ mod tests {
             ),
         ];
 
-        check_expected_tokens(tokens, expect);
+        assert_eq!(tokens, expect);
     }
 
     #[test]
@@ -176,42 +156,36 @@ mod tests {
         dotimes [i 5] [show :i]
         dolist [i [one two :var]] [show :i]
         ";
-        let mut lexer = Lexer::new();
-        lexer.push_block(code, false);
-
-        let mut tokens: Vec<Token> = vec![];
-        while let Ok(token) = lexer.read_token() {
-            tokens.push(token);
-        }
+        let tokens = read_code_into_tokens(code);
 
         let expect = vec![
-            (
-                "make",
+            Token::Command(
+                Command::make(),
                 vec![
                     Token::Word(String::from("lst")),
                     Token::List(String::from("one two three")),
                 ],
             ),
-            (
-                "make",
+            Token::Command(
+                Command::make(),
                 vec![Token::Word(String::from("var")), Token::Number(10.0)],
             ),
-            (
-                "list",
+            Token::Command(
+                Command::list(),
                 vec![
                     Token::Variable(String::from("lst")),
                     Token::List(String::from("four five")),
                 ],
             ),
-            (
-                "dotimes",
+            Token::Command(
+                Command::dotimes(),
                 vec![
                     Token::List(String::from("i 5")),
                     Token::List(String::from("show :i")),
                 ],
             ),
-            (
-                "dolist",
+            Token::Command(
+                Command::dolist(),
                 vec![
                     Token::List(String::from("i [one two :var]")),
                     Token::List(String::from("show :i")),
@@ -219,7 +193,7 @@ mod tests {
             ),
         ];
 
-        check_expected_tokens(tokens, expect);
+        assert_eq!(tokens, expect);
     }
 
     #[test]
@@ -232,28 +206,22 @@ mod tests {
         ifelse not less? :var2 5 [show \"yes] [show \"no]
         carefully [show :noexist] [show \"no]
         ";
-        let mut lexer = Lexer::new();
-        lexer.push_block(code, false);
-
-        let mut tokens: Vec<Token> = vec![];
-        while let Ok(token) = lexer.read_token() {
-            tokens.push(token);
-        }
+        let tokens = read_code_into_tokens(code);
 
         let expect = vec![
-            (
-                "make",
+            Token::Command(
+                Command::make(),
                 vec![
                     Token::Word(String::from("var1")),
                     Token::Word(String::from("hello")),
                 ],
             ),
-            (
-                "make",
+            Token::Command(
+                Command::make(),
                 vec![Token::Word(String::from("var2")), Token::Number(10.0)],
             ),
-            (
-                "if",
+            Token::Command(
+                Command::ifthen(),
                 vec![
                     Token::Command(
                         Command::equal(),
@@ -265,8 +233,8 @@ mod tests {
                     Token::List(String::from("show \"yes")),
                 ],
             ),
-            (
-                "if",
+            Token::Command(
+                Command::ifthen(),
                 vec![
                     Token::Command(
                         Command::and(),
@@ -280,15 +248,15 @@ mod tests {
                             ),
                             Token::Command(
                                 Command::greater(),
-                                vec![Token::Variable(String::from("var1")), Token::Number(5.0)],
+                                vec![Token::Variable(String::from("var2")), Token::Number(5.0)],
                             ),
                         ],
                     ),
                     Token::List(String::from("show \"yes")),
                 ],
             ),
-            (
-                "ifelse",
+            Token::Command(
+                Command::ifelse(),
                 vec![
                     Token::Command(
                         Command::not(),
@@ -298,10 +266,11 @@ mod tests {
                         )],
                     ),
                     Token::List(String::from("show \"yes")),
+                    Token::List(String::from("show \"no")),
                 ],
             ),
-            (
-                "carefully",
+            Token::Command(
+                Command::carefully(),
                 vec![
                     Token::List(String::from("show :noexist")),
                     Token::List(String::from("show \"no")),
@@ -309,15 +278,164 @@ mod tests {
             ),
         ];
 
-        check_expected_tokens(tokens, expect);
+        assert_eq!(tokens, expect);
     }
 
     #[test]
-    fn read_code_with_infix_operators() {}
+    fn read_code_with_infix_operators() {
+        let code = "
+        make \"var1 6 + 5
+        make \"var2 10 - 4
+        make \"var3 3 * 7
+        make \"var4 8 / 2
+        make \"var5 4 ^ 2
+        make \"var6 10 % 3
+        ";
+        let tokens = read_code_into_tokens(code);
+
+        let expect = vec![
+            Token::Command(
+                Command::make(),
+                vec![
+                    Token::Word(String::from("var1")),
+                    Token::Command(Command::sum(), vec![Token::Number(6.0), Token::Number(5.0)]),
+                ],
+            ),
+            Token::Command(
+                Command::make(),
+                vec![
+                    Token::Word(String::from("var2")),
+                    Token::Command(
+                        Command::difference(),
+                        vec![Token::Number(10.0), Token::Number(4.0)],
+                    ),
+                ],
+            ),
+            Token::Command(
+                Command::make(),
+                vec![
+                    Token::Word(String::from("var3")),
+                    Token::Command(
+                        Command::product(),
+                        vec![Token::Number(3.0), Token::Number(7.0)],
+                    ),
+                ],
+            ),
+            Token::Command(
+                Command::make(),
+                vec![
+                    Token::Word(String::from("var4")),
+                    Token::Command(
+                        Command::quotient(),
+                        vec![Token::Number(8.0), Token::Number(2.0)],
+                    ),
+                ],
+            ),
+            Token::Command(
+                Command::make(),
+                vec![
+                    Token::Word(String::from("var5")),
+                    Token::Command(
+                        Command::power(),
+                        vec![Token::Number(4.0), Token::Number(2.0)],
+                    ),
+                ],
+            ),
+            Token::Command(
+                Command::make(),
+                vec![
+                    Token::Word(String::from("var6")),
+                    Token::Command(
+                        Command::remainder(),
+                        vec![Token::Number(10.0), Token::Number(3.0)],
+                    ),
+                ],
+            ),
+        ];
+
+        assert_eq!(tokens, expect);
+    }
 
     #[test]
-    fn read_code_with_parenthesis() {}
+    fn read_code_with_parenthesis() {
+        let code = "
+        show (5 + 2) * (3 - 6)
+        setpos list ((minus 4) + 3) (exp 6 - 1)
+        ";
+        let tokens = read_code_into_tokens(code);
+
+        let expect = vec![
+            Token::Command(
+                Command::show(),
+                vec![Token::Command(
+                    Command::product(),
+                    vec![
+                        Token::Command(Command::paren(), vec![Token::List(String::from("5 + 2"))]),
+                        Token::Command(Command::paren(), vec![Token::List(String::from("3 - 6"))]),
+                    ],
+                )],
+            ),
+            Token::Command(
+                Command::setpos(),
+                vec![Token::Command(
+                    Command::list(),
+                    vec![
+                        Token::Command(
+                            Command::paren(),
+                            vec![Token::List(String::from("(minus 4) + 3"))],
+                        ),
+                        Token::Command(
+                            Command::paren(),
+                            vec![Token::List(String::from("exp 6 - 1"))],
+                        ),
+                    ],
+                )],
+            ),
+        ];
+
+        assert_eq!(tokens, expect);
+    }
 
     #[test]
-    fn read_code_with_aliases() {}
+    fn read_code_with_aliases() {
+        let code = "
+        fd 40
+        bk 20
+        rt 90
+        lt 45
+        se \"one \"two
+        sentence \"one \"two
+        op \"result
+        tto :turtle
+        ";
+        let tokens = read_code_into_tokens(code);
+
+        let expect = vec![
+            Token::Command(Command::forward(), vec![Token::Number(40.0)]),
+            Token::Command(Command::back(), vec![Token::Number(20.0)]),
+            Token::Command(Command::right(), vec![Token::Number(90.0)]),
+            Token::Command(Command::left(), vec![Token::Number(45.0)]),
+            Token::Command(
+                Command::list(),
+                vec![
+                    Token::Word(String::from("one")),
+                    Token::Word(String::from("two")),
+                ],
+            ),
+            Token::Command(
+                Command::list(),
+                vec![
+                    Token::Word(String::from("one")),
+                    Token::Word(String::from("two")),
+                ],
+            ),
+            Token::Command(Command::output(), vec![Token::Word(String::from("result"))]),
+            Token::Command(
+                Command::talkto(),
+                vec![Token::Variable(String::from("turtle"))],
+            ),
+        ];
+
+        assert_eq!(tokens, expect);
+    }
 }

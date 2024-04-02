@@ -1,2 +1,4 @@
 #[cfg(test)]
-mod tests {}
+mod tests {
+    // TODO: Test interpreter state updates after code is run.
+}

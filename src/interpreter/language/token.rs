@@ -31,7 +31,9 @@ impl Token {
 impl PartialEq for Token {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Command(com1, _), Self::Command(com2, _)) => com1.name == com2.name,
+            (Self::Command(com1, args1), Self::Command(com2, args2)) => {
+                com1.name == com2.name && args1 == args2
+            }
             (Self::Word(word1), Self::Word(word2)) => word1 == word2,
             (Self::Number(num1), Self::Number(num2)) => num1 == num2,
             (Self::Boolean(bool1), Self::Boolean(bool2)) => bool1 == bool2,

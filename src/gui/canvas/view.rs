@@ -159,7 +159,8 @@ impl App {
                                 let reset_button_label = RichText::new(String::from("Reset"))
                                     .font(FontId::proportional(14.0))
                                     .color(Color32::from_gray(255));
-                                let reset_button = Button::new(reset_button_label);
+                                let reset_button =
+                                    Button::new(reset_button_label).fill(Color32::from_gray(60));
                                 let reset_button_ref = ui.add_sized(vec2(60.0, 20.0), reset_button);
                                 if reset_button_ref.clicked() {
                                     self.reset_state();

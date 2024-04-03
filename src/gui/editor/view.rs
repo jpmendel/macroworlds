@@ -1,7 +1,6 @@
 use crate::gui::app::App;
+use crate::gui::editor::files::FileHandle;
 use eframe::egui::*;
-
-use super::files::FileHandle;
 
 impl App {
     pub fn code_editor_view(&mut self, ctx: &Context) {
@@ -38,7 +37,8 @@ impl App {
                                 let docs_button_label = RichText::new(String::from("Docs"))
                                     .font(FontId::proportional(14.0))
                                     .color(Color32::from_gray(255));
-                                let docs_button = Button::new(docs_button_label);
+                                let docs_button =
+                                    Button::new(docs_button_label).fill(Color32::from_gray(60));
                                 let docs_button_ref = ui.add_sized(vec2(60.0, 20.0), docs_button);
                                 if docs_button_ref.clicked() {
                                     // Heh
@@ -48,7 +48,8 @@ impl App {
                                 let highlight_button_label = RichText::new(String::from("Hi-Lite"))
                                     .font(FontId::proportional(14.0))
                                     .color(Color32::from_gray(255));
-                                let highlight_button = Button::new(highlight_button_label);
+                                let highlight_button = Button::new(highlight_button_label)
+                                    .fill(Color32::from_gray(60));
                                 let highlight_button_ref =
                                     ui.add_sized(vec2(60.0, 20.0), highlight_button);
                                 if highlight_button_ref.clicked() {
@@ -59,7 +60,8 @@ impl App {
                                 let save_button_label = RichText::new(String::from("Save"))
                                     .font(FontId::proportional(14.0))
                                     .color(Color32::from_gray(255));
-                                let save_button = Button::new(save_button_label);
+                                let save_button =
+                                    Button::new(save_button_label).fill(Color32::from_gray(60));
                                 let save_button_ref = ui.add_sized(vec2(60.0, 20.0), save_button);
                                 if save_button_ref.clicked() {
                                     self.editor.save_current_file();
@@ -69,7 +71,8 @@ impl App {
                                 let open_button_label = RichText::new(String::from("Open"))
                                     .font(FontId::proportional(14.0))
                                     .color(Color32::from_gray(255));
-                                let open_button = Button::new(open_button_label);
+                                let open_button =
+                                    Button::new(open_button_label).fill(Color32::from_gray(60));
                                 let open_button_ref = ui.add_sized(vec2(60.0, 20.0), open_button);
                                 if open_button_ref.clicked() {
                                     self.editor.open_file();
@@ -79,7 +82,8 @@ impl App {
                                 let new_button_label = RichText::new(String::from("New"))
                                     .font(FontId::proportional(14.0))
                                     .color(Color32::from_gray(255));
-                                let new_button = Button::new(new_button_label);
+                                let new_button =
+                                    Button::new(new_button_label).fill(Color32::from_gray(60));
                                 let new_button_ref = ui.add_sized(vec2(60.0, 20.0), new_button);
                                 if new_button_ref.clicked() {
                                     self.editor.new_file();
@@ -119,7 +123,7 @@ impl App {
                         let button_label = RichText::new(button_text)
                             .font(FontId::proportional(16.0))
                             .color(Color32::from_gray(255));
-                        let button = Button::new(button_label);
+                        let button = Button::new(button_label).fill(Color32::from_gray(60));
                         let button_ref = ui.add_sized(ui.available_size(), button);
                         if button_ref.clicked() {
                             if is_running {
@@ -136,6 +140,7 @@ impl App {
                     .show_inside(ui, |ui: &mut Ui| {
                         if let Some(index) = current_file_index {
                             ScrollArea::vertical().show(ui, |ui: &mut Ui| {
+                                ui.style_mut().visuals.extreme_bg_color = Color32::from_gray(0);
                                 let font = self.editor.font.clone();
                                 let size = vec2(ui.available_width() - 2.0, ui.available_height());
                                 if self.editor.should_highlight {
@@ -180,8 +185,8 @@ impl App {
         };
         let frame = Frame::default().fill(fill).stroke(Stroke::new(1.0, stroke));
         frame.show(ui, |ui: &mut Ui| {
-            ui.set_min_size(vec2(140.0, ui.available_height()));
-            ui.set_max_size(vec2(140.0, ui.available_height()));
+            ui.set_min_size(vec2(140.0, 25.0));
+            ui.set_max_size(vec2(140.0, 25.0));
             ui.with_layout(Layout::top_down(Align::LEFT), |ui: &mut Ui| {
                 ui.add_space(10.0);
                 ui.with_layout(Layout::left_to_right(Align::TOP), |ui: &mut Ui| {

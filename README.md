@@ -4,7 +4,7 @@ MacroWorlds is an implementation of the Logo programming language written in Rus
 
 ## Setup
 
-- Install [Rust](https://www.rust-lang.org/tools/install) (minimum version 1.76)
+- Install [Rust](https://www.rust-lang.org/tools/install) (recommended version 1.76 or higher)
 
 
 ## Run

@@ -1,4 +1,4 @@
-use crate::gui::editor::syntax::{
+use crate::gui::editor::keywords::{
     CONTROL_FLOW_COMMANDS, DEFINITION_COMMANDS, OBJ_DEF_COUNT, OTHER_COMMANDS, VAR_DEF_COUNT,
     WORD_LIST_ARGS,
 };

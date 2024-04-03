@@ -71,10 +71,10 @@ impl App {
     }
 
     pub fn reset_state(&mut self) {
+        // If a program is running, stop with an interrupt.
         let is_running = *self.is_running.lock().unwrap();
         if is_running {
-            println!("Can't reset when app is running");
-            return;
+            let _ = self.input_sender.send(InputEvent::Interrupt);
         }
 
         // Delete all state from the interpreter.

@@ -218,9 +218,9 @@ impl Language {
         for (name, _) in &self.commands {
             contents += &format!("\"{}\"\n", name);
         }
-        let file_path = "./assets/language.txt";
+        let file_path = "./local/language.txt";
         let Ok(mut file) = File::create(file_path) else {
-            return Err(Box::from("failed to write file"));
+            return Err(Box::from("failed to write language file"));
         };
         match file.write_all(contents.as_bytes()) {
             Ok(..) => Ok(()),

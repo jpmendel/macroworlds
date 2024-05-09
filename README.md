@@ -8,4 +8,10 @@ MacroWorlds is an implementation of the Logo programming language written in Rus
 
 ## Run
 
-- Run the application: `cargo run --release`
+- Run the application with: `cargo run`
+- For better performance, you may need to use: `cargo run --release`
+
+## Tests
+
+- Run the unit tests with: `cargo test`
+- Run the performance tests with: `cargo test --features performance test::performance`

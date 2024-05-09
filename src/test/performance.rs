@@ -6,7 +6,9 @@ mod tests {
 
     #[test]
     fn math_operators() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::new();
@@ -59,8 +61,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance.print_summary(HashSet::from([
             "sum",
@@ -81,7 +85,9 @@ mod tests {
 
     #[test]
     fn conditionals() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::new();
@@ -136,8 +142,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance.print_summary(HashSet::from([
             "if",
@@ -155,7 +163,9 @@ mod tests {
 
     #[test]
     fn loops() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::from("newturtle \"t1\n");
@@ -169,8 +179,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance
             .print_summary(HashSet::from(["repeat", "dotimes", "dolist"]));
@@ -178,7 +190,9 @@ mod tests {
 
     #[test]
     fn variables() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::new();
@@ -198,8 +212,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance
             .print_summary(HashSet::from(["make", "let"]));
@@ -207,7 +223,9 @@ mod tests {
 
     #[test]
     fn list_processing() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::new();
@@ -226,8 +244,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance.print_summary(HashSet::from([
             "list", "fput", "lput", "first", "last", "butfirst", "butlast", "member?", "empty?",
@@ -236,7 +256,9 @@ mod tests {
 
     #[test]
     fn turtle_movement_pen_down() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::from("newturtle \"t1 pd\n");
@@ -256,8 +278,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance.print_summary(HashSet::from([
             "forward", "back", "left", "right", "setx", "sety", "setpos",
@@ -266,7 +290,9 @@ mod tests {
 
     #[test]
     fn turtle_movement_pen_up() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::from("newturtle \"t1 pu\n");
@@ -286,8 +312,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance.print_summary(HashSet::from([
             "forward", "back", "left", "right", "setx", "sety", "setpos",
@@ -296,7 +324,9 @@ mod tests {
 
     #[test]
     fn get_set_attributes() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::from("newturtle \"t1\n");
@@ -322,8 +352,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance.print_summary(HashSet::from([
             "xcor",
@@ -344,7 +376,9 @@ mod tests {
 
     #[test]
     fn object_custom_attributes() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::from("newturtle \"t1\n");
@@ -358,8 +392,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance
             .print_summary(HashSet::from(["turtlesown", "setattr0", "attr0"]));
@@ -367,7 +403,9 @@ mod tests {
 
     #[test]
     fn object_creation_deletion() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::new();
@@ -381,8 +419,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance
             .print_summary(HashSet::from(["newturtle", "newtext", "remove"]));
@@ -390,7 +430,9 @@ mod tests {
 
     #[test]
     fn background_colors() {
-        assert!(cfg!(feature = "performance"));
+        if !cfg!(feature = "performance") {
+            return;
+        }
 
         let num_executions: usize = 20;
         let mut code = String::from("newturtle \"t1\n");
@@ -408,8 +450,10 @@ mod tests {
         }
 
         let mut int = Interpreter::new();
-        let result = int.interpret(&code);
-        assert!(result.is_ok());
+        match int.interpret(&code) {
+            Ok(..) => (),
+            Err(err) => panic!("test failed: {}", err),
+        };
 
         int.performance
             .print_summary(HashSet::from(["setbg", "bg", "colorunder", "clean"]));
